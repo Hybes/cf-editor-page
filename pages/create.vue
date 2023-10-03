@@ -64,7 +64,15 @@ export default {
         return {
             apiKey: '',
             currZone: '',
-            dns: [],
+            dns:
+            {
+                name: '',
+                type: 'A',
+                content: '',
+                ttl: '',
+                proxied: false,
+                comment: ''
+            },
             loading: true,
             saving: '',
             toggleEndpoint: false
