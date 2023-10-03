@@ -2,15 +2,15 @@
 export default defineNuxtConfig({
   app: {
     head: {
-      title: "Ben's Site",
+      title: "DNS Manager",
       htmlAttrs: {
         lang: 'en-GB',
       },
       meta: [
         { charset: 'utf-8' },
         { name: 'viewport', content: 'width=device-width, initial-scale=1, shrink-to-fit=no' },
-        { name: 'theme-color', content: '#586276' },
-        { name: 'msapplication-TileColor', content: '#586276' },
+        { name: 'theme-color', content: '#ea9900' },
+        { name: 'msapplication-TileColor', content: '#ea9900' },
         { name: 'apple-mobile-web-app-capable', content: 'yes' },
         {
           hid: 'keywords',
@@ -21,31 +21,31 @@ export default defineNuxtConfig({
           hid: 'description',
           name: 'description',
           content:
-            'DESCRIPTION HERE',
+            'API Key editor for Cloudflare DNS records',
         },
         {
           hid: 'og:title',
           name: 'og:title',
-          content: 'TITLE HERE',
+          content: 'DNS Manager',
         },
         {
           hid: 'og:description',
           name: 'og:description',
           content:
-            'DESCRIPTION HERE',
+            'API Key editor for Cloudflare DNS records',
         },
         { hid: 'og:image', name: 'og:image', content: 'og-image.png' },
-        { hid: 'og:url', name: 'og:url', content: 'https://test.brth.uk' },
+        { hid: 'og:url', name: 'og:url', content: 'https://dns.dualtone.io' },
         {
           hid: 'twitter:title',
           name: 'twitter:title',
-          content: 'TITLE HERE',
+          content: 'DNS Manager',
         },
         {
           hid: 'twitter:description',
           name: 'twitter:description',
           content:
-            'DESCRIPTION HERE',
+            'API Key editor for Cloudflare DNS records',
         },
         {
           hid: 'twitter:image',
@@ -56,7 +56,6 @@ export default defineNuxtConfig({
       ],
       link: [
         { rel: 'icon', type: 'image', href: '/favicon.ico' },
-        // { rel: 'stylesheet', href: 'https://use.typekit.net/nyk3qjw.css' },
       ],
     },
     pageTransition: { name: 'fade', mode: 'out-in' },
@@ -64,9 +63,9 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
   runtimeConfig: {
     public: {
-      siteUrl: process.env.NUXT_PUBLIC_SITE_URL || 'https://test.brth.uk',
-      siteName: "Ben's Site",
-      siteDescription: "Welcome to Ben's Site!",
+      siteUrl: process.env.NUXT_PUBLIC_SITE_URL || 'https://dns.dualtone.io',
+      siteName: "DNS Manager",
+      siteDescription: "API Key editor for Cloudflare DNS records",
       language: 'en-GB'
     }
   },
@@ -75,7 +74,6 @@ export default defineNuxtConfig({
     '@nuxtjs/device',
     '@nuxtjs/robots',
     '@nuxtjs/google-fonts',
-    '@nuxtjs/plausible',
     '@nuxt/image',
     '@nuxt/content',
     'nuxt-icon'
