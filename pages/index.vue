@@ -2,17 +2,17 @@
   <div class="w-screen h-screen flex flex-col gap-2 justify-center items-center">
 
     <Head>
-      <Title>Dashboard</Title>
+      <Title>Zones</Title>
     </Head>
     <UButton @click="resetConfig()" color="red" class="absolute top-4 right-8">Logout</UButton>
     <h1 class="text-xl font-semibold">Zones</h1>
-    <div v-if="!loading">
-      <div v-if="zones.length > 0" @click="setZone(zone)" class="bg-gray-200 rounded-md px-8 py-2 group hover:bg-gray-300 cursor-pointer"
+    <div v-if="!loading" class="flex flex-row gap-4 flex-wrap justify-center items-center w-11/12 md:w-3/4 full:w-1/2">
+      <div v-if="zones.length > 0" @click="setZone(zone)" class="bg-stone-100 rounded-md px-8 py-2 hover:bg-stone-200 dark:bg-stone-700 dark:hover:bg-stone-800 cursor-pointer"
         v-for="zone in zones">
-        <p class="text-black">{{ zone.name }}</p>
+        <p>{{ zone.name }}</p>
       </div>
       <div v-else>
-        <p class="text-black">No zones found</p>
+        <p>No zones found</p>
       </div>
     </div>
     <div v-else>

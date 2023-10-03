@@ -112,6 +112,7 @@ export default {
     },
     methods: {
         async getDns() {
+            const toast = useToast()
             const response = await fetch('/api/records', {
             method: 'POST',
             body: JSON.stringify({
@@ -121,6 +122,18 @@ export default {
         })
         if (response.ok) {
             const data = await response.json();
+            if (data.success === false) {
+                toast.add({
+                        id: 'get-records-failed' + Date.now(),
+                        title: 'Failed to get records',
+                        description: data.errors[0].message,
+                        icon: 'i-clarity-warning-solid',
+                        timeout: 3000,
+                        color: 'red'
+                    })
+                this.$router.push('/')
+            }
+
             this.dnsRecords = data.result;
             this.loading = false;
         } else {
