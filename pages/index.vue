@@ -5,10 +5,13 @@
       <Title>Zones</Title>
     </Head>
     <UButton @click="resetConfig()" color="red" class="absolute top-4 right-8">Logout</UButton>
-    <h1 class="text-xl font-semibold">Zones</h1>
-    <div v-if="!loading" class="flex flex-row gap-4 flex-wrap justify-center items-center w-11/12 md:w-3/4 full:w-1/2">
+    <div class="flex gap-4 justify-center items-center my-2">
+      <h1 class="text-xl font-semibold">Zones</h1>
+      <UInput icon="i-heroicons-magnifying-glass-20-solid" v-model="searchQuery" type="text" placeholder="Search" ref="searchInput" size="md" color="white" class="w-full sm:w-auto" />
+    </div>
+    <div v-if="!loading" class="grid sm:grid-cols-2 lg:grid-cols-3 full:grid-cols-4 gap-4 flex-wrap justify-center items-center w-11/12 md:w-3/4 full:w-1/2">
       <div v-if="zones.length > 0" @click="setZone(zone)" class="bg-stone-100 rounded-md px-8 py-2 hover:bg-stone-200 dark:bg-stone-700 dark:hover:bg-stone-800 cursor-pointer"
-        v-for="zone in zones">
+        v-for="zone in filteredZones">
         <p>{{ zone.name }}</p>
       </div>
       <div v-else>
@@ -29,9 +32,17 @@ export default {
     return {
       apiKey: '',
       zones: [],
-      loading: true
+      loading: true,
+      searchQuery: '',
     }
   },
+  computed: {
+        filteredZones() {
+            return this.zones.filter((record) => {
+                return record.name.toLowerCase().includes(this.searchQuery.toLowerCase())
+            })
+        }
+    },
   mounted() {
     this.apiKey = localStorage.getItem('cf-api-key')
     if (!this.apiKey) {
@@ -60,6 +71,9 @@ export default {
       localStorage.removeItem('cf-dns-name');
       this.$router.push('/login')
     },
+    sort(field) {
+            this.dnsRecords.sort((a, b) => a[field].localeCompare(b[field]));
+        },
     async getZones() {
       const response = await fetch('/api/zones', {
         method: 'POST',

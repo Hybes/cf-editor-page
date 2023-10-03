@@ -9,8 +9,8 @@ export default defineNuxtConfig({
       meta: [
         { charset: 'utf-8' },
         { name: 'viewport', content: 'width=device-width, initial-scale=1, shrink-to-fit=no' },
-        { name: 'theme-color', content: '#ea9900' },
-        { name: 'msapplication-TileColor', content: '#ea9900' },
+        { name: 'theme-color', content: '#121212' },
+        { name: 'msapplication-TileColor', content: '#121212' },
         { name: 'apple-mobile-web-app-capable', content: 'yes' },
         {
           hid: 'keywords',
