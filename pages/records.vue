@@ -6,18 +6,17 @@
         <div class="w-full">
             <div class="flex flex-row flex-wrap justify-center items-center gap-2 md:justify-between px-4 py-4">
                 <div class="flex flex-row flex-wrap justify-center gap-2">
-                    <UButton @click="clearZone()" icon="i-clarity-undo-line" to="/">
+                    <UButton @click="clearZone()" variant="outline" icon="i-clarity-undo-line" to="/">
                         Back
                     </UButton>
-                    <UButton to="/create" color="green" icon="i-clarity-plus-circle-solid">
+                    <UButton to="/create" variant="outline" color="green" icon="i-clarity-plus-circle-solid">
                         Create
                     </UButton>
                 </div>
                 <div class="flex flex-row flex-wrap justify-center gap-2">
-                    <UInput icon="i-heroicons-magnifying-glass-20-solid" v-model="searchQuery" type="text" placeholder="Search" ref="searchInput" size="md" color="white" class="w-full sm:w-auto" />
-                    <UButton @click="sort('type')" icon="i-clarity-cloud-network-line">Sort Type</UButton>
-                    <UButton @click="sort('name')" icon="i-clarity-sort-by-line">Sort Name</UButton>
-                    <UButton @click="resetConfig()" color="red" >Logout</UButton>
+                    <UButton @click="sort('type')" variant="outline" color="white" icon="i-clarity-cloud-network-line">Sort Type</UButton>
+                    <UButton @click="sort('name')" variant="outline" color="white" icon="i-clarity-sort-by-line">Sort Name</UButton>
+                    <UButton @click="resetConfig()" variant="outline" color="red" >Logout</UButton>
                 </div>
             </div>
             <div class="w-screen h-screen flex justify-center items-center flex-col" v-if="loading">
@@ -31,6 +30,7 @@
             </div>
             <div v-else>
                 <h1 class="text-lg font-semibold text-center my-4">{{ currZoneName }}</h1>
+                <UInput icon="i-heroicons-magnifying-glass-20-solid" v-model="searchQuery" type="text" placeholder="Search" ref="searchInput" size="md" color="white" class="w-11/12 px-2 sm:w-1/3 mx-auto" />
                 <div v-if="columns === false">
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4">
                         <div @click="setDns(record)" class="bg-stone-200 hover:bg-stone-300 dark:bg-stone-800 dark:hover:bg-stone-900 cursor-pointer px-4 py-2 rounded overflow-hidden"
