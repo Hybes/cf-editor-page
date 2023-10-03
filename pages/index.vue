@@ -4,14 +4,21 @@
     <Head>
       <Title>Dashboard</Title>
     </Head>
-    <button @click="resetConfig()" class="absolute top-4 right-8">Reset</button>
+    <UButton @click="resetConfig()" class="absolute top-4 right-8">Reset</UButton>
     <h1 class="text-xl font-semibold">Zones</h1>
-    <div v-if="zones.length > 0" @click="setZone(zone)" class="bg-gray-200 rounded-md px-8 py-2 group hover:bg-gray-300 cursor-pointer"
-      v-for="zone in zones">
-      <p class="text-black">{{ zone.name }}</p>
+    <div v-if="!loading">
+      <div v-if="zones.length > 0" @click="setZone(zone)" class="bg-gray-200 rounded-md px-8 py-2 group hover:bg-gray-300 cursor-pointer"
+        v-for="zone in zones">
+        <p class="text-black">{{ zone.name }}</p>
+      </div>
+      <div v-else>
+        <p class="text-black">No zones found</p>
+      </div>
     </div>
     <div v-else>
-      <p class="text-black">No zones found</p>
+      <div>
+          <svg class="animate-spin w-12 h-12" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3a9 9 0 1 0 9 9"/></svg>
+        </div>
     </div>
   </div>
 </template>
@@ -21,7 +28,8 @@ export default {
   data() {
     return {
       apiKey: '',
-      zones: []
+      zones: [],
+      loading: true
     }
   },
   mounted() {
@@ -51,18 +59,19 @@ export default {
       this.$router.push('/login')
     },
     async getZones() {
-      const response = await fetch('https://api.cloudflare.com/client/v4/zones', {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${this.apiKey}`,
-          'Content-Type': 'application/json'
-        }
+      const response = await fetch('/api/zones', {
+        method: 'POST',
+        body: JSON.stringify({
+          apiKey: this.apiKey
+        }),
       })
       if (response.ok) {
         const data = await response.json();
         this.zones = data.result;
+        this.loading = false;
       } else {
         console.error('HTTP-Error: ' + response.status);
+        this.loading = false;
       }
     }
   }

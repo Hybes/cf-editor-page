@@ -10,6 +10,11 @@
     </div>
     <div v-else>
       <NuxtPage />
+      <UNotifications />
+      <div class="text-center">
+        <UButton @click="resetConfig()">Reset</UButton>
+        <p class="text-sm my-16 opacity-60 hover:opacity-80"><a href="https://github.com/dualtonecomms" target="_blank">Built by Dualtone</a></p>
+      </div>
     </div>
   </div>
 </template>
@@ -41,6 +46,12 @@ export default {
       const element = document.querySelector(id);
       element.scrollIntoView({ behavior: 'smooth' });
     },
+    resetConfig() {
+      localStorage.removeItem('cf-api-key');
+      localStorage.removeItem('cf-zone-id');
+      localStorage.removeItem('cf-zone-name');
+      this.$router.push('/login')
+    }
   },
 }
 </script>

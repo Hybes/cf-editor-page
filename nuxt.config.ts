@@ -76,11 +76,18 @@ export default defineNuxtConfig({
     '@nuxtjs/google-fonts',
     '@nuxt/image',
     '@nuxt/content',
+    '@nuxt/ui',
     'nuxt-icon'
   ],
   extends: [
     'nuxt-seo-kit'
   ],
+  ui: {
+    global: true,
+    icons: [
+      'clarity'
+    ]
+  },
   robots: {
     rules: {
       UserAgent: '*',
