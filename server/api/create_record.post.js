@@ -1,7 +1,6 @@
 import fetch from 'node-fetch'
 export default defineEventHandler(async (event) => {
     const body = await readBody(event)
-    console.log(body)
     const response = await fetch(`https://api.cloudflare.com/client/v4/zones/${body.currZone}/dns_records/`, {
         method: 'POST',
         headers: {
@@ -18,6 +17,5 @@ export default defineEventHandler(async (event) => {
         })
     })
     const data = await response.json()
-    console.log(data)
     return data
 })
