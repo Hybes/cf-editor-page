@@ -55,7 +55,7 @@ export default defineNuxtConfig({
         { hid: 'twitter:card', name: 'twitter:card', content: 'summary_large_image' },
       ],
       link: [
-        { rel: 'icon', type: 'image', href: '/favicon.ico' },
+        { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' },
       ],
     },
     pageTransition: { name: 'fade', mode: 'out-in' },

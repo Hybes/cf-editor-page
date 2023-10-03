@@ -11,9 +11,9 @@
     <div v-else>
       <NuxtPage />
       <UNotifications />
-      <div class="text-center">
-        <UButton @click="resetConfig()">Reset</UButton>
-        <p class="text-sm my-16 opacity-60 hover:opacity-80"><a href="https://github.com/dualtonecomms" target="_blank">Built by Dualtone</a></p>
+      <div class="text-center mt-8 mb-14">
+        <UButton class="my-2" color="red" @click="resetConfig()">Logout</UButton>
+        <p class="text-sm my-2 opacity-60 hover:opacity-80"><a href="https://github.com/dualtonecomms" target="_blank">Built by Dualtone</a></p>
       </div>
     </div>
   </div>
@@ -50,6 +50,8 @@ export default {
       localStorage.removeItem('cf-api-key');
       localStorage.removeItem('cf-zone-id');
       localStorage.removeItem('cf-zone-name');
+      localStorage.removeItem('cf-dns-id');
+      localStorage.removeItem('cf-dns-name');
       this.$router.push('/login')
     }
   },

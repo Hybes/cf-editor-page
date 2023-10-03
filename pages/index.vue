@@ -4,7 +4,7 @@
     <Head>
       <Title>Dashboard</Title>
     </Head>
-    <UButton @click="resetConfig()" class="absolute top-4 right-8">Reset</UButton>
+    <UButton @click="resetConfig()" color="red" class="absolute top-4 right-8">Logout</UButton>
     <h1 class="text-xl font-semibold">Zones</h1>
     <div v-if="!loading">
       <div v-if="zones.length > 0" @click="setZone(zone)" class="bg-gray-200 rounded-md px-8 py-2 group hover:bg-gray-300 cursor-pointer"
@@ -56,6 +56,8 @@ export default {
       localStorage.removeItem('cf-api-key');
       localStorage.removeItem('cf-zone-id');
       localStorage.removeItem('cf-zone-name');
+      localStorage.removeItem('cf-dns-id');
+      localStorage.removeItem('cf-dns-name');
       this.$router.push('/login')
     },
     async getZones() {

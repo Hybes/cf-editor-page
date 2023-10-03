@@ -2,7 +2,7 @@
     <div>
 
         <Head>
-            <Title>Editor</Title>
+            <Title>New</Title>
         </Head>
         <div class="w-full">
             <UButton @click="clearDns()" class="absolute top-4 left-8" icon="i-clarity-undo-line" to="/records">
@@ -20,7 +20,7 @@
             <div v-else class="flex flex-col items-center">
                 <h1 class="text-lg font-semibold text-center mt-6 mb-2">{{ dns.name }}</h1>
                 <div class="flex flex-col text-center rounded justify-center gap-4 p-4 m-4  w-full md:w-3/4 full:w-1/2">
-                    <h2 class="text-lg font-semibold mb-4">Edit DNS Record</h2>
+                    <h2 class="text-lg font-semibold mb-4">Create DNS Record</h2>
                     <div class="flex justify-between items-center mb-2">
                         <label for="name" class="w-24 mr-2">Name:</label>
                         <input id="name" type="text" v-model="dns.name" placeholder="Name (Required)" class="p-2 rounded border border-gray-300 flex-grow">
@@ -43,7 +43,7 @@
                         <label for="ttl" class="w-24 mr-2">TTL:</label>
                         <input id="ttl" type="text" v-model="dns.ttl" placeholder="TTL (Leave blank or set to 1 for auto TTL)" class="p-2 rounded border border-gray-300 flex-grow">
                     </div>
-                    <div class="flex justify-start items-center mb-2" v-if="dns.proxiable === true">
+                    <div class="flex justify-start items-center mb-2" v-if="dns.type === 'A' || dns.type === 'CNAME'">
                         <label for="proxied" class="w-24 mr-2">Proxied:</label>
                         <input id="proxied" type="checkbox" v-model="dns.proxied" class="p-2 rounded border border-gray-300">
                     </div>
@@ -51,7 +51,7 @@
                         <label for="comment" class="w-24 mr-2">Comment:</label>
                         <input id="comment" type="text" v-model="dns.comment" placeholder="Comment" class="p-2 rounded border border-gray-300 flex-grow">
                     </div>
-                    <button class="bg-blue-500 text-white px-2 py-1 rounded mt-4" :disabled="saving === 'progress'" :class="{ 'bg-opacity-50 cursor-not-allowed' : saving === 'progress' }" @click="saveDns" type="button">Save</button>
+                    <button class="bg-green-500 text-white px-2 py-1 rounded mt-4" :disabled="saving === 'progress'" :class="{ 'bg-opacity-50 cursor-not-allowed' : saving === 'progress' }" @click="createDns" type="button">Create</button>
                 </div>
             </div>
         </div>
@@ -64,8 +64,6 @@ export default {
         return {
             apiKey: '',
             currZone: '',
-            currDns: '',
-            currDnsName: '',
             dns: [],
             loading: true,
             saving: '',
@@ -77,42 +75,21 @@ export default {
         if (!this.apiKey) {
             this.$router.push('/login')
         }
-        if (localStorage.getItem('cf-dns-id') && localStorage.getItem('cf-zone-id')) {
+        if (localStorage.getItem('cf-zone-id')) {
             this.currZone = localStorage.getItem('cf-zone-id')
-            this.currDns = localStorage.getItem('cf-dns-id')
-            this.currDnsName = localStorage.getItem('cf-dns-name')
-            this.getDns()
+            this.loading = false
         } else {
             this.$router.push('/')
         }
     },
     methods: {
-        async getDns() {
-            const response = await fetch('/api/dns_record', {
-                method: 'POST',
-                body: JSON.stringify({
-                    apiKey: this.apiKey,
-                    currZone: this.currZone,
-                    currDnsRecord: this.currDns
-                }),
-            })
-            if (response.ok) {
-                const data = await response.json();
-                this.dns = data.result;
-                this.loading = false;
-            } else {
-                console.error('HTTP-Error: ' + response.status);
-                this.loading = false;
-            }
-        },
-        async saveDns() {
+        async createDns() {
             this.saving = 'progress';
-            const response = await fetch('/api/update_record', {
+            const response = await fetch('/api/create_record', {
                 method: 'POST',
                 body: JSON.stringify({
                     apiKey: this.apiKey,
                     currZone: this.currZone,
-                    currDnsRecord: this.currDns,
                     dns: this.dns
                 }),
             })
@@ -123,8 +100,8 @@ export default {
                     this.saving = 'success';
                     toast.add({
                         id: 'update-record-success' + Date.now(),
-                        title: 'Update success',
-                        description: 'Record updated successfully',
+                        title: 'Create success',
+                        description: 'Record created successfully',
                         icon: 'i-clarity-check-circle-solid',
                         timeout: 3000,
                         color: 'green'
@@ -137,7 +114,7 @@ export default {
                     console.error(data.errors[0].message)
                     toast.add({
                         id: 'update-record-error' + Date.now(),
-                        title: 'Update failed',
+                        title: 'Create failed',
                         description: data.errors[0].message,
                         icon: 'i-clarity-warning-solid',
                         timeout: 3000,
