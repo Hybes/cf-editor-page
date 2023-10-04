@@ -23,7 +23,7 @@
                     <h2 class="text-lg font-semibold mb-4">Create DNS Record</h2>
                     <div class="flex justify-between items-center mb-2">
                         <label for="name" class="w-24 mr-2">Name:</label>
-                        <input id="name" type="text" v-model="dns.name" placeholder="Name (Required)" class="p-2 rounded border border-gray-300 flex-grow">
+                        <input @keydown.enter="createDns()" id="name" type="text" v-model="dns.name" placeholder="Name (Required)" class="p-2 rounded border border-gray-300 flex-grow">
                     </div>
                     <div class="flex justify-between items-center mb-2">
                         <label for="type-select" class="w-24 mr-2">Type:</label>
@@ -36,23 +36,23 @@
                     </div>
                     <div class="flex justify-between items-center mb-2">
                         <label @click="toggleEndpoint = !toggleEndpoint" for="endpoint" class="w-24 mr-2 cursor-pointer">Endpoint:</label>
-                        <input  v-if="!toggleEndpoint" id="endpoint" type="text" v-model="dns.content" placeholder="Endpoint" class="p-2 rounded border border-gray-300 flex-grow">
-                        <textarea v-else id="endpoint" v-model="dns.content" placeholder="Endpoint" class="p-2 rounded border border-gray-300 flex-grow"></textarea>
+                        <input @keydown.enter="createDns()"  v-if="!toggleEndpoint" id="endpoint" type="text" v-model="dns.content" placeholder="Endpoint" class="p-2 rounded border border-gray-300 flex-grow">
+                        <textarea @keydown.enter="createDns()" v-else id="endpoint" v-model="dns.content" placeholder="Endpoint" class="p-2 rounded border border-gray-300 flex-grow"></textarea>
                     </div>
                     <div class="flex justify-between items-center mb-2">
                         <label for="ttl" class="w-24 mr-2">TTL:</label>
-                        <input id="ttl" type="text" v-model="dns.ttl" placeholder="TTL (Leave blank or set to 1 for auto TTL)" class="p-2 rounded border border-gray-300 flex-grow">
+                        <input @keydown.enter="createDns()" id="ttl" type="text" v-model="dns.ttl" placeholder="TTL (Leave blank or set to 1 for auto TTL)" class="p-2 rounded border border-gray-300 flex-grow">
                     </div>
                     <div class="flex justify-start items-center mb-2" v-if="dns.type === 'A' || dns.type === 'CNAME'">
                         <label for="proxied" class="w-24 mr-2">Proxied:</label>
-                        <input id="proxied" type="checkbox" v-model="dns.proxied" class="p-2 rounded border border-gray-300">
+                        <input @keydown.enter="createDns()" id="proxied" type="checkbox" v-model="dns.proxied" class="p-2 rounded border border-gray-300">
                     </div>
                     <div class="flex justify-between items-center mb-2">
                         <label for="comment" class="w-24 mr-2">Comment:</label>
-                        <input id="comment" type="text" v-model="dns.comment" placeholder="Comment" class="p-2 rounded border border-gray-300 flex-grow">
+                        <input @keydown.enter="createDns()" id="comment" type="text" v-model="dns.comment" placeholder="Comment" class="p-2 rounded border border-gray-300 flex-grow">
                     </div>
                     <div>
-                        <UButton class="mt-4 px-6" color="green" variant="outline" :disabled="saving === 'progress'" :class="{ 'bg-opacity-50 cursor-not-allowed' : saving === 'progress' }" @click="createDns" type="button">Create</UButton>
+                        <UButton class="mt-4 px-6" color="green" variant="outline" :disabled="saving === 'progress'" :class="{ 'bg-opacity-50 cursor-not-allowed' : saving === 'progress' }" @click="createDns()" type="button">Create</UButton>
                     </div>
                 </div>
             </div>
@@ -69,10 +69,10 @@ export default {
             dns:
             {
                 name: '',
-                type: 'A',
+                type: 'CNAME',
                 content: '',
                 ttl: '',
-                proxied: false,
+                proxied: true,
                 comment: ''
             },
             loading: true,
@@ -116,9 +116,7 @@ export default {
                         timeout: 3000,
                         color: 'green'
                     })
-                    setTimeout(() => {
-                        this.saving = '';
-                    }, 3000);
+                    this.$router.push('/records')
                 } else {
                     this.saving = 'error';
                     console.error(data.errors[0].message)
