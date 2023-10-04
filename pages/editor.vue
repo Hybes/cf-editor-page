@@ -45,8 +45,9 @@
                         <label for="comment" class="w-24 mr-2">Comment:</label>
                         <input id="comment" type="text" v-model="dns.comment" placeholder="Comment" class="p-2 rounded border border-gray-300 flex-grow">
                     </div>
-                    <div>
+                    <div class="flex gap-2 justify-center">
                         <UButton class="mt-4 px-6" color="green" variant="outline" :disabled="saving === 'progress'" :class="{ 'bg-opacity-50 cursor-not-allowed' : saving === 'progress' }" @click="saveDns" type="button">Save</UButton>
+                        <UButton class="mt-4 px-6" color="red" variant="outline"  @click="preDel(dns)" type="button">Delete</UButton>
                     </div>
                 </div>
             </div>
@@ -151,6 +152,61 @@ export default {
                 }, 3000);
 
             }
+        },
+        async delDns(record) {
+            const toast = useToast()
+            const response = await fetch('/api/delete_record', {
+                method: 'POST',
+                body: JSON.stringify({
+                    apiKey: this.apiKey,
+                    currZone: this.currZone,
+                    currDnsRecord: record.id
+                }),
+            })
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success) {
+                    this.$router.push('/records')
+                    toast.add({
+                        id: 'delete-record-success' + Date.now(),
+                        title: 'Delete success',
+                        description: 'Record deleted successfully',
+                        icon: 'i-clarity-check-circle-solid',
+                        timeout: 3000,
+                        color: 'green'
+                    })
+                }
+            } else {
+                console.error('HTTP-Error: ' + response.status);
+            }
+        },
+        preDel(record) {
+            const toast = useToast()
+            toast.add({
+                id: 'delete-record' + Date.now(),
+                title: 'Delete record',
+                description: 'Are you sure you want to delete this record?',
+                icon: 'i-clarity-warning-solid',
+                timeout: 3000,
+                color: 'red',
+                actions: [
+                    {
+                        label: 'Delete',
+                        color: 'red',
+                        click: () => {
+                            this.delDns(record)
+                            toast.remove('delete-record' + Date.now())
+                        }
+                    },
+                    {
+                        label: 'Cancel',
+                        color: 'white',
+                        click: () => {
+                            toast.remove('delete-record' + Date.now())
+                        }
+                    }
+                ]
+            })
         },
         clearDns() {
             localStorage.removeItem('cf-dns-id')

@@ -45,17 +45,22 @@
                 </div>
                 <div v-if="columns === true || columns === null">
                     <div class="flex flex-col flex-wrap justify-center gap-4 p-4 w-full overflow-clip">
-                        <div @click="setDns(record)" class="flex md:flex-row flex-col cursor-pointer px-4 py-2 overflow-hidden gap-6 w-full bg-stone-200 hover:bg-stone-300 dark:bg-stone-700 dark:hover:bg-stone-800 rounded"
+                        <div class="flex md:flex-row flex-col cursor-pointer px-4 py-2 overflow-hidden gap-6 w-full bg-stone-200 hover:bg-stone-300 dark:bg-stone-700 dark:hover:bg-stone-800 rounded"
                             v-for="record in filteredRecords">
-                            <div class="px-2 py-1 w-24 text-center">
-                                <p class="font-bold">{{ record.type }}</p>
+                            <div class="flex gap-6 w-[calc(100%-3.8rem)]" @click="setDns(record)">
+                                <div class="px-2 py-1 min-w-[6rem] text-center">
+                                    <p class="font-bold">{{ record.type }}</p>
+                                </div>
+                                <div class="border-l-2 pl-8 border-stone-600 dark:border-stone-400 px-2 py-1 text-center">
+                                    <p>{{ record.name }}</p>
+                                </div>
+                                <div class="border-l-2 pl-8 border-stone-600 dark:border-stone-400 px-2 py-1 text-center overflow-hidden max-w-[600px]">
+                                    <p class="truncate">{{ record.content }}</p>
+                                </div>
                             </div>
-                            <div class="border-l-2 pl-8 border-stone-600 dark:border-stone-400 px-2 py-1 text-center">
-                                <p>{{ record.name }}</p>
-                            </div>
-                            <div class="border-l-2 pl-8 border-stone-600 dark:border-stone-400 px-2 py-1 text-center overflow-hidden max-w-[600px]">
-                                <p class="truncate">{{ record.content }}</p>
-                            </div>
+                            <UButton color="red" variant="outline" class="justify-self-end" @click="preDel(record)">
+                                <UIcon name="i-clarity-trash-solid" />
+                            </UButton>
                         </div>
                     </div>
                 </div>
@@ -145,12 +150,9 @@ export default {
             }
 
             this.dnsRecords = data.result;
-            console.log(this.dnsRecords)
-            this.loading = false;
-        } else {
-            console.error('HTTP-Error: ' + response.status);
-            this.loading = false;
-        }
+            } else {
+                console.error('HTTP-Error: ' + response.status);
+            }
         },
         async getZone() {
             const response = await fetch('/api/zone', {
@@ -168,6 +170,59 @@ export default {
                 console.error('HTTP-Error: ' + response.status);
                 this.loading = false;
             }
+        },
+        async delDns(record) {
+            const toast = useToast()
+            const response = await fetch('/api/delete_record', {
+                method: 'POST',
+                body: JSON.stringify({
+                    apiKey: this.apiKey,
+                    currZone: this.currZone,
+                    currDnsRecord: record.id
+                }),
+            })
+            if (response.ok) {
+                const data = await response.json();
+                toast.add({
+                        id: 'delete-record-success' + Date.now(),
+                        title: 'Delete success',
+                        description: 'Record deleted successfully',
+                        icon: 'i-clarity-check-circle-solid',
+                        timeout: 3000,
+                        color: 'green'
+                    })
+                this.getDns()
+            } else {
+                console.error('HTTP-Error: ' + response.status);
+            }
+        },
+        preDel(record) {
+            const toast = useToast()
+            toast.add({
+                id: 'delete-record' + Date.now(),
+                title: 'Delete record',
+                description: 'Are you sure you want to delete this record?',
+                icon: 'i-clarity-warning-solid',
+                timeout: 3000,
+                color: 'red',
+                actions: [
+                    {
+                        label: 'Delete',
+                        color: 'red',
+                        click: () => {
+                            this.delDns(record)
+                            toast.remove('delete-record' + Date.now())
+                        }
+                    },
+                    {
+                        label: 'Cancel',
+                        color: 'white',
+                        click: () => {
+                            toast.remove('delete-record' + Date.now())
+                        }
+                    }
+                ]
+            })
         },
         sort(field) {
             this.dnsRecords.sort((a, b) => a[field].localeCompare(b[field]));
