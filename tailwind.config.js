@@ -11,9 +11,6 @@ module.exports = {
   ],
   theme: {
     extend: {
-      backgroundImage: {
-        noise: "url('http://assets.iceable.com/img/noise-transparent.png')",
-      },
       colors: {
         comet: {
           50: '#f7f7f8',
