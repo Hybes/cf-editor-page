@@ -15,7 +15,7 @@ export default defineNuxtConfig({
         {
           hid: 'keywords',
           name: 'keywords',
-          content: 'tags, go, here',
+          content: 'cloudflare editor, cloudflare api, cloudflare api editor, dns api, cloudflare edit dns, cloudflare api dns edit',
         },
         {
           hid: 'description',
@@ -35,7 +35,7 @@ export default defineNuxtConfig({
             'API Key editor for Cloudflare DNS records',
         },
         { hid: 'og:image', name: 'og:image', content: 'og-image.png' },
-        { hid: 'og:url', name: 'og:url', content: 'https://dns.dualtone.io' },
+        { hid: 'og:url', name: 'og:url', content: 'https://dns.brth.uk' },
         {
           hid: 'twitter:title',
           name: 'twitter:title',
@@ -63,7 +63,7 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
   runtimeConfig: {
     public: {
-      siteUrl: process.env.NUXT_PUBLIC_SITE_URL || 'https://dns.dualtone.io',
+      siteUrl: process.env.NUXT_PUBLIC_SITE_URL || 'https://dns.brth.uk',
       siteName: "DNS Manager",
       siteDescription: "API Key editor for Cloudflare DNS records",
       language: 'en-GB'
@@ -77,6 +77,7 @@ export default defineNuxtConfig({
     '@nuxt/image',
     '@nuxt/content',
     '@nuxt/ui',
+    '@nuxtjs/plausible'
     'nuxt-icon'
   ],
   extends: [
@@ -93,6 +94,9 @@ export default defineNuxtConfig({
       UserAgent: '*',
       Disallow: ''
     }
+  },
+  plausible: {
+    apiHost: 'https://dns.brth.uk/',
   },
   css: ['~/assets/css/main.css'],
   postcss: {
