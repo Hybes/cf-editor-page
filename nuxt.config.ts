@@ -96,7 +96,7 @@ export default defineNuxtConfig({
     }
   },
   plausible: {
-    apiHost: 'https://dns.brth.uk/',
+    apiHost: 'https://views.cnnct.uk',
   },
   css: ['~/assets/css/main.css'],
   postcss: {
