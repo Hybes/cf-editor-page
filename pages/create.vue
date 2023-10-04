@@ -5,7 +5,7 @@
             <Title>New</Title>
         </Head>
         <div class="w-full">
-            <UButton @click="clearDns()" class="absolute top-4 left-8" icon="i-clarity-undo-line" to="/records">
+            <UButton @click="clearDns()" class="absolute top-4 left-8" variant="outline" icon="i-clarity-undo-line" to="/records">
                 Back
             </UButton>
             <div class="w-screen h-screen flex justify-center items-center flex-col" v-if="loading">
@@ -19,7 +19,7 @@
             </div>
             <div v-else class="flex flex-col items-center">
                 <h1 class="text-lg font-semibold text-center mt-6 mb-2">{{ dns.name }}</h1>
-                <div class="flex flex-col text-center rounded justify-center gap-4 p-4 m-4  w-full md:w-3/4 full:w-1/2">
+                <div class="flex flex-col text-center rounded justify-center gap-4 p-4 m-4 w-full md:w-3/4 full:w-1/2">
                     <h2 class="text-lg font-semibold mb-4">Create DNS Record</h2>
                     <div class="flex justify-between items-center mb-2">
                         <label for="name" class="w-24 mr-2">Name:</label>
@@ -51,7 +51,9 @@
                         <label for="comment" class="w-24 mr-2">Comment:</label>
                         <input id="comment" type="text" v-model="dns.comment" placeholder="Comment" class="p-2 rounded border border-gray-300 flex-grow">
                     </div>
-                    <button class="bg-green-500 text-white px-2 py-1 rounded mt-4" :disabled="saving === 'progress'" :class="{ 'bg-opacity-50 cursor-not-allowed' : saving === 'progress' }" @click="createDns" type="button">Create</button>
+                    <div>
+                        <UButton class="mt-4 px-6" color="green" variant="outline" :disabled="saving === 'progress'" :class="{ 'bg-opacity-50 cursor-not-allowed' : saving === 'progress' }" @click="createDns" type="button">Create</UButton>
+                    </div>
                 </div>
             </div>
         </div>

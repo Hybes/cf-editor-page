@@ -12,7 +12,7 @@
       <NuxtPage />
       <UNotifications />
       <div class="text-center mt-8 mb-14">
-        <UButton class="my-2" color="red" @click="resetConfig()">Logout</UButton>
+        <UButton class="my-2" color="red" variant="outline" @click="resetConfig()">Logout</UButton>
         <p class="text-sm my-2 opacity-60 hover:opacity-80"><a href="https://github.com/dualtonecomms" target="_blank">Built by Dualtone</a></p>
       </div>
     </div>
