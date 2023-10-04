@@ -6,10 +6,10 @@ Useful for creating a managed customer access to their domain, should they need 
 ## Useful Information
 
 I used Nuxt 3's server structure to have the requests be run from the backend, in order to avoid CORS and other issues when sending traffic between sites.
-With the code being open-source you can see where the requests go, but would recommend you self-host it anyway. [Demo](https://dns.dualtone.io)
+With the code being open-source you can see where the requests go, but would recommend you self-host it anyway. [Demo](https://dns.brth.uk)
 The site uses local storage to keep majority of the information in the browser, this may not be everyones preffered method, but it works.
 
-The project uses Nuxt UI, so to quickly and easily adjust the theming, use [app.config.js](https://github.com/dualtone-ben/cf-editor-page/blob/main/app.config.js) and [tailwind.config.js](https://github.com/dualtone-ben/cf-editor-page/blob/main/tailwind.config.js)
+The project uses Nuxt UI, so to quickly and easily adjust the theming, use [app.config.js](https://github.com/Hybes/cf-editor-page/blob/main/app.config.js) and [tailwind.config.js](https://github.com/Hybes/cf-editor-page/blob/main/tailwind.config.js)
 
 ## Setup
 

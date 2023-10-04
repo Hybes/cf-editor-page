@@ -77,7 +77,7 @@ export default defineNuxtConfig({
     '@nuxt/image',
     '@nuxt/content',
     '@nuxt/ui',
-    '@nuxtjs/plausible'
+    '@nuxtjs/plausible',
     'nuxt-icon'
   ],
   extends: [
