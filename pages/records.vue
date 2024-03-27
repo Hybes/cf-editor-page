@@ -107,8 +107,11 @@
                 <div class="min-w-[8rem] overflow-hidden rounded-md bg-stone-950/40 px-2 py-1">
                   <p class="truncate text-center font-bold">{{ record.type }}</p>
                 </div>
-                <div class="min-w-[16rem] overflow-hidden px-2 py-1">
+                <div class="flex min-w-[16rem] items-center gap-2 overflow-hidden px-2 py-1">
                   <p class="truncate">{{ record.name }}</p>
+                  <UTooltip v-if="record.proxied === true" text="Record is Proxied">
+                    <UIcon name="i-clarity-circle-solid" class="text-orange-400" />
+                  </UTooltip>
                 </div>
                 <div class="max-w-[600px] overflow-hidden px-2 py-1">
                   <p class="truncate">{{ record.content }}</p>
