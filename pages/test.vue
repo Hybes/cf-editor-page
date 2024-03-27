@@ -1,126 +1,6 @@
 <template>
-	<div>
-		<Head>
-			<Title>Editor</Title>
-		</Head>
-		<div class="w-full">
-			<UButton
-				@click="clearDns()"
-				class="absolute left-8 top-4"
-				variant="outline"
-				icon="i-clarity-undo-line"
-				to="/records"
-			>
-				Back
-			</UButton>
-			<div class="flex h-screen w-screen flex-col items-center justify-center" v-if="loading">
-				<Loader />
-			</div>
-			<div v-else class="flex flex-col items-center">
-				<h1 class="mb-2 mt-6 text-center text-lg font-semibold">{{ dns.name }}</h1>
-				<div class="m-4 flex w-full flex-col justify-center gap-4 rounded p-4 text-center md:w-3/4 full:w-1/2">
-					<h2 class="mb-4 text-lg font-semibold">Edit DNS Record</h2>
-					<div class="mb-2 flex items-center justify-between">
-						<label for="name" class="mr-2 w-24">Name:</label>
-						<input
-							id="name"
-							type="text"
-							v-model="dns.name"
-							placeholder="Name (Required)"
-							class="flex-grow rounded border border-gray-300 p-2"
-						/>
-					</div>
-					<div class="mb-2 flex items-center justify-between">
-						<label for="type-select" class="mr-2 w-24">Type:</label>
-						<select
-							id="type-select"
-							v-model="dns.type"
-							class="type-select flex-grow rounded border border-gray-300 p-2"
-						>
-							<option value="A">A</option>
-							<option value="CNAME">CNAME</option>
-							<option value="MX">MX</option>
-							<option value="TXT">TXT</option>
-							<option value="SRV">SRV</option>
-						</select>
-					</div>
-					<div class="mb-2 flex items-center justify-between">
-						<label @click="toggleEndpoint = !toggleEndpoint" for="endpoint" class="mr-2 w-24 cursor-pointer"
-							>Endpoint:</label
-						>
-						<input
-							v-if="!toggleEndpoint"
-							id="endpoint"
-							type="text"
-							v-model="dns.content"
-							placeholder="Endpoint"
-							class="flex-grow rounded border border-gray-300 p-2"
-						/>
-						<textarea
-							v-else
-							id="endpoint"
-							v-model="dns.content"
-							placeholder="Endpoint"
-							class="flex-grow rounded border border-gray-300 p-2"
-						></textarea>
-					</div>
-					<div class="mb-2 flex items-center justify-between">
-						<label for="ttl" class="mr-2 w-24">TTL:</label>
-						<input
-							id="ttl"
-							type="text"
-							v-model="dns.ttl"
-							placeholder="TTL (Leave blank or set to 1 for auto TTL)"
-							class="flex-grow rounded border border-gray-300 p-2"
-						/>
-					</div>
-					<div class="mb-2 flex items-center justify-start" v-if="dns.proxiable === true">
-						<label for="proxied" class="mr-2 w-24">Proxied:</label>
-						<input
-							id="proxied"
-							type="checkbox"
-							v-model="dns.proxied"
-							class="rounded border border-gray-300 p-2"
-						/>
-					</div>
-					<div class="mb-2 flex items-center justify-between" v-if="dns.type === 'MX' || 'SRV'">
-						<label for="priority" class="mr-2 w-24">Priority:</label>
-						<input
-							id="priority"
-							type="text"
-							v-model="dns.priority"
-							placeholder="Priority"
-							class="flex-grow rounded border border-gray-300 p-2"
-						/>
-					</div>
-					<div class="mb-2 flex items-center justify-between">
-						<label for="comment" class="mr-2 w-24">Comment:</label>
-						<input
-							id="comment"
-							type="text"
-							v-model="dns.comment"
-							placeholder="Comment"
-							class="flex-grow rounded border border-gray-300 p-2"
-						/>
-					</div>
-					<div class="flex justify-center gap-2">
-						<UButton
-							class="mt-4 px-6"
-							color="green"
-							variant="outline"
-							:disabled="saving === 'progress'"
-							:class="{ 'cursor-not-allowed bg-opacity-50': saving === 'progress' }"
-							@click="saveDns"
-							type="button"
-							>Save</UButton
-						>
-						<UButton class="mt-4 px-6" color="red" variant="outline" @click="preDel(dns)" type="button"
-							>Delete</UButton
-						>
-					</div>
-				</div>
-			</div>
-		</div>
+	<div class="flex flex-col items-center justify-center gap-2">
+		<RecordsCNAME />
 	</div>
 </template>
 
@@ -134,8 +14,7 @@ export default {
 			currDnsName: '',
 			dns: {},
 			loading: true,
-			saving: '',
-			toggleEndpoint: false,
+			saving: false,
 		};
 	},
 	mounted() {
