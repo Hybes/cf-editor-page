@@ -2,12 +2,12 @@
 module.exports = {
   plugins: [require('@tailwindcss/forms')],
   content: [
-    "./components/**/*.{js,vue,ts}",
-    "./layouts/**/*.vue",
-    "./pages/**/*.vue",
-    "./plugins/**/*.{js,ts}",
-    "./nuxt.config.{js,ts}",
-    "./app.vue",
+    './components/**/*.{js,vue,ts}',
+    './layouts/**/*.vue',
+    './pages/**/*.vue',
+    './plugins/**/*.{js,ts}',
+    './nuxt.config.{js,ts}',
+    './app.vue',
   ],
   theme: {
     extend: {
@@ -30,10 +30,10 @@ module.exports = {
         accent: '#bbed50',
       },
       screens: {
+        xs: '375px',
         full: '2160px',
       },
     },
   },
   plugins: [],
-}
-
+};
