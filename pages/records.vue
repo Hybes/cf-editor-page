@@ -16,20 +16,6 @@
           </UButton>
         </div>
         <div class="flex flex-row flex-wrap justify-center gap-2">
-          <UButton
-            @click="sort('type')"
-            variant="outline"
-            color="white"
-            icon="i-clarity-cloud-network-line"
-            >Sort Type</UButton
-          >
-          <UButton
-            @click="sort('name')"
-            variant="outline"
-            color="white"
-            icon="i-clarity-sort-by-line"
-            >Sort Name</UButton
-          >
           <UButton @click="resetConfig()" variant="outline" color="red">Logout</UButton>
         </div>
       </div>
@@ -37,9 +23,14 @@
         <Loader />
       </div>
       <div v-else>
-        <h1 class="my-4 text-center text-lg font-semibold">{{ currZoneName }}</h1>
         <div class="flex w-full flex-col justify-center gap-2 px-6 pb-4">
-          <div class="flex flex-wrap items-center justify-center gap-4">
+          <NuxtLink
+            :to="'http://' + currZoneName"
+            external
+            class="my-4 text-center text-xl font-semibold hover:underline"
+            >{{ currZoneName }}</NuxtLink
+          >
+          <div class="flex translate-x-[12px] flex-wrap items-center justify-center gap-4">
             <div
               class="group flex cursor-pointer items-center gap-2"
               v-for="ns in zone.name_servers"
@@ -58,282 +49,320 @@
           ref="searchInput"
           size="md"
           color="white"
-          class="mx-auto w-11/12 px-2 sm:w-1/3"
+          class="mx-auto mb-6 w-11/12 px-2 sm:w-1/3"
         />
-        <div v-if="columns === false">
-          <div
-            :class="{
-              'xs:grid-cols-1': dnsRecords.length < 2,
-              'xs:grid-cols-2': dnsRecords.length > 1,
-            }"
-            class="grid gap-4 p-4"
-          >
-            <div
-              @click="setDns(record)"
-              class="cursor-pointer overflow-hidden rounded bg-stone-800 px-4 py-2 hover:bg-stone-900"
-              v-for="record in dnsRecords"
-            >
-              <div class="flex items-center gap-2 border-b border-stone-600 pb-1 font-semibold">
-                <p>
-                  {{ record.type }}
-                </p>
-                <UTooltip v-if="record.proxied === true" text="Record is Proxied">
-                  <UIcon name="i-clarity-circle-solid" class="text-orange-400" />
-                </UTooltip>
-              </div>
-              <p class="truncate pt-1 text-stone-300">{{ record.name }}</p>
-              <p class="truncate text-stone-500">{{ record.content }}</p>
-            </div>
-          </div>
+        <div class="flex justify-between border-t border-gray-200 px-8 py-3.5 dark:border-gray-700">
+          <USelectMenu
+            v-model="selectedStatus"
+            :options="dnsTypes"
+            multiple
+            placeholder="Type"
+            class="w-40"
+          />
+          <UPagination v-model="page" :page-count="pageCount" :total="filteredRecords.length" />
         </div>
-        <div v-if="columns === true || columns === null">
-          <div class="flex w-full flex-col flex-wrap justify-center gap-3 overflow-clip p-4">
-            <div class="ml-4 flex w-[calc(100%-3.8rem)] gap-8">
-              <div class="min-w-[8rem] overflow-hidden px-2 py-1">
-                <p class="truncate font-bold">Type</p>
-              </div>
-              <div class="min-w-[16rem] overflow-hidden px-2 py-1">
-                <p class="truncate">Name</p>
-              </div>
-              <div class="max-w-[600px] overflow-hidden px-2 py-1">
-                <p class="truncate">Content</p>
-              </div>
+        <UTable
+          :rows="rows"
+          :columns="headers"
+          :ui="{
+            tr: {
+              base: 'even:bg-stone-950/50 odd:bg-stone-900/50',
+            },
+
+            td: {
+              color: 'text-stone-300 dark:text-stone-200',
+            },
+          }"
+          class="px-8"
+        >
+          <template #name-data="{ row, column }">
+            <div class="flex max-w-[200px] items-center gap-2 overflow-hidden">
+              <p class="truncate">
+                {{
+                  row[column.key] === currZoneName || !row[column.key].endsWith(currZoneName)
+                    ? row[column.key]
+                    : row[column.key].slice(0, -currZoneName.length - 1)
+                }}
+              </p>
             </div>
+          </template>
+          <template #content-data="{ row, column }">
             <div
-              class="flex w-full cursor-pointer flex-col gap-6 overflow-hidden rounded bg-stone-200 px-4 py-2 hover:bg-stone-300 dark:bg-stone-700 dark:hover:bg-stone-800 md:flex-row"
-              v-for="record in filteredRecords"
+              class="flex max-w-[120px] items-center gap-2 overflow-hidden sm:max-w-[200px] md:max-w-[280px] lg:max-w-[360px]"
             >
-              <div class="flex w-[calc(100%-3.8rem)] gap-8" @click="setDns(record)">
-                <div class="min-w-[8rem] overflow-hidden rounded-md bg-stone-950/40 px-2 py-1">
-                  <p class="truncate text-center font-bold">{{ record.type }}</p>
-                </div>
-                <div class="flex min-w-[16rem] items-center gap-2 overflow-hidden px-2 py-1">
-                  <p class="truncate">{{ record.name }}</p>
-                  <UTooltip v-if="record.proxied === true" text="Record is Proxied">
-                    <UIcon name="i-clarity-circle-solid" class="text-orange-400" />
-                  </UTooltip>
-                </div>
-                <div class="max-w-[600px] overflow-hidden px-2 py-1">
-                  <p class="truncate">{{ record.content }}</p>
-                </div>
-              </div>
-              <UButton
-                color="red"
-                variant="outline"
-                class="justify-self-end"
-                @click="preDel(record)"
-              >
-                <UIcon name="i-clarity-trash-solid" />
-              </UButton>
+              <p class="truncate">{{ row[column.key] }}</p>
+              <UTooltip v-if="row.proxied === true" text="Record is Proxied">
+                <UIcon name="i-clarity-circle-solid" class="text-orange-400" />
+              </UTooltip>
             </div>
-          </div>
+          </template>
+          <template #created_on-data="{ row, column }">
+            <div class="flex max-w-[200px] items-center gap-2 overflow-hidden">
+              <p class="truncate">{{ moment(row[column.key]).format('DD/MM/YYYY') }}</p>
+            </div>
+          </template>
+          <template #modified_on-data="{ row, column }">
+            <div class="flex max-w-[200px] items-center gap-2 overflow-hidden">
+              <p class="truncate">{{ moment(row[column.key]).format('DD/MM/YYYY') }}</p>
+            </div>
+          </template>
+          <template #actions-data="{ row }">
+            <UDropdown :items="items(row)">
+              <UButton
+                color="gray"
+                variant="ghost"
+                icon="i-heroicons-ellipsis-horizontal-20-solid"
+              /> </UDropdown></template
+        ></UTable>
+        <div class="mt-6 flex justify-end border-t border-gray-200 px-8 py-4 dark:border-gray-700">
+          <UPagination v-model="page" :page-count="pageCount" :total="filteredRecords.length" />
         </div>
       </div>
     </div>
   </div>
 </template>
 
-<script>
-export default {
-  data() {
-    return {
-      apiKey: '',
-      currZone: '',
-      currZoneName: '',
-      dnsRecords: [],
-      zone: [],
-      loading: true,
-      columns: true,
-      searchQuery: '',
-    };
-  },
-  computed: {
-    filteredRecords() {
-      return this.dnsRecords.filter((record) => {
-        return (
-          record.name.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
-          record.content.toLowerCase().includes(this.searchQuery.toLowerCase())
-        );
-      });
-    },
-  },
-  mounted() {
-    this.apiKey = localStorage.getItem('cf-api-key');
-    if (!this.apiKey) {
-      this.$router.push('/login');
-    }
-    if (localStorage.getItem('cf-zone-id')) {
-      this.currZone = localStorage.getItem('cf-zone-id');
-      this.currZoneName = localStorage.getItem('cf-zone-name');
-      this.getDns();
-      this.getZone();
-    } else {
-      this.$router.push('/');
-    }
-    if (window.innerWidth <= 900) {
-      this.columns = false;
-    }
-    if (window.innerWidth > 900) {
-      this.columns = true;
-    }
-    window.addEventListener('resize', () => {
-      if (window.innerWidth <= 900) {
-        this.columns = false;
-      }
-      if (window.innerWidth > 900) {
-        this.columns = true;
-      }
-    });
-  },
-  beforeDestroy() {
-    window.removeEventListener('resize', () => {
-      if (window.innerWidth < 800) {
-        this.columns = false;
-      }
-    });
-  },
-  methods: {
-    async getDns() {
-      const toast = useToast();
-      const response = await fetch('/api/records', {
-        method: 'POST',
-        body: JSON.stringify({
-          apiKey: this.apiKey,
-          currZone: this.currZone,
-        }),
-      });
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success === false) {
-          toast.add({
-            id: 'get-records-failed' + Date.now(),
-            title: 'Failed to get records',
-            description: data.errors[0].message,
-            icon: 'i-clarity-warning-solid',
-            timeout: 3000,
-            color: 'red',
-          });
-          this.$router.push('/');
-        }
+<script setup>
+import moment from 'moment';
+const apiKey = ref('');
+const currZone = ref('');
+const currZoneName = ref('');
+const dnsRecords = ref([]);
+const zone = ref([]);
+const loading = ref(true);
+const columns = ref(true);
+const searchQuery = ref('');
+const page = ref(1);
+const pageCount = 25;
+const router = useRouter();
+const selectedStatus = ref([]);
 
-        this.dnsRecords = data.result;
-      } else {
-        console.error('HTTP-Error: ' + response.status);
-      }
-    },
-    async getZone() {
-      const response = await fetch('/api/zone', {
-        method: 'POST',
-        body: JSON.stringify({
-          apiKey: this.apiKey,
-          currZone: this.currZone,
-        }),
-      });
-      if (response.ok) {
-        const data = await response.json();
-        this.zone = data.result;
-        this.loading = false;
-      } else {
-        console.error('HTTP-Error: ' + response.status);
-        this.loading = false;
-      }
-    },
-    async delDns(record) {
-      const toast = useToast();
-      const response = await fetch('/api/delete_record', {
-        method: 'POST',
-        body: JSON.stringify({
-          apiKey: this.apiKey,
-          currZone: this.currZone,
-          currDnsRecord: record.id,
-        }),
-      });
-      if (response.ok) {
-        const data = await response.json();
-        toast.add({
-          id: 'delete-record-success' + Date.now(),
-          title: 'Delete success',
-          description: 'Record deleted successfully',
-          icon: 'i-clarity-check-circle-solid',
-          timeout: 3000,
-          color: 'green',
-        });
-        this.getDns();
-      } else {
-        console.error('HTTP-Error: ' + response.status);
-      }
-    },
-    preDel(record) {
-      const toast = useToast();
+const dnsTypes = computed(() => {
+  return dnsRecords.value
+    .map((record) => record.type)
+    .filter((value, index, self) => self.indexOf(value) === index);
+});
+
+const headers = [
+  {
+    key: 'type',
+    label: 'Type',
+    sortable: true,
+  },
+  {
+    key: 'name',
+    label: 'Name',
+    sortable: true,
+  },
+  {
+    key: 'content',
+    label: 'Content',
+    sortable: true,
+  },
+  {
+    key: 'created_on',
+    label: 'Created',
+    sortable: true,
+  },
+  {
+    key: 'modified_on',
+    label: 'Modified',
+    sortable: true,
+  },
+  {
+    key: 'actions',
+    label: 'Actions',
+    sortable: false,
+  },
+];
+
+const items = (row) => {
+  return [
+    [
+      {
+        label: 'Edit',
+        icon: 'i-heroicons-pencil-square-20-solid',
+        click: () => setDns(row),
+      },
+      {
+        label: row.proxiable ? 'Proxiable' : 'Not Proxiable',
+        disabled: true,
+        icon: row.proxiable ? 'i-heroicons-check-circle-20-solid' : 'i-heroicons-x-circle-20-solid',
+      },
+    ],
+    [
+      {
+        label: 'Delete',
+        icon: 'i-heroicons-trash-20-solid',
+        color: 'red',
+        click: () => preDel(row),
+      },
+    ],
+  ];
+};
+
+const filteredRecords = computed(() => {
+  if (selectedStatus.value.length > 0) {
+    return dnsRecords.value.filter((record) => {
+      return selectedStatus.value.includes(record.type);
+    });
+  }
+  return dnsRecords.value.filter((record) => {
+    return (
+      record.name.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+      record.content.toLowerCase().includes(searchQuery.value.toLowerCase())
+    );
+  });
+});
+
+const rows = computed(() => {
+  return filteredRecords.value.slice((page.value - 1) * pageCount, page.value * pageCount);
+});
+
+onMounted(async () => {
+  apiKey.value = localStorage.getItem('cf-api-key');
+  if (!apiKey.value) {
+    router.push('/login');
+  }
+  if (localStorage.getItem('cf-zone-id')) {
+    currZone.value = localStorage.getItem('cf-zone-id');
+    currZoneName.value = localStorage.getItem('cf-zone-name');
+    await getDns();
+    await getZone();
+  } else {
+    router.push('/');
+  }
+  updateColumns();
+  window.addEventListener('resize', updateColumns);
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', updateColumns);
+});
+
+const updateColumns = () => {
+  columns.value = window.innerWidth > 900;
+};
+
+const getDns = async () => {
+  const toast = useToast();
+  const response = await fetch('/api/records', {
+    method: 'POST',
+    body: JSON.stringify({
+      apiKey: apiKey.value,
+      currZone: currZone.value,
+    }),
+  });
+  if (response.ok) {
+    const data = await response.json();
+    if (data.success === false) {
       toast.add({
-        id: 'delete-record' + Date.now(),
-        title: 'Delete record',
-        description: 'Are you sure you want to delete this record?',
+        id: 'get-records-failed' + Date.now(),
+        title: 'Failed to get records',
+        description: data.errors[0].message,
         icon: 'i-clarity-warning-solid',
         timeout: 3000,
         color: 'red',
-        actions: [
-          {
-            label: 'Delete',
-            color: 'red',
-            click: () => {
-              this.delDns(record);
-              toast.remove('delete-record' + Date.now());
-            },
-          },
-          {
-            label: 'Cancel',
-            color: 'white',
-            click: () => {
-              toast.remove('delete-record' + Date.now());
-            },
-          },
-        ],
       });
-    },
-    sort(field) {
-      this.dnsRecords.sort((a, b) => a[field].localeCompare(b[field]));
-    },
-    copyToClipboard(text) {
-      navigator.clipboard.writeText(text);
-      const toast = useToast();
-      toast.add({
-        id: 'copy-ns-success' + Date.now(),
-        title: 'Copied to clipboard',
-        description: text,
-        icon: 'i-clarity-check-circle-solid',
-        timeout: 1500,
-      });
-    },
-    clearZone() {
-      localStorage.removeItem('cf-zone-id');
-      localStorage.removeItem('cf-zone-name');
-    },
-    handleKeydown(event) {
-      if ((event.ctrlKey || event.metaKey) && event.key === 'k') {
-        event.preventDefault();
-        this.$nextTick(() => this.$refs.searchInput.focus());
-      }
-    },
-    hideSearch() {
-      this.showSearch = false;
-    },
-    setDns(record) {
-      localStorage.setItem('cf-dns-id', record.id);
-      localStorage.setItem('cf-dns-name', record.name);
-      this.$router.push('/editor');
-    },
-    switchView() {
-      this.columns = !this.columns;
-    },
-    resetConfig() {
-      localStorage.removeItem('cf-api-key');
-      localStorage.removeItem('cf-zone-id');
-      localStorage.removeItem('cf-zone-name');
-      localStorage.removeItem('cf-dns-id');
-      localStorage.removeItem('cf-dns-name');
-      this.$router.push('/login');
-    },
-  },
+      router.push('/');
+    }
+    dnsRecords.value = data.result;
+  } else {
+    console.error('HTTP-Error: ' + response.status);
+  }
+};
+
+const getZone = async () => {
+  const response = await fetch('/api/zone', {
+    method: 'POST',
+    body: JSON.stringify({
+      apiKey: apiKey.value,
+      currZone: currZone.value,
+    }),
+  });
+  if (response.ok) {
+    const data = await response.json();
+    zone.value = data.result;
+    loading.value = false;
+  } else {
+    console.error('HTTP-Error: ' + response.status);
+    loading.value = false;
+  }
+};
+
+const delDns = async (record) => {
+  const toast = useToast();
+  const response = await fetch('/api/delete_record', {
+    method: 'POST',
+    body: JSON.stringify({
+      apiKey: apiKey.value,
+      currZone: currZone.value,
+      currDnsRecord: record.id,
+    }),
+  });
+  if (response.ok) {
+    const data = await response.json();
+    toast.add({
+      id: 'delete-record-success' + Date.now(),
+      title: 'Delete success',
+      description: 'Record deleted successfully',
+      icon: 'i-clarity-check-circle-solid',
+      timeout: 3000,
+      color: 'green',
+    });
+    await getDns();
+  } else {
+    console.error('HTTP-Error: ' + response.status);
+  }
+};
+
+const preDel = (record) => {
+  const toast = useToast();
+  toast.add({
+    id: 'delete-record' + Date.now(),
+    title: 'Delete record',
+    description: 'Are you sure you want to delete this record?',
+    icon: 'i-clarity-warning-solid',
+    timeout: 3000,
+    color: 'red',
+    actions: [
+      {
+        label: 'Delete',
+        color: 'red',
+        click: () => {
+          delDns(record);
+          toast.remove('delete-record' + Date.now());
+        },
+      },
+      {
+        label: 'Cancel',
+        color: 'white',
+        click: () => {
+          toast.remove('delete-record' + Date.now());
+        },
+      },
+    ],
+  });
+};
+
+const setDns = (record) => {
+  localStorage.setItem('cf-dns-id', record.id);
+  localStorage.setItem('cf-dns-name', record.name);
+  router.push('/editor');
+};
+
+const clearZone = () => {
+  localStorage.removeItem('cf-zone-id');
+  localStorage.removeItem('cf-zone-name');
+  router.push('/');
+};
+
+const resetConfig = () => {
+  localStorage.removeItem('cf-api-key');
+  localStorage.removeItem('cf-zone-id');
+  localStorage.removeItem('cf-zone-name');
+  localStorage.removeItem('cf-dns-id');
+  localStorage.removeItem('cf-dns-name');
+  router.push('/login');
 };
 </script>

@@ -3,7 +3,7 @@
     <div class="flex w-full justify-end p-4">
       <UButton @click="resetConfig()" variant="outline" color="red" class="">Logout</UButton>
     </div>
-    <div class="flex min-h-[80vh] w-screen flex-col items-center justify-center gap-2">
+    <div class="flex min-h-[70vh] w-screen flex-col items-center justify-center gap-2">
       <Head>
         <Title>Zones</Title>
       </Head>
