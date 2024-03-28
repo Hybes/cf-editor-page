@@ -27,6 +27,7 @@
           <NuxtLink
             :to="'http://' + currZoneName"
             external
+            target="_blank"
             class="my-4 text-center text-xl font-semibold hover:underline"
             >{{ currZoneName }}</NuxtLink
           >
@@ -77,20 +78,22 @@
         >
           <template #name-data="{ row, column }">
             <div class="flex max-w-[200px] items-center gap-2 overflow-hidden">
-              <p class="truncate">
+              <UButton variant="link" @click="setDns(row)" color="white" class="truncate">
                 {{
                   row[column.key] === currZoneName || !row[column.key].endsWith(currZoneName)
                     ? row[column.key]
                     : row[column.key].slice(0, -currZoneName.length - 1)
                 }}
-              </p>
+              </UButton>
             </div>
           </template>
           <template #content-data="{ row, column }">
             <div
               class="flex max-w-[120px] items-center gap-2 overflow-hidden sm:max-w-[200px] md:max-w-[280px] lg:max-w-[360px]"
             >
-              <p class="truncate">{{ row[column.key] }}</p>
+              <UButton variant="link" @click="setDns(row)" color="white" class="truncate">{{
+                row[column.key]
+              }}</UButton>
               <UTooltip v-if="row.proxied === true" text="Record is Proxied">
                 <UIcon name="i-clarity-circle-solid" class="text-orange-400" />
               </UTooltip>

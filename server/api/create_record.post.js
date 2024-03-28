@@ -1,7 +1,6 @@
 import fetch from 'node-fetch';
 export default defineEventHandler(async (event) => {
   const body = await readBody(event);
-  console.log(body);
   const bodyToSend = {};
   if (body.data) {
     bodyToSend.data = body.data;
@@ -12,7 +11,6 @@ export default defineEventHandler(async (event) => {
   if (body.dns) {
     bodyToSend.dns = body.dns;
   }
-  console.log(bodyToSend);
   const response = await fetch(
     `https://api.cloudflare.com/client/v4/zones/${body.currZone}/dns_records/`,
     {

@@ -34,6 +34,12 @@
         </div>
       </div>
       <div v-else class="flex flex-col items-center">
+        <div class="mt-4 flex gap-2">
+          <UButton v-for="p in presets" @click="loadPreset(p)" variant="outline" color="orange"
+            >{{ p }}<span @click="delPreset(p)"><Icon name="mdi:delete" /></span
+          ></UButton>
+          <UButton @click="savePreset" variant="outline" color="blue">Save Preset</UButton>
+        </div>
         <h1 class="mb-2 mt-6 text-center text-lg font-semibold">{{ dns.name }}</h1>
         <div
           class="m-4 flex w-full flex-col justify-center gap-4 rounded p-4 text-center md:w-3/4 full:w-1/2"
@@ -237,6 +243,7 @@ const saving = ref('');
 const toggleEndpoint = ref(false);
 const router = useRouter();
 const zone = ref([]);
+const presets = ref([]);
 
 onMounted(() => {
   apiKey.value = localStorage.getItem('cf-api-key');
@@ -246,6 +253,7 @@ onMounted(() => {
   if (localStorage.getItem('cf-zone-id')) {
     currZone.value = localStorage.getItem('cf-zone-id');
     getZone();
+    getPresets();
     loading.value = false;
   } else {
     router.push('/');
@@ -326,6 +334,62 @@ const getZone = async () => {
   } else {
     console.error('HTTP-Error: ' + response.status);
     loading.value = false;
+  }
+};
+
+const savePreset = () => {
+  const preset = prompt('Enter a name for this preset');
+  if (preset) {
+    const {
+      created_on,
+      id,
+      locked,
+      meta,
+      modified_on,
+      zone_id,
+      zone_name,
+      name,
+      data: { name: dataName, ...restData },
+      ...rest
+    } = dns.value;
+    localStorage.setItem('cf-dns-preset-' + preset, JSON.stringify({ ...rest, data: restData }));
+  }
+  getPresets();
+};
+
+const loadPreset = (preset) => {
+  const presetData = JSON.parse(localStorage.getItem('cf-dns-preset-' + preset));
+  if (presetData) {
+    if (presetData.data) {
+      // If there's a data object in the preset, spread its properties into data.value
+      data.value = { ...data.value, ...presetData.data };
+      // Remove the data property from presetData to avoid duplication
+      delete presetData.data;
+    }
+    // Spread the remaining properties of presetData into dns.value
+    dns.value = { ...dns.value, ...presetData };
+  } else {
+    console.error('Preset not found:', preset);
+  }
+};
+
+const delPreset = (preset) => {
+  localStorage.removeItem('cf-dns-preset-' + preset);
+  getPresets();
+};
+
+const getPresets = () => {
+  presets.value = []; // Clear the presets array first
+  const seen = new Set();
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key.includes('cf-dns-preset-')) {
+      const preset = key.replace('cf-dns-preset-', '');
+      if (!seen.has(preset)) {
+        seen.add(preset);
+        presets.value.push(preset);
+      }
+    }
   }
 };
 
