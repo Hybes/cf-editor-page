@@ -78,7 +78,13 @@
         >
           <template #name-data="{ row, column }">
             <div class="flex max-w-[200px] items-center gap-2 overflow-hidden">
-              <UButton variant="link" @click="setDns(row)" color="white" class="truncate">
+              <UButton
+                variant="link"
+                :padded="false"
+                @click="setDns(row)"
+                color="white"
+                class="truncate"
+              >
                 {{
                   row[column.key] === currZoneName || !row[column.key].endsWith(currZoneName)
                     ? row[column.key]
@@ -91,9 +97,14 @@
             <div
               class="flex max-w-[120px] items-center gap-2 overflow-hidden sm:max-w-[200px] md:max-w-[280px] lg:max-w-[360px]"
             >
-              <UButton variant="link" @click="setDns(row)" color="white" class="truncate">{{
-                row[column.key]
-              }}</UButton>
+              <UButton
+                variant="link"
+                :padded="false"
+                @click="setDns(row)"
+                color="white"
+                class="truncate"
+                >{{ row[column.key] }}</UButton
+              >
               <UTooltip v-if="row.proxied === true" text="Record is Proxied">
                 <UIcon name="i-clarity-circle-solid" class="text-orange-400" />
               </UTooltip>
@@ -367,5 +378,18 @@ const resetConfig = () => {
   localStorage.removeItem('cf-dns-id');
   localStorage.removeItem('cf-dns-name');
   router.push('/login');
+};
+
+const copyToClipboard = (text) => {
+  navigator.clipboard.writeText(text);
+  const toast = useToast();
+  toast.add({
+    id: 'copy-ns' + Date.now(),
+    title: 'Copied to clipboard',
+    description: 'Nameserver copied to clipboard',
+    icon: 'i-clarity-check-circle-solid',
+    timeout: 3000,
+    color: 'green',
+  });
 };
 </script>

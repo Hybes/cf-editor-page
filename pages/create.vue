@@ -49,98 +49,94 @@
           </h2>
           <div class="mb-2 flex items-center justify-between" v-if="dns.type !== 'SRV'">
             <label for="name" class="mr-2 w-24">Name:</label>
-            <input
+            <UInput
               @keydown.enter="createDns()"
               id="name"
               type="text"
               v-model="dns.name"
               placeholder="Name (Required)"
-              class="flex-grow rounded border border-gray-300 p-2"
+              class="flex-grow"
             />
           </div>
           <div class="mb-2 flex items-center justify-between">
             <label for="type-select" class="mr-2 w-24">Type:</label>
-            <select
+            <USelect
               id="type-select"
               v-model="dns.type"
-              class="type-select flex-grow rounded border border-gray-300 p-2"
+              class="type-select flex-grow uppercase"
+              :options="['A', 'CNAME', 'MX', 'SRV', 'TXT']"
             >
-              <option value="A">A</option>
-              <option value="CNAME">CNAME</option>
-              <option value="MX">MX</option>
-              <option value="SRV">SRV</option>
-              <option value="TXT">TXT</option>
-            </select>
+            </USelect>
           </div>
           <div class="flex w-full flex-col justify-center gap-4" v-if="dns.type === 'SRV'">
             <div class="mb-2 flex items-center justify-between">
               <label for="ttl" class="mr-2 w-24">Name:</label>
-              <input
+              <UInput
                 id="srv_name"
                 type="text"
                 v-model="data.name"
                 placeholder="Name"
-                class="flex-grow rounded border border-gray-300 p-2"
+                class="flex-grow"
               />
             </div>
             <div class="mb-2 flex items-center justify-between">
               <label for="ttl" class="mr-2 w-24">Port:</label>
-              <input
+              <UInput
                 id="srv_port"
                 type="text"
                 v-model="data.port"
                 placeholder="Port"
-                class="flex-grow rounded border border-gray-300 p-2"
+                class="flex-grow"
               />
             </div>
             <div class="mb-2 flex items-center justify-between">
               <label for="ttl" class="mr-2 w-24">Priority:</label>
-              <input
+              <UInput
                 id="srv_priority"
                 type="text"
                 v-model="data.priority"
                 placeholder="Priority"
-                class="flex-grow rounded border border-gray-300 p-2"
+                class="flex-grow"
               />
             </div>
             <div class="mb-2 flex items-center justify-between">
               <label for="ttl" class="mr-2 w-24">Proto:</label>
-              <input
+              <UInput
                 id="srv_proto"
                 type="text"
                 v-model="data.proto"
                 placeholder="Proto"
-                class="flex-grow rounded border border-gray-300 p-2"
+                class="flex-grow"
               />
             </div>
             <div class="mb-2 flex items-center justify-between">
               <label for="ttl" class="mr-2 w-24">Service:</label>
-              <input
+              <UInput
                 id="srv_service"
                 type="text"
                 v-model="data.service"
                 placeholder="Service"
-                class="flex-grow rounded border border-gray-300 p-2"
+                class="flex-grow"
               />
             </div>
             <div class="mb-2 flex items-center justify-between">
               <label for="ttl" class="mr-2 w-24">Target:</label>
-              <input
+              <UInput
                 id="srv_target"
                 type="text"
                 v-model="data.target"
                 placeholder="Target"
-                class="flex-grow rounded border border-gray-300 p-2"
+                class="flex-grow"
               />
             </div>
             <div class="mb-2 flex items-center justify-between">
               <label for="ttl" class="mr-2 w-24">Weight:</label>
-              <input
+              <UInput
                 id="srv_weight"
                 type="text"
                 v-model="data.weight"
                 placeholder="Weight"
-                class="flex-grow rounded border border-gray-300 p-2"
+                class="flex-grow"
               />
             </div>
           </div>
@@ -151,14 +147,14 @@
               class="mr-2 w-24 cursor-pointer"
               >Endpoint:</label
             >
-            <input
+            <UInput
               @keydown.enter="createDns()"
               v-if="!toggleEndpoint"
               id="endpoint"
               type="text"
               v-model="dns.content"
               placeholder="Endpoint"
-              class="flex-grow rounded border border-gray-300 p-2"
+              class="flex-grow"
             />
             <textarea
               @keydown.enter="createDns()"
@@ -166,28 +162,28 @@
               id="endpoint"
               v-model="dns.content"
               placeholder="Endpoint"
-              class="flex-grow rounded border border-gray-300 p-2"
+              class="flex-grow"
             ></textarea>
           </div>
           <div class="mb-2 flex items-center justify-between">
             <label for="ttl" class="mr-2 w-24">TTL:</label>
-            <input
+            <UInput
               @keydown.enter="createDns()"
               id="ttl"
               type="text"
               v-model="dns.ttl"
               placeholder="TTL (Leave blank or set to 1 for auto TTL)"
-              class="flex-grow rounded border border-gray-300 p-2"
+              class="flex-grow"
             />
           </div>
           <div class="mb-2 flex items-center justify-between" v-if="dns.type === 'SRV'">
             <label for="priority" class="mr-2 w-24">Priority:</label>
-            <input
+            <UInput
               id="priority"
               type="text"
               v-model="dns.priority"
               placeholder="Priority"
-              class="flex-grow rounded border border-gray-300 p-2"
+              class="flex-grow"
             />
           </div>
           <div
@@ -199,13 +195,13 @@
           </div>
           <div class="mb-2 flex items-center justify-between">
             <label for="comment" class="mr-2 w-24">Comment:</label>
-            <input
+            <UInput
               @keydown.enter="createDns()"
               id="comment"
               type="text"
               v-model="dns.comment"
               placeholder="Comment"
-              class="flex-grow rounded border border-gray-300 p-2"
+              class="flex-grow"
             />
           </div>
           <div>

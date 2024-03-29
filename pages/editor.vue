@@ -30,97 +30,93 @@
           <h2 class="mb-4 text-lg font-semibold">Edit DNS Record</h2>
           <div class="mb-2 flex items-center justify-between" v-if="dns.type !== 'SRV'">
             <label for="name" class="mr-2 w-24">Name:</label>
-            <input
-              id="name"
-              type="text"
-              v-model="dns.name"
-              placeholder="Name (Required)"
-              class="flex-grow rounded border border-gray-300 p-2"
-            />
+            <UInput id="name" v-model="dns.name" placeholder="Name (Required)" class="flex-grow" />
           </div>
           <div class="mb-2 flex items-center justify-between">
             <label for="type-select" class="mr-2 w-24">Type:</label>
-            <select
+            <USelect
               id="type-select"
               v-model="dns.type"
-              class="type-select flex-grow rounded border border-gray-300 p-2"
-            >
-              <option value="A">A</option>
-              <option value="CNAME">CNAME</option>
-              <option value="MX">MX</option>
-              <option value="SRV">SRV</option>
-              <option value="TXT">TXT</option>
-            </select>
+              class="type-select flex-grow uppercase"
+              :options="['A', 'CNAME', 'MX', 'SRV', 'TXT']"
+            />
           </div>
           <div class="flex w-full flex-col justify-center gap-4" v-if="dns.type === 'SRV'">
             <div class="mb-2 flex items-center justify-between">
               <label for="ttl" class="mr-2 w-24">Name:</label>
-              <input
+              <UInput
                 id="srv_name"
                 type="text"
-                v-model="dns.data.name"
+                v-model="data.name"
                 placeholder="Name"
-                class="flex-grow rounded border border-gray-300 p-2"
+                class="flex-grow"
+                @keydown.enter="saveDns()"
               />
             </div>
             <div class="mb-2 flex items-center justify-between">
               <label for="ttl" class="mr-2 w-24">Port:</label>
-              <input
+              <UInput
                 id="srv_port"
                 type="text"
-                v-model="dns.data.port"
+                v-model="data.port"
                 placeholder="Port"
-                class="flex-grow rounded border border-gray-300 p-2"
+                class="flex-grow"
+                @keydown.enter="saveDns()"
               />
             </div>
             <div class="mb-2 flex items-center justify-between">
               <label for="ttl" class="mr-2 w-24">Priority:</label>
-              <input
+              <UInput
                 id="srv_priority"
                 type="text"
-                v-model="dns.data.priority"
+                v-model="data.priority"
                 placeholder="Priority"
-                class="flex-grow rounded border border-gray-300 p-2"
+                class="flex-grow"
+                @keydown.enter="saveDns()"
               />
             </div>
             <div class="mb-2 flex items-center justify-between">
               <label for="ttl" class="mr-2 w-24">Proto:</label>
-              <input
+              <UInput
                 id="srv_proto"
                 type="text"
-                v-model="dns.data.proto"
+                v-model="data.proto"
                 placeholder="Proto"
-                class="flex-grow rounded border border-gray-300 p-2"
+                class="flex-grow"
+                @keydown.enter="saveDns()"
               />
             </div>
             <div class="mb-2 flex items-center justify-between">
               <label for="ttl" class="mr-2 w-24">Service:</label>
-              <input
+              <UInput
                 id="srv_service"
                 type="text"
-                v-model="dns.data.service"
+                v-model="data.service"
                 placeholder="Service"
-                class="flex-grow rounded border border-gray-300 p-2"
+                class="flex-grow"
+                @keydown.enter="saveDns()"
               />
             </div>
             <div class="mb-2 flex items-center justify-between">
               <label for="ttl" class="mr-2 w-24">Target:</label>
-              <input
+              <UInput
                 id="srv_target"
                 type="text"
-                v-model="dns.data.target"
+                v-model="data.target"
                 placeholder="Target"
-                class="flex-grow rounded border border-gray-300 p-2"
+                class="flex-grow"
+                @keydown.enter="saveDns()"
               />
             </div>
             <div class="mb-2 flex items-center justify-between">
               <label for="ttl" class="mr-2 w-24">Weight:</label>
-              <input
+              <UInput
                 id="srv_weight"
                 type="text"
-                v-model="dns.data.weight"
+                v-model="data.weight"
                 placeholder="Weight"
-                class="flex-grow rounded border border-gray-300 p-2"
+                class="flex-grow"
+                @keydown.enter="saveDns()"
               />
             </div>
           </div>
@@ -129,44 +125,47 @@
               @click="toggleEndpoint = !toggleEndpoint"
               for="endpoint"
               class="mr-2 w-24 cursor-pointer"
+              @keydown.enter="saveDns()"
               >Endpoint:</label
             >
-            <input
-              @keydown.enter="createDns()"
+            <UInput
+              @keydown.enter="saveDns()"
               v-if="!toggleEndpoint"
               id="endpoint"
               type="text"
               v-model="dns.content"
               placeholder="Endpoint"
-              class="flex-grow rounded border border-gray-300 p-2"
+              class="flex-grow"
             />
             <textarea
-              @keydown.enter="createDns()"
+              @keydown.enter="saveDns()"
               v-else
               id="endpoint"
               v-model="dns.content"
               placeholder="Endpoint"
-              class="flex-grow rounded border border-gray-300 p-2"
+              class="flex-grow"
             ></textarea>
           </div>
           <div class="mb-2 flex items-center justify-between">
             <label for="ttl" class="mr-2 w-24">TTL:</label>
-            <input
+            <UInput
               id="ttl"
               type="text"
               v-model="dns.ttl"
               placeholder="TTL (Leave blank or set to 1 for auto TTL)"
-              class="flex-grow rounded border border-gray-300 p-2"
+              class="flex-grow"
+              @keydown.enter="saveDns()"
             />
           </div>
           <div class="mb-2 flex items-center justify-between" v-if="dns.type === 'SRV'">
             <label for="priority" class="mr-2 w-24">Priority:</label>
-            <input
+            <UInput
               id="priority"
               type="text"
               v-model="dns.priority"
               placeholder="Priority"
-              class="flex-grow rounded border border-gray-300 p-2"
+              class="flex-grow"
+              @keydown.enter="saveDns()"
             />
           </div>
           <div class="mb-2 flex items-center justify-start" v-if="dns.proxiable === true">
@@ -175,12 +174,13 @@
           </div>
           <div class="mb-2 flex items-center justify-between">
             <label for="comment" class="mr-2 w-24">Comment:</label>
-            <input
+            <UInput
               id="comment"
               type="text"
               v-model="dns.comment"
               placeholder="Comment"
-              class="flex-grow rounded border border-gray-300 p-2"
+              class="flex-grow"
+              @keydown.enter="saveDns()"
             />
           </div>
           <div class="flex justify-center gap-2">
@@ -215,6 +215,7 @@ const currZone = ref('');
 const currDns = ref('');
 const currDnsName = ref('');
 const dns = ref([]);
+const data = ref([]);
 const loading = ref(true);
 const saving = ref('');
 const toggleEndpoint = ref(false);
@@ -231,8 +232,9 @@ const getDns = async () => {
     }),
   });
   if (response.ok) {
-    const data = await response.json();
-    dns.value = data.result;
+    const result = await response.json();
+    dns.value = result.result;
+    data.value = result.result.data;
     loading.value = false;
   } else {
     console.error('HTTP-Error: ' + response.status);
@@ -242,14 +244,18 @@ const getDns = async () => {
 
 const saveDns = async () => {
   saving.value = 'progress';
+  const bodyToSend = {
+    apiKey: apiKey.value,
+    currZone: currZone.value,
+    currDnsRecord: currDns.value,
+    dns: dns.value,
+  };
+  if (dns.value.type === 'SRV') {
+    bodyToSend.dns.data = data.value;
+  }
   const response = await fetch('/api/update_record', {
     method: 'POST',
-    body: JSON.stringify({
-      apiKey: apiKey.value,
-      currZone: currZone.value,
-      currDnsRecord: currDns.value,
-      dns: dns.value,
-    }),
+    body: JSON.stringify(bodyToSend),
   });
   if (response.ok) {
     const data = await response.json();
