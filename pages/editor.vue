@@ -328,19 +328,9 @@ const delDns = async (record) => {
 const savePreset = () => {
   const preset = prompt('Enter a name for this preset');
   if (preset) {
-    const {
-      created_on,
-      id,
-      locked,
-      meta,
-      modified_on,
-      zone_id,
-      zone_name,
-      name,
-      data: { name: dataName, ...restData },
-      ...rest
-    } = dns.value;
-    localStorage.setItem('cf-dns-preset-' + preset, JSON.stringify({ ...rest, data: restData }));
+    const { created_on, id, locked, meta, modified_on, zone_id, zone_name, name, ...rest } =
+      dns.value;
+    localStorage.setItem('cf-dns-preset-' + preset, JSON.stringify(rest));
   }
   getPresets();
 };
