@@ -5,3 +5,7 @@
 input, textarea, select {
   @apply bg-stone-900 border text-white;
 }
+
+html {
+  @apply overflow-x-hidden;
+}
