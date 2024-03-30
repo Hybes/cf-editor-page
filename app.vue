@@ -12,50 +12,64 @@
       <NuxtPage />
       <UNotifications />
       <div class="text-center mt-8 mb-14">
-        <UButton class="my-2" color="red" variant="outline" @click="resetConfig()">Logout</UButton>
+        <div class="flex flex-col gap-2 justify-center items-center">
+          <ClientOnly>
+              <UButton
+                :icon="isDark ? 'i-heroicons-moon-20-solid' : 'i-heroicons-sun-20-solid'"
+                color="gray"
+                variant="outline"
+                aria-label="Theme"
+                @click="isDark = !isDark"
+              >{{ isDark ? 'Light Mode' : 'Dark Mode' }}</UButton>
+              <template #fallback>
+                <div class="w-8 h-8" />
+              </template>
+          </ClientOnly>
+          <UButton class="my-2" color="red" variant="outline" @click="resetConfig()">Logout</UButton>
+        </div>
         <p class="text-sm my-2 opacity-60 hover:opacity-80"><a href="https://connectdorset.com" target="_blank">Built by Connect</a></p>
       </div>
     </div>
   </div>
 </template>
 
-<script>
-export default {
-  setup() {
-    return {
-      config: useRuntimeConfig(),
-    };
+<script setup>
+const config = useRuntimeConfig();
+const loading = ref(true);
+const apiKey = ref('');
+const colorMode = useColorMode()
+const isDark = computed({
+  get () {
+    return colorMode.value === 'dark'
   },
-  data() {
-    return {
-      loading: true,
-      apiKey: '',
-    };
-  },
-  mounted() {
-    this.apiKey = localStorage.getItem('cf-api-key')
-    if (this.apiKey) {
-        this.loading = false;
-      } else {
-        this.$router.push('/login')
-        this.loading = false;
-      }
-  },
-  methods: {
-    navigateTo(id) {
-      const element = document.querySelector(id);
-      element.scrollIntoView({ behavior: 'smooth' });
-    },
-    resetConfig() {
-      localStorage.removeItem('cf-api-key');
-      localStorage.removeItem('cf-zone-id');
-      localStorage.removeItem('cf-zone-name');
-      localStorage.removeItem('cf-dns-id');
-      localStorage.removeItem('cf-dns-name');
-      this.$router.push('/login')
-    }
-  },
-}
+  set () {
+    colorMode.preference = colorMode.value === 'dark' ? 'light' : 'dark'
+  }
+})
+
+onMounted(() => {
+  apiKey.value = localStorage.getItem('cf-api-key');
+  if (apiKey.value) {
+    loading.value = false;
+  } else {
+    useRouter().push('/login');
+    loading.value = false;
+  }
+});
+
+const navigateTo = (id) => {
+  const element = document.querySelector(id);
+  element.scrollIntoView({ behavior: 'smooth' });
+};
+
+const resetConfig = () => {
+  localStorage.removeItem('cf-api-key');
+  localStorage.removeItem('cf-zone-id');
+  localStorage.removeItem('cf-zone-name');
+  localStorage.removeItem('cf-dns-id');
+  localStorage.removeItem('cf-dns-name');
+  useRouter().push('/login');
+};
 </script>
 
 <style>

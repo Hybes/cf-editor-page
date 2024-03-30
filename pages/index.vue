@@ -1,6 +1,18 @@
 <template>
   <div>
-    <div class="flex w-full justify-end p-4">
+    <div class="flex w-full justify-end p-4 gap-2">
+      <ClientOnly>
+        <UButton
+          :icon="isDark ? 'i-heroicons-moon-20-solid' : 'i-heroicons-sun-20-solid'"
+          color="white"
+          variant="outline"
+          aria-label="Theme"
+          @click="isDark = !isDark"
+        />
+        <template #fallback>
+          <div class="w-8 h-8" />
+        </template>
+      </ClientOnly>
       <UButton @click="resetConfig()" variant="outline" color="red" class="">Logout</UButton>
     </div>
     <div class="flex min-h-[70vh] w-screen flex-col items-center justify-center gap-2">
@@ -8,7 +20,7 @@
         <Title>Zones</Title>
       </Head>
 
-      <div class="my-2 flex w-full flex-col items-center justify-center gap-4 sm:w-1/2">
+      <div class="flex w-full flex-col items-center justify-center gap-4 px-4 md:px-8 sm:w-1/2">
         <h1 class="text-xl font-semibold">Zones</h1>
         <UInput
           icon="i-heroicons-magnifying-glass-20-solid"
@@ -17,46 +29,28 @@
           placeholder="Search"
           autofocus
           ref="searchInput"
-          size="md"
           color="white"
           class="w-full"
         />
       </div>
-      <div v-if="!loading" class="w-full">
+      <div class="w-full">
         <UTable
           :rows="filteredZones"
-          :columns="[
-            {
-              key: 'status',
-            },
-            {
-              key: 'name',
-              label: 'Name',
-              sortable: true,
-            },
-            {
-              key: 'created_on',
-              label: 'Created On',
-              sortable: true,
-            },
-            {
-              key: 'id',
-              label: 'ID',
-            },
-          ]"
+          :columns="columns"
+          :loading="loading"
           :ui="{
             tr: {
-              base: 'even:bg-stone-950/50 odd:bg-stone-900/50',
+              base: 'even:bg-stone-100 even:dark:bg-stone-950/50',
             },
 
             td: {
-              color: 'text-stone-300 dark:text-stone-200',
+              color: 'text-stone-700 dark:text-stone-200',
             },
           }"
-          class="px-8"
+          class="border mx-4 md:mx-8 rounded-lg border-stone-300 dark:border-stone-700"
           @select="setZone"
         >
-          <template #status-data="{ row }">
+          <template #name-data="{ row }">
             <div class="flex items-center gap-2">
               <UTooltip v-if="row.status === 'active' && row.paused !== true" text="Active">
                 <UIcon name="i-clarity-circle-solid" class="text-green-400" />
@@ -67,17 +61,22 @@
               <UTooltip v-if="row.paused === true" text="Domain is paused">
                 <UIcon name="i-clarity-pause-solid" class="text-orange-400" />
               </UTooltip>
+              <p class="whitespace nowrap text-sm text-stone-600 dark:text-stone-200">
+              {{ row.name }}
+            </p>
             </div>
           </template>
           <template #created_on-data="{ row }">
-            <p class="whitespace nowrap text-xs text-gray-300">
+            <p class="whitespace nowrap text-xs text-stone-600 dark:text-stone-200">
               {{ moment(row.created_on).format('MMM DD, YYYY') }}
             </p>
           </template>
+          <template #original_registrar-data="{ row }">
+            <p class="whitespace nowrap text-xs text-stone-600 dark:text-stone-200">
+              {{ row.original_registrar ? row.original_registrar.replace(/\(.*?\)/g, '') : '' }}
+            </p>
+          </template>
         </UTable>
-      </div>
-      <div v-else>
-        <Loader />
       </div>
     </div>
   </div>
@@ -89,6 +88,34 @@ const apiKey = ref('');
 const zones = ref([]);
 const loading = ref(true);
 const searchQuery = ref('');
+
+const columns = ref([
+  {
+    key: 'name',
+    label: 'Name',
+    sortable: true,
+  },
+  {
+    key: 'created_on',
+    label: 'Created',
+    sortable: true,
+  },
+  {
+    key: 'original_registrar',
+    label: 'Previous',
+    sortable: true,
+  }
+]);
+
+const colorMode = useColorMode()
+const isDark = computed({
+  get () {
+    return colorMode.value === 'dark'
+  },
+  set () {
+    colorMode.preference = colorMode.value === 'dark' ? 'light' : 'dark'
+  }
+})
 
 const filteredZones = computed(() => {
   return zones.value.filter((record) => {
@@ -130,6 +157,7 @@ const getZones = async () => {
   if (response.ok) {
     const data = await response.json();
     zones.value = data.result;
+    console.log(data.result);
     loading.value = false;
   } else {
     console.error('HTTP-Error: ' + response.status);

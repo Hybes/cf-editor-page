@@ -5,7 +5,7 @@
     </Head>
     <div class="w-full">
       <div
-        class="flex flex-row flex-wrap items-center justify-center gap-2 px-4 py-4 md:justify-between"
+        class="flex flex-row flex-wrap items-center gap-2 px-4 md:px-8 py-4 justify-between"
       >
         <div class="flex flex-row flex-wrap justify-center gap-2">
           <UButton @click="clearZone()" variant="outline" icon="i-clarity-undo-line" to="/">
@@ -16,107 +16,117 @@
           </UButton>
         </div>
         <div class="flex flex-row flex-wrap justify-center gap-2">
+          <ClientOnly>
+            <UButton
+              :icon="isDark ? 'i-heroicons-moon-20-solid' : 'i-heroicons-sun-20-solid'"
+              color="white"
+              variant="outline"
+              aria-label="Theme"
+              @click="isDark = !isDark"
+            />
+            <template #fallback>
+              <div class="w-8 h-8" />
+            </template>
+          </ClientOnly>
           <UButton @click="resetConfig()" variant="outline" color="red">Logout</UButton>
         </div>
       </div>
-      <div class="flex h-screen w-screen flex-col items-center justify-center" v-if="loading">
-        <Loader />
-      </div>
-      <div v-else>
-        <div class="flex w-full flex-col justify-center gap-2 px-6 pb-4">
+      <div>
+        <div class="flex w-full flex-col justify-center gap-2 px-4 md:px-8 pb-2">
           <NuxtLink
             :to="'http://' + currZoneName"
             external
             target="_blank"
-            class="my-4 text-center text-xl font-semibold hover:underline"
+            class="text-center text-stone-900 dark:text-stone-100 text-2xl font-semibold hover:underline"
             >{{ currZoneName }}</NuxtLink
           >
-          <div class="flex translate-x-[12px] flex-wrap items-center justify-center gap-4">
+          <div class="flex translate-x-[12px] flex-wrap items-center justify-center gap-2">
             <div
               class="group flex cursor-pointer items-center gap-2"
               v-for="ns in zone.name_servers"
               @click="copyToClipboard(ns)"
             >
-              <p class="font-bold italic text-stone-300">{{ ns }}</p>
+              <p class="font-bold italic text-stone-600 dark:text-stone-400">{{ ns }}</p>
               <UIcon name="i-clarity-clipboard-line" class="opacity-0 group-hover:opacity-100" />
             </div>
           </div>
         </div>
-        <UInput
-          icon="i-heroicons-magnifying-glass-20-solid"
-          v-model="searchQuery"
-          type="text"
-          placeholder="Search"
-          ref="searchInput"
-          size="md"
-          color="white"
-          class="mx-auto mb-6 w-11/12 px-2 sm:w-1/3"
-        />
-        <div class="flex justify-between border-t border-gray-200 px-8 py-3.5 dark:border-gray-700">
-          <USelectMenu
-            v-model="selectedStatus"
-            :options="dnsTypes"
-            multiple
-            placeholder="Type"
-            class="w-40"
-          />
-          <UPagination v-model="page" :page-count="pageCount" :total="filteredRecords.length" />
+        <div class="flex gap-2 items-center flex-wrap justify-between px-4 md:px-8 py-2">
+          <div class="flex gap-2 w-full md:w-[calc(50%-0.25rem)]">
+            <USelectMenu
+              v-model="selectedStatus"
+              :options="dnsTypes"
+              multiple
+              placeholder="Type"
+              class="min-w-[6rem]"
+            />
+            <UInput
+            icon="i-heroicons-magnifying-glass-20-solid"
+            v-model="searchQuery"
+            type="text"
+            placeholder="Search"
+            ref="searchInput"
+            color="white"
+            class="min-w-[12rem] flex-grow"
+                    />
+          </div>
+            <div class="flex gap-2 w-full md:w-[calc(50%-0.25rem)]">
+              <USelectMenu class="flex-grow" v-model="selectedColumns" :options="columns" multiple placeholder="Columns" />
+              <UPagination v-model="page" :page-count="pageCount" :total="filteredRecords.length" />
+            </div>
         </div>
         <UTable
           :rows="rows"
-          :columns="headers"
+          :columns="selectedColumns"
+          :loading="loading"
+          class="border rounded-lg mt-2 mx-4 md:mx-8 border-stone-300 dark:border-stone-700"
           :ui="{
             tr: {
-              base: 'even:bg-stone-950/50 odd:bg-stone-900/50',
+              base: 'even:bg-stone-100 even:dark:bg-stone-950/50',
             },
 
             td: {
-              color: 'text-stone-300 dark:text-stone-200',
+              color: 'text-stone-700 dark:text-stone-200',
             },
           }"
-          class="px-8"
         >
+          <template #type-data="{ row, column }">
+              <p class="truncate text-xs md:text-sm">{{ row[column.key] }}</p>
+          </template>
           <template #name-data="{ row, column }">
-            <div class="flex max-w-[200px] items-center gap-2 overflow-hidden">
-              <UButton
-                variant="link"
-                :padded="false"
-                @click="setDns(row)"
-                color="white"
-                class="truncate"
+            <div @click="setDns(row)" class="flex max-w-[120px] cursor-pointer group sm:max-w-[200px] items-center gap-2 overflow-hidden">
+              <p
+                class="truncate group-hover:underline font-medium text-xs md:text-sm"
               >
                 {{
                   row[column.key] === currZoneName || !row[column.key].endsWith(currZoneName)
                     ? row[column.key]
                     : row[column.key].slice(0, -currZoneName.length - 1)
                 }}
-              </UButton>
+              </p>
             </div>
           </template>
           <template #content-data="{ row, column }">
-            <div
-              class="flex max-w-[120px] items-center gap-2 overflow-hidden sm:max-w-[200px] md:max-w-[280px] lg:max-w-[360px]"
-            >
-              <UButton
-                variant="link"
-                :padded="false"
+            <div 
                 @click="setDns(row)"
-                color="white"
-                class="truncate"
-                >{{ row[column.key] }}</UButton
+              class="flex max-w-[120px] group items-center gap-2 overflow-hidden cursor-pointer sm:max-w-[200px] md:max-w-[280px] lg:max-w-[360px]"
+            >
+              <p
+                class="font-medium group-hover:underline truncate text-xs md:text-sm"
+                >{{ row[column.key] }}</p
               >
               <UTooltip v-if="row.proxied === true" text="Record is Proxied">
-                <UIcon name="i-clarity-circle-solid" class="text-orange-400" />
+                <UIcon name="i-clarity-circle-solid" class="text-orange-400 text-xs md:text-sm" />
               </UTooltip>
             </div>
           </template>
-          <template #created_on-data="{ row, column }">
-            <div class="flex max-w-[200px] items-center gap-2 overflow-hidden">
+          <template #created_on-data="{ row, column }" v-show="isLargeScreen">
+            <div class="flex max-w-[200px] items-center truncate text-xs md:text-sm gap-2 overflow-hidden">
               <p class="truncate">{{ moment(row[column.key]).format('DD/MM/YYYY') }}</p>
             </div>
           </template>
-          <template #modified_on-data="{ row, column }">
-            <div class="flex max-w-[200px] items-center gap-2 overflow-hidden">
+          <template #modified_on-data="{ row, column }" v-show="isLargeScreen">
+            <div class="flex max-w-[200px] items-center truncate text-xs md:text-sm gap-2 overflow-hidden">
               <p class="truncate">{{ moment(row[column.key]).format('DD/MM/YYYY') }}</p>
             </div>
           </template>
@@ -126,8 +136,10 @@
                 color="gray"
                 variant="ghost"
                 icon="i-heroicons-ellipsis-horizontal-20-solid"
-              /> </UDropdown></template
-        ></UTable>
+              />
+            </UDropdown>
+          </template>
+        </UTable>
         <div class="mt-6 flex justify-end border-t border-gray-200 px-8 py-4 dark:border-gray-700">
           <UPagination v-model="page" :page-count="pageCount" :total="filteredRecords.length" />
         </div>
@@ -144,12 +156,21 @@ const currZoneName = ref('');
 const dnsRecords = ref([]);
 const zone = ref([]);
 const loading = ref(true);
-const columns = ref(true);
 const searchQuery = ref('');
 const page = ref(1);
 const pageCount = 25;
 const router = useRouter();
 const selectedStatus = ref([]);
+
+const colorMode = useColorMode()
+const isDark = computed({
+  get () {
+    return colorMode.value === 'dark'
+  },
+  set () {
+    colorMode.preference = colorMode.value === 'dark' ? 'light' : 'dark'
+  }
+})
 
 const dnsTypes = computed(() => {
   return dnsRecords.value
@@ -157,7 +178,7 @@ const dnsTypes = computed(() => {
     .filter((value, index, self) => self.indexOf(value) === index);
 });
 
-const headers = [
+const columns = [
   {
     key: 'type',
     label: 'Type',
@@ -189,6 +210,8 @@ const headers = [
     sortable: false,
   },
 ];
+
+const selectedColumns = ref([...columns])
 
 const items = (row) => {
   return [
@@ -241,22 +264,12 @@ onMounted(async () => {
   if (localStorage.getItem('cf-zone-id')) {
     currZone.value = localStorage.getItem('cf-zone-id');
     currZoneName.value = localStorage.getItem('cf-zone-name');
-    await getDns();
     await getZone();
+    await getDns();
   } else {
     router.push('/');
   }
-  updateColumns();
-  window.addEventListener('resize', updateColumns);
 });
-
-onBeforeUnmount(() => {
-  window.removeEventListener('resize', updateColumns);
-});
-
-const updateColumns = () => {
-  columns.value = window.innerWidth > 900;
-};
 
 const getDns = async () => {
   const toast = useToast();
