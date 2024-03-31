@@ -120,7 +120,10 @@
                   {{ row[column.key] }}
                 </p>
                 <UTooltip v-if="row.proxied === true" text="Record is Proxied">
-                  <UIcon name="i-clarity-circle-solid" class="text-xs text-orange-400 md:text-sm" />
+                  <UIcon
+                    name="i-clarity-circle-solid"
+                    class="animate-pulse text-xs text-orange-400 md:text-sm"
+                  />
                 </UTooltip>
               </div>
             </template>
@@ -148,7 +151,7 @@
               </UDropdown>
             </template>
           </UTable>
-          <div class="flex justify-end border-t border-gray-200 dark:border-gray-700">
+          <div class="flex w-full justify-end">
             <UPagination v-model="page" :page-count="pageCount" :total="filteredRecords.length" />
           </div>
         </div>

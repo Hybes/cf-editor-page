@@ -51,13 +51,13 @@
             <template #name-data="{ row }">
               <div class="flex items-center gap-4">
                 <UTooltip v-if="row.status === 'active' && row.paused !== true" text="Active">
-                  <UIcon name="i-clarity-circle-solid" class="text-green-400" />
+                  <UIcon name="i-clarity-circle-solid" class="animate-pulse text-green-400" />
                 </UTooltip>
                 <UTooltip v-if="row.status !== 'active' && row.paused !== true" text="Inactive">
                   <UIcon name="i-clarity-circle-solid" class="animate-pulse text-red-500" />
                 </UTooltip>
                 <UTooltip v-if="row.paused === true" text="Domain is paused">
-                  <UIcon name="i-clarity-pause-solid" class="text-orange-400" />
+                  <UIcon name="i-clarity-pause-solid" class="animate-pulse text-orange-400" />
                 </UTooltip>
                 <p class="whitespace nowrap text-sm text-stone-600 dark:text-stone-200">
                   {{ row.name }}
