@@ -1,5 +1,5 @@
 <template>
-  <div class="flex h-screen w-screen flex-col items-center justify-center gap-2">
+  <div class="flex h-screen w-screen flex-col items-center justify-center gap-4">
     <Head>
       <Title>Login</Title>
     </Head>

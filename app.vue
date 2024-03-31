@@ -2,32 +2,52 @@
   <SeoKit />
   <div>
     <div v-if="loading">
-      <div class="w-screen h-screen flex flex-col gap-2 justify-center items-center">
+      <div class="flex h-screen w-screen flex-col items-center justify-center gap-4">
         <div>
-          <svg class="animate-spin w-12 h-12" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3a9 9 0 1 0 9 9"/></svg>
+          <svg
+            class="h-12 w-12 animate-spin"
+            xmlns="http://www.w3.org/2000/svg"
+            width="32"
+            height="32"
+            viewBox="0 0 24 24"
+          >
+            <path
+              fill="none"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M12 3a9 9 0 1 0 9 9"
+            />
+          </svg>
         </div>
       </div>
     </div>
     <div v-else>
       <NuxtPage />
       <UNotifications />
-      <div class="text-center mt-8 mb-14">
-        <div class="flex flex-col gap-2 justify-center items-center">
+      <div class="mb-14 mt-8 text-center">
+        <div class="flex flex-col items-center justify-center gap-4">
           <ClientOnly>
-              <UButton
-                :icon="isDark ? 'i-heroicons-moon-20-solid' : 'i-heroicons-sun-20-solid'"
-                color="white"
-                variant="outline"
-                aria-label="Theme"
-                @click="isDark = !isDark"
-              >{{ isDark ? 'Light Mode' : 'Dark Mode' }}</UButton>
-              <template #fallback>
-                <div class="w-8 h-8" />
-              </template>
+            <UButton
+              :icon="isDark ? 'i-heroicons-moon-20-solid' : 'i-heroicons-sun-20-solid'"
+              color="white"
+              variant="outline"
+              aria-label="Theme"
+              @click="isDark = !isDark"
+              >{{ isDark ? 'Light Mode' : 'Dark Mode' }}</UButton
+            >
+            <template #fallback>
+              <div class="h-8 w-8" />
+            </template>
           </ClientOnly>
-          <UButton class="my-2" color="red" variant="outline" @click="resetConfig()">Logout</UButton>
+          <UButton class="my-2" color="red" variant="outline" @click="resetConfig()"
+            >Logout</UButton
+          >
         </div>
-        <p class="text-sm my-2 opacity-60 hover:opacity-80"><a href="https://connectdorset.com" target="_blank">Built by Connect</a></p>
+        <p class="my-2 text-sm opacity-60 hover:opacity-80">
+          <a href="https://connectdorset.com" target="_blank">Built by Connect</a>
+        </p>
       </div>
     </div>
   </div>
@@ -37,15 +57,15 @@
 const config = useRuntimeConfig();
 const loading = ref(true);
 const apiKey = ref('');
-const colorMode = useColorMode()
+const colorMode = useColorMode();
 const isDark = computed({
-  get () {
-    return colorMode.value === 'dark'
+  get() {
+    return colorMode.value === 'dark';
   },
-  set () {
-    colorMode.preference = colorMode.value === 'dark' ? 'light' : 'dark'
-  }
-})
+  set() {
+    colorMode.preference = colorMode.value === 'dark' ? 'light' : 'dark';
+  },
+});
 
 onMounted(() => {
   apiKey.value = localStorage.getItem('cf-api-key');

@@ -17,7 +17,7 @@
         <Loader />
       </div>
       <div v-else class="flex flex-col items-center">
-        <div class="mt-4 flex gap-2">
+        <div class="mt-4 flex gap-4">
           <UButton v-for="p in presets" @click="loadPreset(p)" variant="outline" color="orange"
             >{{ p }}<span @click="delPreset(p)"><Icon name="mdi:delete" /></span
           ></UButton>
@@ -183,7 +183,7 @@
               @keydown.enter="saveDns()"
             />
           </div>
-          <div class="flex justify-center gap-2">
+          <div class="flex justify-center gap-4">
             <UButton
               class="mt-4 px-6"
               color="green"

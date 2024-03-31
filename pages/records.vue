@@ -4,10 +4,8 @@
       <Title>Records</Title>
     </Head>
     <div class="w-full">
-      <div
-        class="flex flex-row flex-wrap items-center gap-2 px-4 md:px-8 py-4 justify-between"
-      >
-        <div class="flex flex-row flex-wrap justify-center gap-2">
+      <div class="flex flex-row flex-wrap items-center justify-between gap-4 px-4 py-4 md:px-8">
+        <div class="flex flex-row flex-wrap justify-center gap-4">
           <UButton @click="clearZone()" variant="outline" icon="i-clarity-undo-line" to="/">
             Back
           </UButton>
@@ -15,7 +13,7 @@
             Create
           </UButton>
         </div>
-        <div class="flex flex-row flex-wrap justify-center gap-2">
+        <div class="flex flex-row flex-wrap justify-center gap-4 px-4 md:px-8">
           <ClientOnly>
             <UButton
               :icon="isDark ? 'i-heroicons-moon-20-solid' : 'i-heroicons-sun-20-solid'"
@@ -25,24 +23,24 @@
               @click="isDark = !isDark"
             />
             <template #fallback>
-              <div class="w-8 h-8" />
+              <div class="h-8 w-8" />
             </template>
           </ClientOnly>
           <UButton @click="resetConfig()" variant="outline" color="red">Logout</UButton>
         </div>
       </div>
-      <div>
-        <div class="flex w-full flex-col justify-center gap-2 px-4 md:px-8 pb-2">
+      <div class="flex flex-col items-center justify-center gap-4 px-4 md:px-8">
+        <div class="flex w-full max-w-7xl flex-col justify-center gap-4">
           <NuxtLink
             :to="'http://' + currZoneName"
             external
             target="_blank"
-            class="text-center text-stone-900 dark:text-stone-100 text-2xl font-semibold hover:underline"
+            class="text-center text-2xl font-semibold text-stone-900 hover:underline dark:text-stone-100"
             >{{ currZoneName }}</NuxtLink
           >
-          <div class="flex translate-x-[12px] flex-wrap items-center justify-center gap-2">
+          <div class="flex translate-x-[12px] flex-wrap items-center justify-center gap-4">
             <div
-              class="group flex cursor-pointer items-center gap-2"
+              class="group flex cursor-pointer items-center gap-4"
               v-for="ns in zone.name_servers"
               @click="copyToClipboard(ns)"
             >
@@ -51,97 +49,108 @@
             </div>
           </div>
         </div>
-        <div class="flex gap-2 items-center flex-wrap justify-between px-4 md:px-8 py-2">
-          <div class="flex gap-2 w-full md:w-[calc(50%-0.25rem)]">
-            <USelectMenu
-              v-model="selectedStatus"
-              :options="dnsTypes"
-              multiple
-              placeholder="Type"
-              class="min-w-[6rem]"
-            />
-            <UInput
-            icon="i-heroicons-magnifying-glass-20-solid"
-            v-model="searchQuery"
-            type="text"
-            placeholder="Search"
-            ref="searchInput"
-            color="white"
-            class="min-w-[12rem] flex-grow"
-                    />
-          </div>
-            <div class="flex gap-2 w-full md:w-[calc(50%-0.25rem)]">
-              <USelectMenu class="flex-grow" v-model="selectedColumns" :options="columns" multiple placeholder="Columns" />
+        <div class="flex w-full max-w-7xl flex-col items-center justify-center gap-4">
+          <div class="flex w-full flex-wrap items-center justify-between gap-4">
+            <div class="flex w-full gap-4 md:w-[calc(50%-0.5rem)]">
+              <USelectMenu
+                v-model="selectedStatus"
+                :options="dnsTypes"
+                multiple
+                placeholder="Type"
+                class="min-w-[6rem]"
+              />
+              <UInput
+                icon="i-heroicons-magnifying-glass-20-solid"
+                v-model="searchQuery"
+                type="text"
+                placeholder="Search"
+                ref="searchInput"
+                color="white"
+                class="min-w-[12rem] flex-grow"
+              />
+            </div>
+            <div class="flex w-full gap-4 md:w-[calc(50%-0.5rem)]">
+              <USelectMenu
+                class="flex-grow"
+                v-model="selectedColumns"
+                :options="columns"
+                multiple
+                placeholder="Columns"
+              />
               <UPagination v-model="page" :page-count="pageCount" :total="filteredRecords.length" />
             </div>
-        </div>
-        <UTable
-          :rows="rows"
-          :columns="selectedColumns"
-          :loading="loading"
-          class="border rounded-lg mt-2 mx-4 md:mx-8 border-stone-300 dark:border-stone-700"
-          :ui="{
-            tr: {
-              base: 'even:bg-stone-100 even:dark:bg-stone-950/50',
-            },
-
-            td: {
-              color: 'text-stone-700 dark:text-stone-200',
-            },
-          }"
-        >
-          <template #type-data="{ row, column }">
+          </div>
+          <UTable
+            :rows="rows"
+            :columns="selectedColumns"
+            :loading="loading"
+            class="w-full rounded-lg border border-stone-300 dark:border-stone-700"
+            :ui="{
+              tr: {
+                base: 'even:bg-stone-100 even:dark:bg-stone-950/50',
+              },
+              td: {
+                color: 'text-stone-700 dark:text-stone-200',
+              },
+            }"
+          >
+            <template #type-data="{ row, column }">
               <p class="truncate text-xs md:text-sm">{{ row[column.key] }}</p>
-          </template>
-          <template #name-data="{ row, column }">
-            <div @click="setDns(row)" class="flex max-w-[120px] cursor-pointer group sm:max-w-[200px] items-center gap-2 overflow-hidden">
-              <p
-                class="truncate group-hover:underline font-medium text-xs md:text-sm"
-              >
-                {{
-                  row[column.key] === currZoneName || !row[column.key].endsWith(currZoneName)
-                    ? row[column.key]
-                    : row[column.key].slice(0, -currZoneName.length - 1)
-                }}
-              </p>
-            </div>
-          </template>
-          <template #content-data="{ row, column }">
-            <div 
+            </template>
+            <template #name-data="{ row, column }">
+              <div
                 @click="setDns(row)"
-              class="flex max-w-[120px] group items-center gap-2 overflow-hidden cursor-pointer sm:max-w-[200px] md:max-w-[280px] lg:max-w-[360px]"
-            >
-              <p
-                class="font-medium group-hover:underline truncate text-xs md:text-sm"
-                >{{ row[column.key] }}</p
+                class="group flex max-w-[120px] cursor-pointer items-center gap-4 overflow-hidden sm:max-w-[200px]"
               >
-              <UTooltip v-if="row.proxied === true" text="Record is Proxied">
-                <UIcon name="i-clarity-circle-solid" class="text-orange-400 text-xs md:text-sm" />
-              </UTooltip>
-            </div>
-          </template>
-          <template #created_on-data="{ row, column }" v-show="isLargeScreen">
-            <div class="flex max-w-[200px] items-center truncate text-xs md:text-sm gap-2 overflow-hidden">
-              <p class="truncate">{{ moment(row[column.key]).format('DD/MM/YYYY') }}</p>
-            </div>
-          </template>
-          <template #modified_on-data="{ row, column }" v-show="isLargeScreen">
-            <div class="flex max-w-[200px] items-center truncate text-xs md:text-sm gap-2 overflow-hidden">
-              <p class="truncate">{{ moment(row[column.key]).format('DD/MM/YYYY') }}</p>
-            </div>
-          </template>
-          <template #actions-data="{ row }">
-            <UDropdown :items="items(row)">
-              <UButton
-                color="gray"
-                variant="ghost"
-                icon="i-heroicons-ellipsis-horizontal-20-solid"
-              />
-            </UDropdown>
-          </template>
-        </UTable>
-        <div class="mt-6 flex justify-end border-t border-gray-200 px-8 py-4 dark:border-gray-700">
-          <UPagination v-model="page" :page-count="pageCount" :total="filteredRecords.length" />
+                <p class="truncate text-xs font-medium group-hover:underline md:text-sm">
+                  {{
+                    row[column.key] === currZoneName || !row[column.key].endsWith(currZoneName)
+                      ? row[column.key]
+                      : row[column.key].slice(0, -currZoneName.length - 1)
+                  }}
+                </p>
+              </div>
+            </template>
+            <template #content-data="{ row, column }">
+              <div
+                @click="setDns(row)"
+                class="group flex max-w-[120px] cursor-pointer items-center gap-4 overflow-hidden sm:max-w-[200px] md:max-w-[280px] lg:max-w-[360px]"
+              >
+                <p class="truncate text-xs font-medium group-hover:underline md:text-sm">
+                  {{ row[column.key] }}
+                </p>
+                <UTooltip v-if="row.proxied === true" text="Record is Proxied">
+                  <UIcon name="i-clarity-circle-solid" class="text-xs text-orange-400 md:text-sm" />
+                </UTooltip>
+              </div>
+            </template>
+            <template #created_on-data="{ row, column }" v-show="isLargeScreen">
+              <div
+                class="flex max-w-[200px] items-center gap-4 overflow-hidden truncate text-xs md:text-sm"
+              >
+                <p class="truncate">{{ moment(row[column.key]).format('DD/MM/YYYY') }}</p>
+              </div>
+            </template>
+            <template #modified_on-data="{ row, column }" v-show="isLargeScreen">
+              <div
+                class="flex max-w-[200px] items-center gap-4 overflow-hidden truncate text-xs md:text-sm"
+              >
+                <p class="truncate">{{ moment(row[column.key]).format('DD/MM/YYYY') }}</p>
+              </div>
+            </template>
+            <template #actions-data="{ row }">
+              <UDropdown :items="items(row)">
+                <UButton
+                  color="gray"
+                  variant="ghost"
+                  icon="i-heroicons-ellipsis-horizontal-20-solid"
+                />
+              </UDropdown>
+            </template>
+          </UTable>
+          <div class="flex justify-end border-t border-gray-200 dark:border-gray-700">
+            <UPagination v-model="page" :page-count="pageCount" :total="filteredRecords.length" />
+          </div>
         </div>
       </div>
     </div>
@@ -162,15 +171,15 @@ const pageCount = 25;
 const router = useRouter();
 const selectedStatus = ref([]);
 
-const colorMode = useColorMode()
+const colorMode = useColorMode();
 const isDark = computed({
-  get () {
-    return colorMode.value === 'dark'
+  get() {
+    return colorMode.value === 'dark';
   },
-  set () {
-    colorMode.preference = colorMode.value === 'dark' ? 'light' : 'dark'
-  }
-})
+  set() {
+    colorMode.preference = colorMode.value === 'dark' ? 'light' : 'dark';
+  },
+});
 
 const dnsTypes = computed(() => {
   return dnsRecords.value
@@ -211,7 +220,7 @@ const columns = [
   },
 ];
 
-const selectedColumns = ref([...columns])
+const selectedColumns = ref([...columns]);
 
 const items = (row) => {
   return [
