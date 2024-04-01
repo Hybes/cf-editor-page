@@ -19,7 +19,7 @@
       <UButton @click="resetConfig()" variant="outline" color="red" class="">Logout</UButton>
     </div>
     <div class="flex min-h-[70vh] items-center justify-center gap-4">
-      <div class="flex w-full max-w-7xl flex-col items-center justify-center gap-4">
+      <div class="flex w-full max-w-7xl flex-col items-center justify-center gap-4 px-4 md:px-8">
         <h1 class="text-xl font-semibold">Zones</h1>
         <UInput
           icon="i-heroicons-magnifying-glass-20-solid"

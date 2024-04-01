@@ -8,8 +8,13 @@ export default defineEventHandler(async (event) => {
     bodyToSend.name = dnsName;
     bodyToSend.type = 'SRV';
   }
-  if (body.dns) {
-    bodyToSend.dns = body.dns;
+  if (body.dns.type !== 'SRV') {
+    bodyToSend.content = body.dns.content;
+    bodyToSend.name = body.dns.name;
+    bodyToSend.proxied = body.dns.proxied;
+    bodyToSend.type = body.dns.type;
+    bodyToSend.comment = body.dns.comment || '';
+    bodyToSend.ttl = body.dns.ttl || 1;
   }
   const response = await fetch(
     `https://api.cloudflare.com/client/v4/zones/${body.currZone}/dns_records/`,
