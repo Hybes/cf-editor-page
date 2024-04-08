@@ -57,6 +57,14 @@ export default defineNuxtConfig({
       link: [
         { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' },
       ],
+      script: [
+        {
+          hid: 'umami-script',
+          src: 'https://view.cnnct.uk/script.js',
+          async: true,
+          'data-website-id': '7911a836-2f1b-431a-903d-1d898a030724',
+        },
+      ],
     },
     pageTransition: { name: 'fade', mode: 'out-in' },
   },
@@ -76,7 +84,6 @@ export default defineNuxtConfig({
     '@nuxtjs/google-fonts',
     '@nuxt/image',
     '@nuxt/ui',
-    '@nuxtjs/plausible',
     'nuxt-icon'
   ],
   extends: [
@@ -93,9 +100,6 @@ export default defineNuxtConfig({
       UserAgent: '*',
       Disallow: ''
     }
-  },
-  plausible: {
-    apiHost: 'https://views.cnnct.uk',
   },
   css: ['~/assets/css/main.css'],
   postcss: {
