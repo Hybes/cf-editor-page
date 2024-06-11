@@ -113,18 +113,20 @@
             </template>
             <template #content-data="{ row, column }">
               <div
-                @click="setDns(row)"
                 class="group flex max-w-[120px] cursor-pointer items-center gap-4 overflow-hidden sm:max-w-[200px] md:max-w-[280px] lg:max-w-[360px]"
               >
-                <p class="truncate text-xs font-medium group-hover:underline md:text-sm">
+                <p
+                  @click="setDns(row)"
+                  class="truncate text-xs font-medium group-hover:underline md:text-sm"
+                >
                   {{ row[column.key] }}
                 </p>
-                <UTooltip v-if="row.proxied === true" text="Record is Proxied">
-                  <UIcon
-                    name="i-clarity-circle-solid"
-                    class="animate-pulse text-xs text-orange-400 md:text-sm"
-                  />
-                </UTooltip>
+                <UToggle
+                  v-if="row.proxiable"
+                  v-model="row.proxied"
+                  color="orange"
+                  @update:modelValue="() => updateProxyStatus(row)"
+                />
               </div>
             </template>
             <template #created_on-data="{ row, column }" v-show="isLargeScreen">
@@ -173,6 +175,45 @@ const page = ref(1);
 const pageCount = 25;
 const router = useRouter();
 const selectedStatus = ref([]);
+
+const updateProxyStatus = async (record) => {
+  const toast = useToast();
+  const response = await fetch('/api/update_record', {
+    method: 'POST',
+    body: JSON.stringify({
+      apiKey: apiKey.value,
+      currZone: currZone.value,
+      currDnsRecord: record.id,
+      dns: { ...record, proxied: record.proxied ? true : false },
+    }),
+  });
+  if (response.ok) {
+    const data = await response.json();
+    if (data.success) {
+      toast.add({
+        id: 'update-proxy-success' + Date.now(),
+        title: 'Update success',
+        description: 'Proxy status updated successfully',
+        icon: 'i-clarity-check-circle-solid',
+        timeout: 3000,
+        color: 'green',
+      });
+      await getDns(); // Refresh the DNS records
+    } else {
+      console.error(data.errors[0].message);
+      toast.add({
+        id: 'update-proxy-error' + Date.now(),
+        title: 'Update failed',
+        description: data.errors[0].message,
+        icon: 'i-clarity-warning-solid',
+        timeout: 3000,
+        color: 'red',
+      });
+    }
+  } else {
+    console.error('HTTP-Error: ' + response.status);
+  }
+};
 
 const colorMode = useColorMode();
 const isDark = computed({
