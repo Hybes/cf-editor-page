@@ -12,6 +12,7 @@ export default defineEventHandler(async (event) => {
     }
   );
   const data = await response.json();
+
   if (data.result_info.total_pages > 1) {
     for (let i = 2; i <= data.result_info.total_pages; i++) {
       const response = await fetch(

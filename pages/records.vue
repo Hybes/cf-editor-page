@@ -31,13 +31,79 @@
       </div>
       <div class="flex flex-col items-center justify-center gap-4 px-4 md:px-8">
         <div class="flex w-full max-w-7xl flex-col justify-center gap-4">
-          <NuxtLink
-            :to="'http://' + currZoneName"
-            external
-            target="_blank"
-            class="text-center text-2xl font-semibold text-stone-900 hover:underline dark:text-stone-100"
-            >{{ currZoneName }}</NuxtLink
-          >
+          <div class="flex items-center justify-center gap-2">
+            <NuxtLink
+              :to="'http://' + currZoneName"
+              external
+              target="_blank"
+              class="text-center text-2xl font-semibold text-stone-900 hover:underline dark:text-stone-100"
+              >{{ currZoneName }}</NuxtLink
+            >
+            <div class="relative">
+              <div @click="showDropdown = !showDropdown" class="cursor-pointer">
+                <UIcon
+                  name="i-clarity-lock-solid"
+                  v-if="zone.ssl?.value === 'strict'"
+                  class="h-6 w-6"
+                />
+                <UIcon
+                  name="i-clarity-lock-line"
+                  v-if="zone.ssl?.value === 'full'"
+                  class="h-6 w-6"
+                />
+                <UIcon
+                  name="i-clarity-curve-chart-solid"
+                  v-if="zone.ssl?.value === 'flexible'"
+                  class="h-6 w-6"
+                />
+                <UIcon
+                  name="i-clarity-no-access-solid"
+                  v-if="zone.ssl?.value === 'off'"
+                  class="h-6 w-6"
+                />
+              </div>
+              <div
+                v-if="showDropdown"
+                class="absolute right-0 z-10 mt-2 w-48 rounded border border-stone-600 bg-stone-300 shadow-lg dark:border-stone-400 dark:bg-stone-700"
+              >
+                <div
+                  @click="updateSslSetting('strict')"
+                  class="flex cursor-pointer items-center gap-2 px-4 py-2 hover:bg-gray-100 dark:hover:bg-stone-800"
+                  :class="{ 'bg-gray-200 dark:bg-gray-800': zone.ssl?.value === 'strict' }"
+                >
+                  <UIcon name="i-clarity-lock-solid" class="h-4 w-4" />
+                  Strict
+                </div>
+                <div class="border-t border-stone-400 dark:border-stone-600"></div>
+                <div
+                  @click="updateSslSetting('full')"
+                  class="flex cursor-pointer items-center gap-2 px-4 py-2 hover:bg-gray-100 dark:hover:bg-stone-800"
+                  :class="{ 'bg-gray-200 dark:bg-gray-800': zone.ssl?.value === 'full' }"
+                >
+                  <UIcon name="i-clarity-lock-line" class="h-4 w-4" />
+                  Full
+                </div>
+                <div class="border-t border-stone-400 dark:border-stone-600"></div>
+                <div
+                  @click="updateSslSetting('flexible')"
+                  class="flex cursor-pointer items-center gap-2 px-4 py-2 hover:bg-gray-100 dark:hover:bg-stone-800"
+                  :class="{ 'bg-gray-200 dark:bg-gray-800': zone.ssl?.value === 'flexible' }"
+                >
+                  <UIcon name="i-clarity-curve-chart-solid" class="h-4 w-4" />
+                  Flexible
+                </div>
+                <div class="border-t border-stone-400 dark:border-stone-600"></div>
+                <div
+                  @click="updateSslSetting('off')"
+                  class="flex cursor-pointer items-center gap-2 px-4 py-2 hover:bg-gray-100 dark:hover:bg-stone-800"
+                  :class="{ 'bg-gray-200 dark:bg-gray-800': zone.ssl?.value === 'off' }"
+                >
+                  <UIcon name="i-clarity-no-access-solid" class="h-4 w-4" />
+                  Off
+                </div>
+              </div>
+            </div>
+          </div>
           <div class="flex translate-x-[12px] flex-wrap items-center justify-center gap-4">
             <div
               class="group flex cursor-pointer items-center gap-4"
@@ -175,6 +241,7 @@ const page = ref(1);
 const pageCount = 25;
 const router = useRouter();
 const selectedStatus = ref([]);
+const showDropdown = ref(false);
 
 const updateProxyStatus = async (record) => {
   const toast = useToast();
@@ -203,6 +270,47 @@ const updateProxyStatus = async (record) => {
       console.error(data.errors[0].message);
       toast.add({
         id: 'update-proxy-error' + Date.now(),
+        title: 'Update failed',
+        description: data.errors[0].message,
+        icon: 'i-clarity-warning-solid',
+        timeout: 3000,
+        color: 'red',
+      });
+    }
+  } else {
+    console.error('HTTP-Error: ' + response.status);
+  }
+};
+
+const updateSslSetting = async (sslMode) => {
+  const toast = useToast();
+  console.log(sslMode);
+  console.log(currZone.value);
+  const response = await fetch('/api/update_ssl', {
+    method: 'POST',
+    body: JSON.stringify({
+      apiKey: apiKey.value,
+      currZone: currZone.value,
+      ssl: sslMode,
+    }),
+  });
+  if (response.ok) {
+    const data = await response.json();
+    if (data.success) {
+      toast.add({
+        id: 'update-ssl-success' + Date.now(),
+        title: 'Update success',
+        description: 'SSL status updated successfully',
+        icon: 'i-clarity-check-circle-solid',
+        timeout: 3000,
+        color: 'green',
+      });
+      showDropdown.value = false;
+      await getAll();
+    } else {
+      console.error(data.errors[0].message);
+      toast.add({
+        id: 'update-ssl-error' + Date.now(),
         title: 'Update failed',
         description: data.errors[0].message,
         icon: 'i-clarity-warning-solid',
@@ -317,8 +425,7 @@ onMounted(async () => {
   if (localStorage.getItem('cf-zone-id')) {
     currZone.value = localStorage.getItem('cf-zone-id');
     currZoneName.value = localStorage.getItem('cf-zone-name');
-    await getZone();
-    await getDns();
+    await getAll();
   } else {
     router.push('/');
   }
@@ -363,11 +470,16 @@ const getZone = async () => {
   if (response.ok) {
     const data = await response.json();
     zone.value = data.result;
-    loading.value = false;
   } else {
     console.error('HTTP-Error: ' + response.status);
-    loading.value = false;
   }
+};
+
+const getAll = async () => {
+  loading.value = true;
+  await Promise.all([getDns(), getZone()]);
+  console.log(zone.value);
+  loading.value = false;
 };
 
 const delDns = async (record) => {
