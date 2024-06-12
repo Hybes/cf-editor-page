@@ -31,6 +31,14 @@
           color="white"
           class="w-full md:w-1/2"
         />
+        <UButton
+          @click="getSsl()"
+          variant="outline"
+          color="blue"
+          :loading="loadingSsl"
+          :disabled="gotSSL"
+          >Get SSL Mode</UButton
+        >
         <div class="w-full">
           <UTable
             :rows="filteredZones"
@@ -50,6 +58,26 @@
           >
             <template #name-data="{ row }">
               <div class="flex items-center gap-4">
+                <UIcon
+                  name="i-clarity-lock-solid"
+                  v-if="row.ssl?.result?.value === 'strict'"
+                  class="h-6 w-6"
+                />
+                <UIcon
+                  name="i-clarity-lock-line"
+                  v-if="row.ssl?.result?.value === 'full'"
+                  class="h-6 w-6"
+                />
+                <UIcon
+                  name="i-clarity-curve-chart-solid"
+                  v-if="row.ssl?.result?.value === 'flexible'"
+                  class="h-6 w-6"
+                />
+                <UIcon
+                  name="i-clarity-no-access-solid"
+                  v-if="row.ssl?.result?.value === 'off'"
+                  class="h-6 w-6"
+                />
                 <UTooltip v-if="row.status === 'active' && row.paused !== true" text="Active">
                   <UIcon name="i-clarity-circle-solid" class="animate-pulse text-green-400" />
                 </UTooltip>
@@ -87,6 +115,8 @@ const apiKey = ref('');
 const zones = ref([]);
 const loading = ref(true);
 const searchQuery = ref('');
+const loadingSsl = ref(false);
+const gotSSL = ref(false);
 
 const columns = ref([
   {
@@ -160,6 +190,28 @@ const getZones = async () => {
   } else {
     console.error('HTTP-Error: ' + response.status);
     loading.value = false;
+  }
+};
+
+const getSsl = async () => {
+  loadingSsl.value = true;
+  const response = await fetch('/api/zones', {
+    method: 'POST',
+    body: JSON.stringify({
+      apiKey: apiKey.value,
+      getSsl: true,
+    }),
+  });
+  if (response.ok) {
+    const data = await response.json();
+    zones.value = data.result;
+    loading.value = false;
+    gotSSL.value = true;
+    loadingSsl.value = false;
+  } else {
+    console.error('HTTP-Error: ' + response.status);
+    loading.value = false;
+    loadingSsl.value = false;
   }
 };
 </script>
