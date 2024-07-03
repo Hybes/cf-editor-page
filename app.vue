@@ -1,8 +1,7 @@
 <template>
-  <SeoKit />
-  <div>
+  <div class="relative">
     <div v-if="loading">
-      <div class="flex h-screen w-screen flex-col items-center justify-center gap-4">
+      <div class="flex h-screen w-screen flex-col fixed bg-neutral-100 dark:bg-neutral-900 z-10 top-0 left-0 items-center justify-center gap-4">
         <div>
           <svg
             class="h-12 w-12 animate-spin"
@@ -23,7 +22,6 @@
         </div>
       </div>
     </div>
-    <div v-else>
       <NuxtPage />
       <UNotifications />
       <div class="mb-14 mt-8 text-center">
@@ -49,12 +47,10 @@
           <a href="https://connectdorset.com" target="_blank">Built by Connect</a>
         </p>
       </div>
-    </div>
   </div>
 </template>
 
 <script setup>
-const config = useRuntimeConfig();
 const loading = ref(true);
 const apiKey = ref('');
 const colorMode = useColorMode();
@@ -76,11 +72,6 @@ onMounted(() => {
     loading.value = false;
   }
 });
-
-const navigateTo = (id) => {
-  const element = document.querySelector(id);
-  element.scrollIntoView({ behavior: 'smooth' });
-};
 
 const resetConfig = () => {
   localStorage.removeItem('cf-api-key');

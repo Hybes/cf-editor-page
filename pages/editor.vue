@@ -120,6 +120,7 @@
               />
             </div>
           </div>
+
           <div class="mb-2 flex items-center justify-between" v-if="dns.type !== 'SRV'">
             <label
               @click="toggleEndpoint = !toggleEndpoint"
@@ -157,7 +158,7 @@
               @keydown.enter="saveDns()"
             />
           </div>
-          <div class="mb-2 flex items-center justify-between" v-if="dns.type === 'SRV'">
+          <div class="mb-2 flex items-center justify-between" v-if="dns.type === 'SRV' || 'MX'">
             <label for="priority" class="mr-2 w-24">Priority:</label>
             <UInput
               id="priority"

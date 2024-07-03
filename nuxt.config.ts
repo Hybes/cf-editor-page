@@ -68,44 +68,54 @@ export default defineNuxtConfig({
     },
     pageTransition: { name: 'fade', mode: 'out-in' },
   },
-  devtools: { enabled: true },
-  runtimeConfig: {
-    public: {
-      siteUrl: process.env.NUXT_PUBLIC_SITE_URL || 'https://dns.brth.uk',
-      siteName: "DNS Manager",
-      siteDescription: "API Key editor for Cloudflare DNS records",
-      language: 'en-GB'
-    }
+
+  site: {
+    name: 'DNS Manager',
+    description: 'API Key editor for Cloudflare DNS records',
+    url: 'https://dns.brth.uk',
+    image: '/og-image.png',
+    twitter: '@hybes',
+    lang: 'en-GB',
+    twitterImage: '/twitter.png',
+    themeColor: '#121212',
+    backgroundColor: '#121212',
   },
 
   modules: [
     '@nuxtjs/device',
     '@nuxtjs/robots',
-    '@nuxtjs/google-fonts',
     '@nuxt/image',
     '@nuxt/ui',
-    'nuxt-icon'
+    'nuxt-icon',
+    '@nuxtjs/seo',
+    '@nuxtjs/sitemap',
+    'nuxt-simple-robots',
+    'nuxt-og-image',
+    'nuxt-schema-org'
   ],
-  extends: [
-    'nuxt-seo-kit'
-  ],
+
   ui: {
     global: true,
     icons: [
       'clarity'
     ]
   },
+
   robots: {
     rules: {
       UserAgent: '*',
       Disallow: ''
     }
   },
+
   css: ['~/assets/css/main.css'],
+
   postcss: {
     plugins: {
       tailwindcss: {},
       autoprefixer: {},
     },
   },
+
+  compatibilityDate: '2024-07-03',
 })

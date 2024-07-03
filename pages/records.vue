@@ -284,8 +284,6 @@ const updateProxyStatus = async (record) => {
 
 const updateSslSetting = async (sslMode) => {
   const toast = useToast();
-  console.log(sslMode);
-  console.log(currZone.value);
   const response = await fetch('/api/update_ssl', {
     method: 'POST',
     body: JSON.stringify({
@@ -478,7 +476,6 @@ const getZone = async () => {
 const getAll = async () => {
   loading.value = true;
   await Promise.all([getDns(), getZone()]);
-  console.log(zone.value);
   loading.value = false;
 };
 
