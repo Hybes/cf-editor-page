@@ -107,7 +107,7 @@
           <div class="flex translate-x-[12px] flex-wrap items-center justify-center gap-4">
             <div
               class="group flex cursor-pointer items-center gap-4"
-              v-for="ns in zone.name_servers"
+              v-for="ns in zone.name_servers || []"
               @click="copyToClipboard(ns)"
             >
               <p class="font-bold italic text-stone-600 dark:text-stone-400">{{ ns }}</p>
@@ -234,7 +234,7 @@ const apiKey = ref('');
 const currZone = ref('');
 const currZoneName = ref('');
 const dnsRecords = ref([]);
-const zone = ref([]);
+const zone = ref({});
 const loading = ref(true);
 const searchQuery = ref('');
 const page = ref(1);
@@ -332,7 +332,9 @@ const isDark = computed({
 });
 
 const dnsTypes = computed(() => {
+  if (!dnsRecords.value) return [];
   return dnsRecords.value
+    .filter((record) => record && record.type)
     .map((record) => record.type)
     .filter((value, index, self) => self.indexOf(value) === index);
 });
@@ -400,13 +402,14 @@ const items = (row) => {
 const filteredRecords = computed(() => {
   if (selectedStatus.value.length > 0) {
     return dnsRecords.value.filter((record) => {
-      return selectedStatus.value.includes(record.type);
+      return record && selectedStatus.value.includes(record.type);
     });
   }
   return dnsRecords.value.filter((record) => {
     return (
-      record.name.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-      record.content.toLowerCase().includes(searchQuery.value.toLowerCase())
+      record &&
+      (record.name.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+        record.content.toLowerCase().includes(searchQuery.value.toLowerCase()))
     );
   });
 });

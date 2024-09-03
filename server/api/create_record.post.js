@@ -3,13 +3,15 @@ export default defineEventHandler(async (event) => {
   try {
     const body = JSON.parse(await readBody(event));
     const bodyToSend = {};
+
     if (body.data) {
       bodyToSend.data = body.data;
       const dnsName = body.data.service + '.' + body.data.proto + '.' + body.data.name;
       bodyToSend.name = dnsName;
       bodyToSend.type = 'SRV';
     }
-    if (body.dns.type !== 'SRV') {
+
+    if (body.dns && body.dns.type !== 'SRV') {
       bodyToSend.content = body.dns.content;
       bodyToSend.name = body.dns.name;
       bodyToSend.proxied = body.dns.proxied;
@@ -17,9 +19,11 @@ export default defineEventHandler(async (event) => {
       bodyToSend.comment = body.dns.comment || '';
       bodyToSend.ttl = Number.isInteger(body.dns.ttl) ? body.dns.ttl : Number(body.dns.ttl) || 1;
     }
-    if (body.dns.priority !== undefined) {
+
+    if (body.dns && body.dns.priority !== undefined) {
       bodyToSend.priority = Number(body.dns.priority) || 0;
     }
+
     const response = await fetch(
       `https://api.cloudflare.com/client/v4/zones/${body.currZone}/dns_records/`,
       {

@@ -2,6 +2,11 @@ import fetch from 'node-fetch';
 export default defineEventHandler(async (event) => {
   try {
     const body = JSON.parse(await readBody(event));
+
+    if (!body.dns || !body.dns.type) {
+      throw new Error("Invalid DNS data: 'type' is required");
+    }
+
     const bodyToSend = {
       content: body.dns.content,
       name: body.dns.name,
@@ -10,12 +15,14 @@ export default defineEventHandler(async (event) => {
       comment: body.dns.comment || '',
       ttl: Number.isInteger(body.dns.ttl) ? body.dns.ttl : Number(body.dns.ttl) || 1,
     };
+
     if (body.dns.data) {
       bodyToSend.data = body.dns.data;
     }
     if (body.dns.priority !== undefined) {
       bodyToSend.priority = Number(body.dns.priority) || 0;
     }
+
     const response = await fetch(
       `https://api.cloudflare.com/client/v4/zones/${body.currZone}/dns_records/${body.currDnsRecord}`,
       {
