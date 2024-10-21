@@ -176,7 +176,7 @@
               class="flex-grow"
             />
           </div>
-          <div class="mb-2 flex items-center justify-between" v-if="dns.type === 'SRV'">
+          <div class="mb-2 flex items-center justify-between" v-if="dns.type === 'SRV' || dns.type === 'MX'">
             <label for="priority" class="mr-2 w-24">Priority:</label>
             <UInput
               id="priority"
