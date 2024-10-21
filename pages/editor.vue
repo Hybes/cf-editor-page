@@ -18,7 +18,7 @@
       </div>
       <div v-else class="flex flex-col items-center">
         <div class="mt-4 flex gap-4">
-          <UButton v-for="p in presets" @click="loadPreset(p)" variant="outline" color="orange"
+          <UButton v-for="(p, index) in presets" :key="index" @click="loadPreset(p)" variant="outline" color="orange"
             >{{ p }}<span @click="delPreset(p)"><Icon name="mdi:delete" /></span
           ></UButton>
           <UButton @click="savePreset" variant="outline" color="blue">Save Preset</UButton>
@@ -28,7 +28,7 @@
           class="m-4 flex w-full flex-col justify-center gap-4 rounded p-4 text-center md:w-3/4 full:w-1/2"
         >
           <h2 class="mb-4 text-lg font-semibold">Edit DNS Record</h2>
-          <div class="mb-2 flex items-center justify-between" v-if="dns.type !== 'SRV'">
+          <div class="mb-2 flex items-center justify-between" v-if="dns.type && dns.type !== 'SRV'">
             <label for="name" class="mr-2 w-24">Name:</label>
             <UInput id="name" v-model="dns.name" placeholder="Name (Required)" class="flex-grow" />
           </div>
@@ -121,7 +121,7 @@
             </div>
           </div>
 
-          <div class="mb-2 flex items-center justify-between" v-if="dns.type !== 'SRV'">
+          <div class="mb-2 flex items-center justify-between" v-if="dns.type && dns.type !== 'SRV'">
             <label
               @click="toggleEndpoint = !toggleEndpoint"
               for="endpoint"
@@ -158,7 +158,7 @@
               @keydown.enter="saveDns()"
             />
           </div>
-          <div class="mb-2 flex items-center justify-between" v-if="dns.type === 'SRV' || 'MX'">
+          <div class="mb-2 flex items-center justify-between" v-if="dns.type === 'SRV' || dns.type === 'MX'">
             <label for="priority" class="mr-2 w-24">Priority:</label>
             <UInput
               id="priority"
@@ -215,8 +215,8 @@ const apiKey = ref('');
 const currZone = ref('');
 const currDns = ref('');
 const currDnsName = ref('');
-const dns = ref([]);
-const data = ref([]);
+const dns = ref({});
+const data = ref({});
 const loading = ref(true);
 const saving = ref('');
 const toggleEndpoint = ref(false);
@@ -234,8 +234,8 @@ const getDns = async () => {
   });
   if (response.ok) {
     const result = await response.json();
-    dns.value = result.result;
-    data.value = result.result.data;
+    dns.value = result.result || {};
+    data.value = result.result.data || {};
     loading.value = false;
   } else {
     console.error('HTTP-Error: ' + response.status);

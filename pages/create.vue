@@ -35,7 +35,7 @@
       </div>
       <div v-else class="flex flex-col items-center">
         <div class="mt-4 flex gap-4">
-          <UButton v-for="p in presets" @click="loadPreset(p)" variant="outline" color="orange"
+          <UButton v-for="p in presets" :key="p" @click="loadPreset(p)" variant="outline" color="orange"
             >{{ p }}<span @click="delPreset(p)"><Icon name="mdi:delete" /></span
           ></UButton>
           <UButton @click="savePreset" variant="outline" color="blue">Save Preset</UButton>
@@ -47,7 +47,7 @@
           <h2 class="mb-4 text-lg font-semibold">
             Creating DNS Record for <span class="text-blue-300">{{ zone.name }}</span>
           </h2>
-          <div class="mb-2 flex items-center justify-between" v-if="dns.type !== 'SRV'">
+          <div class="mb-2 flex items-center justify-between" v-if="dns?.type !== 'SRV'">
             <label for="name" class="mr-2 w-24">Name:</label>
             <UInput
               @keydown.enter="createDns()"
@@ -68,7 +68,7 @@
             >
             </USelect>
           </div>
-          <div class="flex w-full flex-col justify-center gap-4" v-if="dns.type === 'SRV'">
+          <div class="flex w-full flex-col justify-center gap-4" v-if="dns?.type === 'SRV'">
             <div class="mb-2 flex items-center justify-between">
               <label for="ttl" class="mr-2 w-24">Name:</label>
               <UInput
@@ -140,7 +140,7 @@
               />
             </div>
           </div>
-          <div class="mb-2 flex items-center justify-between" v-if="dns.type !== 'SRV'">
+          <div class="mb-2 flex items-center justify-between" v-if="dns?.type !== 'SRV'">
             <label
               @click="toggleEndpoint = !toggleEndpoint"
               for="endpoint"
@@ -188,7 +188,7 @@
           </div>
           <div
             class="mb-2 flex items-center justify-start"
-            v-if="dns.type === 'A' || dns.type === 'CNAME'"
+            v-if="dns?.type === 'A' || dns?.type === 'CNAME'"
           >
             <label for="proxied" class="mr-2 w-24">Proxied:</label>
             <UToggle @keydown.enter="createDns()" id="proxied" v-model="dns.proxied" />
