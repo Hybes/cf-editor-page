@@ -1,43 +1,28 @@
 <template>
   <div>
     <Head>
-      <Title>Records</Title>
+      <Title>DNS Records</Title>
     </Head>
     <div class="w-full">
       <div class="flex flex-row flex-wrap items-center justify-between gap-4 px-4 py-4 md:px-8">
         <div class="flex flex-row flex-wrap justify-center gap-4">
-          <UButton @click="clearZone()" variant="outline" icon="i-clarity-undo-line" to="/">
-            Back
+          <UButton variant="outline" icon="i-clarity-undo-line" to="/zones">
+            Back to Zones
           </UButton>
-          <UButton to="/create" variant="outline" color="green" icon="i-clarity-plus-circle-solid">
-            Create
+          <UButton :to="`/zones/${zoneId}/records/create`" variant="outline" color="green" icon="i-clarity-plus-circle-solid">
+            Create Record
           </UButton>
-        </div>
-        <div class="flex flex-row flex-wrap justify-center gap-4 px-4 md:px-8">
-          <ClientOnly>
-            <UButton
-              :icon="isDark ? 'i-heroicons-moon-20-solid' : 'i-heroicons-sun-20-solid'"
-              color="white"
-              variant="outline"
-              aria-label="Theme"
-              @click="isDark = !isDark"
-            />
-            <template #fallback>
-              <div class="h-8 w-8" />
-            </template>
-          </ClientOnly>
-          <UButton @click="resetConfig()" variant="outline" color="red">Logout</UButton>
         </div>
       </div>
       <div class="flex flex-col items-center justify-center gap-4 px-4 md:px-8">
         <div class="flex w-full max-w-7xl flex-col justify-center gap-4">
           <div class="flex items-center justify-center gap-2">
             <NuxtLink
-              :to="'http://' + currZoneName"
+              :to="'http://' + zoneName"
               external
               target="_blank"
               class="text-center text-2xl font-semibold text-stone-900 hover:underline dark:text-stone-100"
-              >{{ currZoneName }}</NuxtLink
+              >{{ zoneName }}</NuxtLink
             >
             <div class="relative">
               <div @click="showDropdown = !showDropdown" class="cursor-pointer">
@@ -172,15 +157,16 @@
             </template>
             <template #name-data="{ row, column }">
               <div
-                @click="setDns(row)"
+                @click="navigateToRecord(row.id)"
                 class="group flex max-w-[120px] cursor-pointer items-center gap-2 overflow-hidden sm:max-w-[200px]"
               >
                 <UIcon :name="getRecordTypeIcon(row.type)" class="h-4 w-4 text-gray-500" />
                 <p class="truncate text-xs font-medium group-hover:underline md:text-sm">
                   {{
-                    row[column.key] === currZoneName || !row[column.key].endsWith(currZoneName)
+                    row.type === 'SRV' ? formatSrvRecordName(row) :
+                    row[column.key] === zoneName || !row[column.key].endsWith(zoneName)
                       ? row[column.key]
-                      : row[column.key].slice(0, -currZoneName.length - 1)
+                      : row[column.key].slice(0, -zoneName.length - 1)
                   }}
                 </p>
               </div>
@@ -190,7 +176,7 @@
                 class="group flex max-w-[120px] items-center gap-4 overflow-hidden sm:max-w-[200px] md:max-w-[280px] lg:max-w-[360px]"
               >
                 <p
-                  @click="setDns(row)"
+                  @click="navigateToRecord(row.id)"
                   class="truncate text-xs font-medium group-hover:underline md:text-sm"
                 >
                   {{ formatContent(row) }}
@@ -238,18 +224,22 @@
 
 <script setup>
 import moment from 'moment';
+
+const route = useRoute();
+const router = useRouter();
+const zoneId = computed(() => route.params.zone_id);
 const apiKey = ref('');
-const currZone = ref('');
-const currZoneName = ref('');
+const zoneName = ref('');
 const dnsRecords = ref([]);
 const zone = ref({});
 const loading = ref(true);
 const searchQuery = ref('');
 const page = ref(1);
 const pageCount = 25;
-const router = useRouter();
 const selectedStatus = ref([]);
 const showDropdown = ref(false);
+const windowSize = useWindowSize();
+const isLargeScreen = computed(() => windowSize.width.value >= 768);
 
 const updateProxyStatus = async (record) => {
   const toast = useToast();
@@ -257,7 +247,7 @@ const updateProxyStatus = async (record) => {
     method: 'POST',
     body: JSON.stringify({
       apiKey: apiKey.value,
-      currZone: currZone.value,
+      currZone: zoneId.value,
       currDnsRecord: record.id,
       dns: { ...record, proxied: record.proxied ? true : false },
     }),
@@ -296,7 +286,7 @@ const updateSslSetting = async (sslMode) => {
     method: 'POST',
     body: JSON.stringify({
       apiKey: apiKey.value,
-      currZone: currZone.value,
+      currZone: zoneId.value,
       ssl: sslMode,
     }),
   });
@@ -388,7 +378,7 @@ const items = (row) => {
       {
         label: 'Edit',
         icon: 'i-heroicons-pencil-square-20-solid',
-        click: () => setDns(row),
+        click: () => navigateToRecord(row.id),
       },
       {
         label: row.proxiable ? 'Proxiable' : 'Not Proxiable',
@@ -406,9 +396,6 @@ const items = (row) => {
     ],
   ];
 };
-
-const { width } = useWindowSize();
-const isLargeScreen = computed(() => width.value >= 768);
 
 const filteredRecords = computed(() => {
   let records = dnsRecords.value || [];
@@ -437,20 +424,13 @@ const rows = computed(() => {
   return filteredRecords.value.slice(startIndex, endIndex);
 });
 
-onMounted(() => {
+onMounted(async () => {
   apiKey.value = localStorage.getItem('cf-api-key');
   if (!apiKey.value) {
     router.push('/login');
     return;
   }
-  
-  // Redirect to the new zone-based structure
-  if (localStorage.getItem('cf-zone-id')) {
-    const zoneId = localStorage.getItem('cf-zone-id');
-    router.push(`/zones/${zoneId}/records`);
-  } else {
-    router.push('/zones');
-  }
+  await getAll();
 });
 
 const getDns = async () => {
@@ -459,7 +439,7 @@ const getDns = async () => {
     method: 'POST',
     body: JSON.stringify({
       apiKey: apiKey.value,
-      currZone: currZone.value,
+      currZone: zoneId.value,
     }),
   });
   if (response.ok) {
@@ -473,7 +453,8 @@ const getDns = async () => {
         timeout: 3000,
         color: 'red',
       });
-      router.push('/');
+      router.push('/zones');
+      return;
     }
     dnsRecords.value = data.result;
   } else {
@@ -486,12 +467,13 @@ const getZone = async () => {
     method: 'POST',
     body: JSON.stringify({
       apiKey: apiKey.value,
-      currZone: currZone.value,
+      currZone: zoneId.value,
     }),
   });
   if (response.ok) {
     const data = await response.json();
     zone.value = data.result;
+    zoneName.value = data.result.name;
   } else {
     console.error('HTTP-Error: ' + response.status);
   }
@@ -509,7 +491,7 @@ const delDns = async (record) => {
     method: 'POST',
     body: JSON.stringify({
       apiKey: apiKey.value,
-      currZone: currZone.value,
+      currZone: zoneId.value,
       currDnsRecord: record.id,
     }),
   });
@@ -558,25 +540,17 @@ const preDel = (record) => {
   });
 };
 
-const setDns = (record) => {
-  localStorage.setItem('cf-dns-id', record.id);
-  localStorage.setItem('cf-dns-name', record.name);
-  router.push('/editor');
-};
-
-const clearZone = () => {
-  localStorage.removeItem('cf-zone-id');
-  localStorage.removeItem('cf-zone-name');
-  router.push('/');
-};
-
-const resetConfig = () => {
-  localStorage.removeItem('cf-api-key');
-  localStorage.removeItem('cf-zone-id');
-  localStorage.removeItem('cf-zone-name');
-  localStorage.removeItem('cf-dns-id');
-  localStorage.removeItem('cf-dns-name');
-  router.push('/login');
+const navigateToRecord = (recordId) => {
+  // Also store in localStorage for compatibility with older pages
+  localStorage.setItem('cf-dns-id', recordId);
+  
+  // Find record to store its name
+  const record = dnsRecords.value.find(r => r.id === recordId);
+  if (record) {
+    localStorage.setItem('cf-dns-name', record.name);
+  }
+  
+  router.push(`/zones/${zoneId.value}/records/${recordId}`);
 };
 
 const copyToClipboard = (text) => {
@@ -595,6 +569,14 @@ const copyToClipboard = (text) => {
 // Utility function to format content based on record type
 const formatContent = (record) => {
   if (record.type === 'SRV' && record.data) {
+    // For Minecraft SRV records, use a special format
+    if (record.name.includes('_minecraft._tcp')) {
+      // Extract just what follows after _minecraft._tcp.
+      const domainPart = record.name.split('_minecraft._tcp.')[1];
+      if (domainPart) {
+        return `${domainPart} → ${record.data.target}:${record.data.port}`;
+      }
+    }
     return `➡️ ${record.data.target}:${record.data.port} (Weight: ${record.data.weight})`;
   }
   return record.content;
@@ -625,4 +607,35 @@ const getRecordTypeIcon = (type) => {
   };
   return iconMap[type] || 'mdi:dns';
 };
-</script>
+
+// Format SRV record name for display
+const formatSrvRecordName = (record) => {
+  const name = record.name;
+  
+  // Handle Minecraft SRV
+  if (name.includes('_minecraft._tcp')) {
+    // Extract just what follows after _minecraft._tcp.
+    const domainPart = name.split('_minecraft._tcp.')[1];
+    if (domainPart) {
+      return domainPart;
+    }
+  }
+  
+  // Handle general SRV records
+  // Remove the service and proto parts, display them in a cleaner way
+  const parts = name.split('.');
+  
+  // Try to find service and proto parts (with leading underscores)
+  const serviceParts = parts.filter(p => p.startsWith('_'));
+  if (serviceParts.length >= 2) {
+    // Get domain by removing service parts
+    const domainParts = parts.filter(p => !p.startsWith('_'));
+    
+    // Create a cleaner display version
+    const service = serviceParts.map(p => p.replace('_', '')).join('.');
+    return `${service}.${domainParts.join('.')}`;
+  }
+  
+  return name;
+};
+</script> 

@@ -1,20 +1,36 @@
 <template>
   <div>
     <Head>
-      <Title>Editor</Title>
+      <Title>Edit DNS Record</Title>
     </Head>
     <div class="w-full">
       <UButton
-        @click="clearDns()"
         class="absolute left-8 top-4"
         variant="outline"
         icon="i-clarity-undo-line"
-        to="/records"
+        :to="`/zones/${zoneId}/records`"
       >
         Back
       </UButton>
       <div class="flex h-screen w-screen flex-col items-center justify-center" v-if="loading">
-        <Loader />
+        <div>
+          <svg
+            class="h-12 w-12 animate-spin"
+            xmlns="http://www.w3.org/2000/svg"
+            width="32"
+            height="32"
+            viewBox="0 0 24 24"
+          >
+            <path
+              fill="none"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M12 3a9 9 0 1 0 9 9"
+            />
+          </svg>
+        </div>
       </div>
       <div v-else class="flex flex-col items-center mb-20">
         <div class="mt-4 flex flex-wrap gap-4 justify-center">
@@ -29,7 +45,9 @@
           </UButton>
           <UButton @click="savePreset" variant="outline" color="blue" icon="i-heroicons-bookmark">Save Preset</UButton>
         </div>
-        <h1 class="mb-2 mt-6 text-center text-xl font-semibold">{{ dns.type === 'SRV' ? getSrvFullName() : dns.name }}</h1>
+        <h1 class="mb-2 mt-6 text-center text-xl font-semibold">
+          {{ dns.type === 'SRV' ? formatSrvDisplayName() : dns.name }}
+        </h1>
         <div
           class="m-4 flex w-full flex-col justify-center gap-4 rounded-xl border dark:border-gray-700 p-6 shadow-sm text-center md:w-3/4 lg:w-1/2"
         >
@@ -75,6 +93,7 @@
                   <UButton @click="loadSrvPreset('_ldap._tcp', 389)" size="xs" variant="soft" color="blue">LDAP</UButton>
                   <UButton @click="loadSrvPreset('_imap._tcp', 143)" size="xs" variant="soft" color="blue">IMAP</UButton>
                   <UButton @click="loadSrvPreset('_smtp._tcp', 25)" size="xs" variant="soft" color="blue">SMTP</UButton>
+                  <UButton @click="loadSrvPreset('_minecraft._tcp', 25565)" size="xs" variant="soft" color="green">Minecraft</UButton>
                 </div>
               </div>
               
@@ -131,8 +150,20 @@
                 <UInput
                   id="srv_preview"
                   type="text"
-                  :model-value="getSrvFullName()"
+                  :model-value="formatSrvDisplayName()"
                   placeholder="Preview"
+                  class="flex-grow text-gray-500"
+                  disabled
+                />
+              </div>
+              
+              <div class="mb-2 flex items-center justify-between">
+                <label for="srv_full_name" class="mr-2 w-24">Technical:</label>
+                <UInput
+                  id="srv_full_name"
+                  type="text"
+                  :model-value="getSrvFullName()"
+                  placeholder="Technical format"
                   class="flex-grow text-gray-500"
                   disabled
                 />
@@ -233,7 +264,7 @@
                 <UInput
                   id="srv_preview"
                   type="text"
-                  :model-value="getSrvFullName()"
+                  :model-value="formatSrvDisplayName()"
                   placeholder="Preview"
                   class="flex-grow text-gray-500"
                   disabled
@@ -332,16 +363,20 @@
 </template>
 
 <script setup>
+const route = useRoute();
+const router = useRouter();
+const zoneId = computed(() => route.params.zone_id);
+const recordId = computed(() => route.params.record_id);
+
 const apiKey = ref('');
-const currZone = ref('');
-const currDnsId = ref('');
 const dns = ref({});
 const data = ref({});
 const loading = ref(true);
-const saving = ref(false);
+const saving = ref('');
 const toggleEndpoint = ref(false);
-const router = useRouter();
 const presets = ref([]);
+const windowSize = useWindowSize();
+const isLargeScreen = computed(() => windowSize.width.value >= 768);
 
 // For SRV records
 const advancedSrvMode = ref(false);
@@ -363,8 +398,8 @@ const getDns = async () => {
     method: 'POST',
     body: JSON.stringify({
       apiKey: apiKey.value,
-      currZone: currZone.value,
-      currDnsRecord: currDnsId.value,
+      currZone: zoneId.value,
+      currDnsRecord: recordId.value,
     }),
   });
   if (response.ok) {
@@ -381,6 +416,16 @@ const getDns = async () => {
   } else {
     console.error('HTTP-Error: ' + response.status);
     loading.value = false;
+    const toast = useToast();
+    toast.add({
+      id: 'get-record-error' + Date.now(),
+      title: 'Error',
+      description: 'Failed to fetch DNS record',
+      icon: 'i-clarity-warning-solid',
+      timeout: 3000,
+      color: 'red',
+    });
+    router.push(`/zones/${zoneId.value}/records`);
   }
 };
 
@@ -422,18 +467,32 @@ const saveDns = async () => {
 
   const bodyToSend = {
     apiKey: apiKey.value,
-    currZone: currZone.value,
-    currDnsRecord: currDnsId.value,
+    currZone: zoneId.value,
+    currDnsRecord: recordId.value,
     dns: dns.value,
   };
+  
   if (dns.value.type === 'SRV') {
     bodyToSend.dns.data = data.value;
-    bodyToSend.dns.name = getSrvFullName();
+    
+    // For SRV records, we need to construct the full name with service and protocol
+    // But if it's an existing record with a properly formatted name, just use that
+    if (dns.value.name && dns.value.name.includes('._') && 
+        dns.value.name.includes(data.value.service) && 
+        dns.value.name.includes(`._${data.value.proto}`)) {
+      // The name is already in correct format
+      bodyToSend.dns.name = dns.value.name;
+    } else {
+      // Generate the new name
+      bodyToSend.dns.name = getSrvFullName();
+    }
   }
+  
   const response = await fetch('/api/update_record', {
     method: 'POST',
     body: JSON.stringify(bodyToSend),
   });
+  
   if (response.ok) {
     const data = await response.json();
     const toast = useToast();
@@ -480,14 +539,14 @@ const delDns = async (record) => {
     method: 'POST',
     body: JSON.stringify({
       apiKey: apiKey.value,
-      currZone: currZone.value,
+      currZone: zoneId.value,
       currDnsRecord: record.id,
     }),
   });
   if (response.ok) {
     const data = await response.json();
     if (data.success) {
-      router.push('/records');
+      router.push(`/zones/${zoneId.value}/records`);
       toast.add({
         id: 'delete-record-success' + Date.now(),
         title: 'Delete success',
@@ -570,14 +629,25 @@ const getPresets = () => {
   }
 };
 
-const clearDns = () => {
-  localStorage.removeItem('cf-dns-id');
-  localStorage.removeItem('cf-dns-name');
-};
-
 const getSrvFullName = () => {
+  // If this is an existing SRV record with a name that already has service and protocol parts,
+  // just return the original name to avoid modifying it
+  if (dns.value.name && dns.value.name.includes('._')) {
+    return dns.value.name;
+  }
+
   if (!data.value.service || !data.value.proto || !data.value.name) return '';
-  return `${data.value.service}.${data.value.proto}.${data.value.name}`;
+  
+  // Make sure we have the correct name for the SRV record
+  let name = data.value.name;
+  
+  // If this is a Minecraft record and the name starts with 'mc.', remove the prefix
+  // as it will be added by the service part
+  if (data.value.service === '_minecraft' && data.value.proto === 'tcp' && name.startsWith('mc.')) {
+    name = name.substring(3); // Remove 'mc.' prefix
+  }
+  
+  return `${data.value.service}.${data.value.proto}.${name}`;
 };
 
 // Add function to get icon based on record type
@@ -624,14 +694,56 @@ const updateSrvPreview = () => {
 
 // Detect service type on load
 const detectServiceType = () => {
-  if (data.value.service && data.value.proto) {
-    const serviceProto = `${data.value.service}._${data.value.proto}`;
-    const found = commonServices.find(s => s.value === serviceProto);
-    if (found) {
-      srvSimpleService.value = found.value;
-    } else {
-      srvSimpleService.value = 'custom';
-      advancedSrvMode.value = true;
+  if (dns.value.type === 'SRV') {
+    // Check if the record name is already in fully qualified format (_service._proto.name)
+    if (dns.value.name && dns.value.name.includes('._')) {
+      // Parse the full name format
+      const parts = dns.value.name.split('.');
+      
+      // Extract service and protocol parts (with leading underscores)
+      const serviceParts = parts.filter(p => p.startsWith('_'));
+      if (serviceParts.length >= 2) {
+        // Store these in data.value for display
+        data.value.service = serviceParts[0];
+        data.value.proto = serviceParts[1].substring(1); // Remove leading underscore
+        
+        // Extract the domain part (everything else)
+        const domainParts = parts.slice(serviceParts.length);
+        data.value.name = domainParts.join('.');
+        
+        // Special case for Minecraft
+        if (data.value.service === '_minecraft' && data.value.proto === 'tcp') {
+          srvSimpleService.value = '_minecraft._tcp';
+          return;
+        }
+        
+        // Find matching service in our common services
+        const serviceProto = `${data.value.service}._${data.value.proto}`;
+        const found = commonServices.find(s => s.value === serviceProto);
+        if (found) {
+          srvSimpleService.value = found.value;
+        } else {
+          srvSimpleService.value = 'custom';
+          advancedSrvMode.value = true;
+        }
+      }
+    } else if (data.value.service && data.value.proto) {
+      // Already in separate fields format
+      const serviceProto = `${data.value.service}._${data.value.proto}`;
+      
+      // Special case for Minecraft which might be using _minecraft._tcp
+      if (data.value.service === '_minecraft' && data.value.proto === 'tcp') {
+        srvSimpleService.value = '_minecraft._tcp';
+        return;
+      }
+      
+      const found = commonServices.find(s => s.value === serviceProto);
+      if (found) {
+        srvSimpleService.value = found.value;
+      } else {
+        srvSimpleService.value = 'custom';
+        advancedSrvMode.value = true;
+      }
     }
   }
 };
@@ -662,6 +774,23 @@ const getDnsTypeHelp = (type) => {
   return help[type] || 'Configure your DNS record settings below.';
 };
 
+// Format SRV display name for the title
+const formatSrvDisplayName = () => {
+  if (!data.value.service || !data.value.proto || !data.value.name) return '';
+  
+  // For display purposes, show a more user-friendly format that highlights the domain
+  const domainPart = data.value.name;
+  
+  // Special case for Minecraft
+  if (data.value.service === '_minecraft' && data.value.proto === 'tcp') {
+    return `${domainPart} → ${data.value.target}:${data.value.port}`;
+  }
+  
+  // Strip leading underscores for display
+  const cleanServicePart = `${data.value.service.replace(/_/g, '')}.${data.value.proto}`;
+  return `${cleanServicePart}.${domainPart}`;
+};
+
 onMounted(() => {
   apiKey.value = localStorage.getItem('cf-api-key');
   if (!apiKey.value) {
@@ -669,16 +798,11 @@ onMounted(() => {
     return;
   }
   
-  // Redirect to the new zone-based structure
-  if (localStorage.getItem('cf-zone-id') && localStorage.getItem('cf-dns-id')) {
-    const zoneId = localStorage.getItem('cf-zone-id');
-    const recordId = localStorage.getItem('cf-dns-id');
-    router.push(`/zones/${zoneId}/records/${recordId}`);
-  } else if (localStorage.getItem('cf-zone-id')) {
-    const zoneId = localStorage.getItem('cf-zone-id');
-    router.push(`/zones/${zoneId}/records`);
-  } else {
-    router.push('/zones');
-  }
+  // Store in localStorage for compatibility with older pages
+  localStorage.setItem('cf-zone-id', zoneId.value);
+  localStorage.setItem('cf-dns-id', recordId.value);
+  
+  getDns();
+  getPresets();
 });
-</script>
+</script> 

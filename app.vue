@@ -1,10 +1,10 @@
 <template>
-  <div class="relative">
+  <div class="relative min-h-screen">
     <div v-if="loading">
       <div class="flex h-screen w-screen flex-col fixed bg-neutral-100 dark:bg-neutral-900 z-10 top-0 left-0 items-center justify-center gap-4">
-        <div>
+        <div class="flex flex-col items-center gap-4">
           <svg
-            class="h-12 w-12 animate-spin"
+            class="h-16 w-16 animate-spin text-blue-500"
             xmlns="http://www.w3.org/2000/svg"
             width="32"
             height="32"
@@ -19,13 +19,17 @@
               d="M12 3a9 9 0 1 0 9 9"
             />
           </svg>
+          <p class="text-lg font-medium">Loading Cloudflare DNS Editor...</p>
         </div>
       </div>
     </div>
-      <NuxtPage />
-      <UNotifications />
-      <div class="mb-14 mt-8 text-center">
-        <div class="flex flex-col items-center justify-center gap-4">
+
+    <NuxtPage />
+    <UNotifications />
+    
+    <footer class="mt-8 pb-8 px-4 text-center">
+      <div class="flex flex-col items-center justify-center gap-4">
+        <div class="flex flex-wrap gap-3 justify-center">
           <ClientOnly>
             <UButton
               :icon="isDark ? 'i-heroicons-moon-20-solid' : 'i-heroicons-sun-20-solid'"
@@ -39,14 +43,18 @@
               <div class="h-8 w-8" />
             </template>
           </ClientOnly>
-          <UButton class="my-2" color="red" variant="outline" @click="resetConfig()"
+          <UButton color="red" variant="outline" icon="i-heroicons-arrow-right-on-rectangle" @click="resetConfig()"
             >Logout</UButton
           >
         </div>
-        <p class="my-2 text-sm opacity-60 hover:opacity-80">
-          <a href="https://connectdorset.com" target="_blank">Built by Connect</a>
+        <p class="mt-4 text-sm opacity-60 hover:opacity-80">
+          <a href="https://connectdorset.com" target="_blank" class="flex items-center justify-center gap-2">
+            <span>Built by Connect</span>
+            <UIcon name="i-heroicons-arrow-top-right-on-square" class="h-4 w-4" />
+          </a>
         </p>
       </div>
+    </footer>
   </div>
 </template>
 
@@ -64,13 +72,16 @@ const isDark = computed({
 });
 
 onMounted(() => {
-  apiKey.value = localStorage.getItem('cf-api-key');
-  if (apiKey.value) {
-    loading.value = false;
-  } else {
-    useRouter().push('/login');
-    loading.value = false;
-  }
+  // Simulate a minimum loading time for better UX
+  setTimeout(() => {
+    apiKey.value = localStorage.getItem('cf-api-key');
+    if (apiKey.value) {
+      loading.value = false;
+    } else {
+      useRouter().push('/login');
+      loading.value = false;
+    }
+  }, 800);
 });
 
 const resetConfig = () => {
@@ -79,7 +90,9 @@ const resetConfig = () => {
   localStorage.removeItem('cf-zone-name');
   localStorage.removeItem('cf-dns-id');
   localStorage.removeItem('cf-dns-name');
-  useRouter().push('/login');
+  
+  const router = useRouter();
+  router.push('/login');
 };
 </script>
 

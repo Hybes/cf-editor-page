@@ -1,20 +1,36 @@
 <template>
   <div>
     <Head>
-      <Title>Editor</Title>
+      <Title>Create DNS Record</Title>
     </Head>
     <div class="w-full">
       <UButton
-        @click="clearDns()"
         class="absolute left-8 top-4"
         variant="outline"
         icon="i-clarity-undo-line"
-        to="/records"
+        :to="`/zones/${zoneId}/records`"
       >
         Back
       </UButton>
       <div class="flex h-screen w-screen flex-col items-center justify-center" v-if="loading">
-        <Loader />
+        <div>
+          <svg
+            class="h-12 w-12 animate-spin"
+            xmlns="http://www.w3.org/2000/svg"
+            width="32"
+            height="32"
+            viewBox="0 0 24 24"
+          >
+            <path
+              fill="none"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M12 3a9 9 0 1 0 9 9"
+            />
+          </svg>
+        </div>
       </div>
       <div v-else class="flex flex-col items-center mb-20">
         <div class="mt-4 flex flex-wrap gap-4 justify-center">
@@ -29,25 +45,38 @@
           </UButton>
           <UButton @click="savePreset" variant="outline" color="blue" icon="i-heroicons-bookmark">Save Preset</UButton>
         </div>
-        <h1 class="mb-2 mt-6 text-center text-xl font-semibold">{{ dns.type === 'SRV' ? getSrvFullName() : dns.name }}</h1>
+        <h1 class="mb-2 mt-6 text-center text-xl font-semibold">{{ zone.name }}</h1>
         <div
           class="m-4 flex w-full flex-col justify-center gap-4 rounded-xl border dark:border-gray-700 p-6 shadow-sm text-center md:w-3/4 lg:w-1/2"
         >
           <h2 class="mb-2 text-lg font-semibold flex items-center justify-center gap-2">
-            <Icon :name="getRecordTypeIcon()" class="text-blue-500" /> Edit DNS Record
+            <Icon name="mdi:dns" class="text-blue-500" /> Create DNS Record
           </h2>
-          <div class="mb-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 text-sm" v-if="dns.type">
+          <div class="mb-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 text-sm">
             <div class="flex items-start">
               <UIcon name="i-heroicons-information-circle" class="mr-2 mt-0.5 flex-shrink-0" />
               <div>
-                <p class="font-medium">{{ getDnsTypeDescription(dns.type) }}</p>
-                <p class="mt-1">{{ getDnsTypeHelp(dns.type) }}</p>
+                <p class="font-medium">DNS Record Types:</p>
+                <ul class="list-disc list-inside mt-1 space-y-1">
+                  <li><span class="font-medium">A</span>: Maps a domain to an IPv4 address (e.g., 192.168.1.1)</li>
+                  <li><span class="font-medium">CNAME</span>: Creates an alias pointing to another domain</li>
+                  <li><span class="font-medium">MX</span>: Directs email to a mail server</li>
+                  <li><span class="font-medium">TXT</span>: Stores text information (often for verification)</li>
+                  <li><span class="font-medium">SRV</span>: Maps services to specific servers and ports</li>
+                </ul>
               </div>
             </div>
           </div>
-          <div class="mb-2 flex items-center justify-between" v-if="dns.type && dns.type !== 'SRV'">
+          <div class="mb-2 flex items-center justify-between" v-if="dns.type !== 'SRV'">
             <label for="name" class="mr-2 w-24">Name:</label>
-            <UInput id="name" v-model="dns.name" placeholder="Name (Required)" class="flex-grow" />
+            <UInput
+              @keydown.enter="createDns()"
+              id="name"
+              type="text"
+              v-model="dns.name"
+              placeholder="Name (Required)"
+              class="flex-grow"
+            />
           </div>
           <div class="mb-2 flex items-center justify-between">
             <label for="type-select" class="mr-2 w-24">Type:</label>
@@ -56,7 +85,8 @@
               v-model="dns.type"
               class="type-select flex-grow uppercase"
               :options="['A', 'CNAME', 'MX', 'SRV', 'TXT']"
-            />
+            >
+            </USelect>
           </div>
           <div class="flex w-full flex-col justify-center gap-4" v-if="dns.type === 'SRV'">
             <div class="mb-4 flex items-center justify-center">
@@ -75,6 +105,7 @@
                   <UButton @click="loadSrvPreset('_ldap._tcp', 389)" size="xs" variant="soft" color="blue">LDAP</UButton>
                   <UButton @click="loadSrvPreset('_imap._tcp', 143)" size="xs" variant="soft" color="blue">IMAP</UButton>
                   <UButton @click="loadSrvPreset('_smtp._tcp', 25)" size="xs" variant="soft" color="blue">SMTP</UButton>
+                  <UButton @click="loadSrvPreset('_minecraft._tcp', 25565)" size="xs" variant="soft" color="green">Minecraft</UButton>
                 </div>
               </div>
               
@@ -90,39 +121,36 @@
               </div>
               
               <div class="mb-2 flex items-center justify-between">
-                <label for="srv_name" class="mr-2 w-24">Name:</label>
+                <label for="srv_simple_name" class="mr-2 w-24">Name:</label>
                 <UInput
-                  id="srv_name"
+                  id="srv_simple_name"
                   type="text"
                   v-model="data.name"
                   placeholder="Hostname or subdomain"
                   class="flex-grow"
                   @update:modelValue="updateSrvPreview"
-                  @keydown.enter="saveDns()"
                 />
               </div>
               
               <div class="mb-2 flex items-center justify-between">
-                <label for="srv_target" class="mr-2 w-24">Target:</label>
+                <label for="srv_simple_target" class="mr-2 w-24">Target:</label>
                 <UInput
-                  id="srv_target"
+                  id="srv_simple_target"
                   type="text"
                   v-model="data.target"
                   placeholder="Target hostname"
                   class="flex-grow"
-                  @keydown.enter="saveDns()"
                 />
               </div>
               
               <div class="mb-2 flex items-center justify-between">
-                <label for="srv_port" class="mr-2 w-24">Port:</label>
+                <label for="srv_simple_port" class="mr-2 w-24">Port:</label>
                 <UInput
-                  id="srv_port"
+                  id="srv_simple_port"
                   type="number"
                   v-model="data.port"
                   placeholder="Port number"
                   class="flex-grow"
-                  @keydown.enter="saveDns()"
                 />
               </div>
               
@@ -131,8 +159,20 @@
                 <UInput
                   id="srv_preview"
                   type="text"
-                  :model-value="getSrvFullName()"
+                  :model-value="formatSrvDisplayName()"
                   placeholder="Preview"
+                  class="flex-grow text-gray-500"
+                  disabled
+                />
+              </div>
+              
+              <div class="mb-2 flex items-center justify-between">
+                <label for="srv_full_name" class="mr-2 w-24">Technical:</label>
+                <UInput
+                  id="srv_full_name"
+                  type="text"
+                  :model-value="getSrvFullName()"
+                  placeholder="Technical format"
                   class="flex-grow text-gray-500"
                   disabled
                 />
@@ -157,7 +197,6 @@
                   placeholder="Name"
                   class="flex-grow"
                   @update:modelValue="updateSrvPreview"
-                  @keydown.enter="saveDns()"
                 />
               </div>
               <div class="mb-2 flex items-center justify-between">
@@ -169,7 +208,6 @@
                   placeholder="Service"
                   class="flex-grow"
                   @update:modelValue="updateSrvPreview"
-                  @keydown.enter="saveDns()"
                 />
               </div>
               <div class="mb-2 flex items-center justify-between">
@@ -181,7 +219,6 @@
                   placeholder="Proto"
                   class="flex-grow"
                   @update:modelValue="updateSrvPreview"
-                  @keydown.enter="saveDns()"
                 />
               </div>
               <div class="mb-2 flex items-center justify-between">
@@ -192,7 +229,6 @@
                   v-model="data.target"
                   placeholder="Target"
                   class="flex-grow"
-                  @keydown.enter="saveDns()"
                 />
               </div>
               <div class="mb-2 flex items-center justify-between">
@@ -203,7 +239,6 @@
                   v-model="data.port"
                   placeholder="Port"
                   class="flex-grow"
-                  @keydown.enter="saveDns()"
                 />
               </div>
               <div class="mb-2 flex items-center justify-between">
@@ -214,7 +249,6 @@
                   v-model="data.priority"
                   placeholder="Priority"
                   class="flex-grow"
-                  @keydown.enter="saveDns()"
                 />
               </div>
               <div class="mb-2 flex items-center justify-between">
@@ -225,7 +259,6 @@
                   v-model="data.weight"
                   placeholder="Weight"
                   class="flex-grow"
-                  @keydown.enter="saveDns()"
                 />
               </div>
               <div class="mb-2 flex items-center justify-between">
@@ -233,25 +266,34 @@
                 <UInput
                   id="srv_preview"
                   type="text"
-                  :model-value="getSrvFullName()"
+                  :model-value="formatSrvDisplayName()"
                   placeholder="Preview"
+                  class="flex-grow text-gray-500"
+                  disabled
+                />
+              </div>
+              <div class="mb-2 flex items-center justify-between">
+                <label for="srv_full_name" class="mr-2 w-24">Technical:</label>
+                <UInput
+                  id="srv_full_name"
+                  type="text"
+                  :model-value="getSrvFullName()"
+                  placeholder="Technical format"
                   class="flex-grow text-gray-500"
                   disabled
                 />
               </div>
             </div>
           </div>
-
-          <div class="mb-2 flex items-center justify-between" v-if="dns.type && dns.type !== 'SRV'">
+          <div class="mb-2 flex items-center justify-between" v-if="dns.type !== 'SRV'">
             <label
               @click="toggleEndpoint = !toggleEndpoint"
               for="endpoint"
               class="mr-2 w-24 cursor-pointer"
-              @keydown.enter="saveDns()"
               >Endpoint:</label
             >
             <UInput
-              @keydown.enter="saveDns()"
+              @keydown.enter="createDns()"
               v-if="!toggleEndpoint"
               id="endpoint"
               type="text"
@@ -260,7 +302,7 @@
               class="flex-grow"
             />
             <textarea
-              @keydown.enter="saveDns()"
+              @keydown.enter="createDns()"
               v-else
               id="endpoint"
               v-model="dns.content"
@@ -271,12 +313,12 @@
           <div class="mb-2 flex items-center justify-between">
             <label for="ttl" class="mr-2 w-24">TTL:</label>
             <UInput
+              @keydown.enter="createDns()"
               id="ttl"
               type="text"
               v-model="dns.ttl"
               placeholder="TTL (Leave blank or set to 1 for auto TTL)"
               class="flex-grow"
-              @keydown.enter="saveDns()"
             />
           </div>
           <div class="mb-2 flex items-center justify-between" v-if="dns.type === 'SRV' || dns.type === 'MX'">
@@ -287,42 +329,36 @@
               v-model="dns.priority"
               placeholder="Priority"
               class="flex-grow"
-              @keydown.enter="saveDns()"
             />
           </div>
-          <div class="mb-2 flex items-center justify-start" v-if="dns.proxiable === true">
+          <div
+            class="mb-2 flex items-center justify-start"
+            v-if="dns.type === 'A' || dns.type === 'CNAME'"
+          >
             <label for="proxied" class="mr-2 w-24">Proxied:</label>
-            <UToggle id="proxied" v-model="dns.proxied" />
+            <UToggle @keydown.enter="createDns()" id="proxied" v-model="dns.proxied" />
           </div>
           <div class="mb-2 flex items-center justify-between">
             <label for="comment" class="mr-2 w-24">Comment:</label>
             <UInput
+              @keydown.enter="createDns()"
               id="comment"
               type="text"
               v-model="dns.comment"
               placeholder="Comment"
               class="flex-grow"
-              @keydown.enter="saveDns()"
             />
           </div>
-          <div class="flex justify-center gap-4">
+          <div>
             <UButton
               class="mt-4 px-6"
               color="green"
               variant="outline"
               :disabled="saving === 'progress'"
               :class="{ 'cursor-not-allowed bg-opacity-50': saving === 'progress' }"
-              @click="saveDns"
+              @click="createDns()"
               type="button"
-              >Save</UButton
-            >
-            <UButton
-              class="mt-4 px-6"
-              color="red"
-              variant="outline"
-              @click="preDel(dns)"
-              type="button"
-              >Delete</UButton
+              >Create</UButton
             >
           </div>
         </div>
@@ -332,16 +368,26 @@
 </template>
 
 <script setup>
+const route = useRoute();
+const router = useRouter();
+const zoneId = computed(() => route.params.zone_id);
 const apiKey = ref('');
-const currZone = ref('');
-const currDnsId = ref('');
-const dns = ref({});
+const dns = ref({
+  name: '',
+  type: 'CNAME',
+  content: '',
+  ttl: '',
+  proxied: false,
+  comment: '',
+});
 const data = ref({});
 const loading = ref(true);
-const saving = ref(false);
+const saving = ref('');
 const toggleEndpoint = ref(false);
-const router = useRouter();
+const zone = ref({});
 const presets = ref([]);
+const windowSize = useWindowSize();
+const isLargeScreen = computed(() => windowSize.width.value >= 768);
 
 // For SRV records
 const advancedSrvMode = ref(false);
@@ -358,35 +404,27 @@ const commonServices = [
   { label: 'Custom', value: 'custom' }
 ];
 
-const getDns = async () => {
-  const response = await fetch('/api/dns_record', {
-    method: 'POST',
-    body: JSON.stringify({
-      apiKey: apiKey.value,
-      currZone: currZone.value,
-      currDnsRecord: currDnsId.value,
-    }),
-  });
-  if (response.ok) {
-    const result = await response.json();
-    dns.value = result.result || {};
-    data.value = result.result.data || {};
-    
-    // Set up SRV mode and detect service type
-    if (dns.value.type === 'SRV') {
-      detectServiceType();
-    }
-    
-    loading.value = false;
-  } else {
-    console.error('HTTP-Error: ' + response.status);
-    loading.value = false;
+onMounted(() => {
+  apiKey.value = localStorage.getItem('cf-api-key');
+  if (!apiKey.value) {
+    router.push('/login');
+    return;
   }
-};
+  
+  // Store zone ID in localStorage for compatibility with older pages
+  localStorage.setItem('cf-zone-id', zoneId.value);
+  
+  getZone();
+  getPresets();
+});
 
-const saveDns = async () => {
+const createDns = async () => {
   saving.value = 'progress';
-
+  const bodyToSend = {
+    apiKey: apiKey.value,
+    currZone: zoneId.value,
+  };
+  
   // Basic validation
   if (dns.value.type === 'SRV') {
     if (!data.value.service || !data.value.proto || !data.value.name || !data.value.target) {
@@ -402,60 +440,56 @@ const saveDns = async () => {
       saving.value = '';
       return;
     }
+    
     // Convert numeric fields to numbers
     data.value.port = Number(data.value.port);
-    data.value.weight = Number(data.value.weight);
-    data.value.priority = Number(data.value.priority);
-  } else if (!dns.value.name || !dns.value.content) {
-    const toast = useToast();
-    toast.add({
-      id: 'validation-error' + Date.now(),
-      title: 'Validation Error',
-      description: 'Please fill in all required fields',
-      icon: 'i-clarity-warning-solid',
-      timeout: 3000,
-      color: 'red',
-    });
-    saving.value = '';
-    return;
+    data.value.weight = Number(data.value.weight || 10);
+    data.value.priority = Number(data.value.priority || 1);
+    
+    bodyToSend.data = data.value;
+  } else {
+    if (!dns.value.name || !dns.value.content) {
+      const toast = useToast();
+      toast.add({
+        id: 'validation-error' + Date.now(),
+        title: 'Validation Error',
+        description: 'Please fill in all required fields',
+        icon: 'i-clarity-warning-solid',
+        timeout: 3000,
+        color: 'red',
+      });
+      saving.value = '';
+      return;
+    }
+    
+    bodyToSend.dns = dns.value;
   }
-
-  const bodyToSend = {
-    apiKey: apiKey.value,
-    currZone: currZone.value,
-    currDnsRecord: currDnsId.value,
-    dns: dns.value,
-  };
-  if (dns.value.type === 'SRV') {
-    bodyToSend.dns.data = data.value;
-    bodyToSend.dns.name = getSrvFullName();
-  }
-  const response = await fetch('/api/update_record', {
+  
+  const response = await fetch('/api/create_record', {
     method: 'POST',
     body: JSON.stringify(bodyToSend),
   });
+  
   if (response.ok) {
     const data = await response.json();
     const toast = useToast();
     if (data.success === true) {
       saving.value = 'success';
       toast.add({
-        id: 'update-record-success' + Date.now(),
-        title: 'Update success',
-        description: 'Record updated successfully',
+        id: 'create-record-success' + Date.now(),
+        title: 'Create success',
+        description: 'Record created successfully',
         icon: 'i-clarity-check-circle-solid',
         timeout: 3000,
         color: 'green',
       });
-      setTimeout(() => {
-        saving.value = '';
-      }, 3000);
+      router.push(`/zones/${zoneId.value}/records`);
     } else {
       saving.value = 'error';
       console.error(data.errors[0].message);
       toast.add({
-        id: 'update-record-error' + Date.now(),
-        title: 'Update failed',
+        id: 'create-record-error' + Date.now(),
+        title: 'Create failed',
         description: data.errors[0].message,
         icon: 'i-clarity-warning-solid',
         timeout: 3000,
@@ -474,40 +508,44 @@ const saveDns = async () => {
   }
 };
 
-const delDns = async (record) => {
-  const toast = useToast();
-  const response = await fetch('/api/delete_record', {
+const getZone = async () => {
+  const response = await fetch('/api/zone', {
     method: 'POST',
     body: JSON.stringify({
       apiKey: apiKey.value,
-      currZone: currZone.value,
-      currDnsRecord: record.id,
+      currZone: zoneId.value,
     }),
   });
   if (response.ok) {
     const data = await response.json();
     if (data.success) {
-      router.push('/records');
+      zone.value = data.result;
+      loading.value = false;
+    } else {
+      const toast = useToast();
       toast.add({
-        id: 'delete-record-success' + Date.now(),
-        title: 'Delete success',
-        description: 'Record deleted successfully',
-        icon: 'i-clarity-check-circle-solid',
+        id: 'get-zone-error' + Date.now(),
+        title: 'Error',
+        description: 'Failed to fetch zone information',
+        icon: 'i-clarity-warning-solid',
         timeout: 3000,
-        color: 'green',
+        color: 'red',
       });
+      router.push('/zones');
     }
   } else {
     console.error('HTTP-Error: ' + response.status);
+    loading.value = false;
   }
 };
 
 const savePreset = () => {
   const preset = prompt('Enter a name for this preset');
   if (preset) {
-    const { created_on, id, locked, meta, modified_on, zone_id, zone_name, name, ...rest } =
-      dns.value;
-    localStorage.setItem('cf-dns-preset-' + preset, JSON.stringify(rest));
+    localStorage.setItem('cf-dns-preset-' + preset, JSON.stringify({
+      ...dns.value,
+      data: data.value
+    }));
   }
   getPresets();
 };
@@ -515,7 +553,21 @@ const savePreset = () => {
 const loadPreset = (preset) => {
   const presetData = JSON.parse(localStorage.getItem('cf-dns-preset-' + preset));
   if (presetData) {
-    dns.value = { ...dns.value, ...presetData };
+    if (presetData.data) {
+      // If there's a data object in the preset, spread its properties into data.value
+      data.value = { ...data.value, ...presetData.data };
+      // Set SRV mode if needed
+      if (presetData.type === 'SRV') {
+        dns.value.type = 'SRV';
+        detectServiceType();
+      }
+      // Remove the data property from presetData to avoid duplication
+      const { data: _, ...rest } = presetData;
+      dns.value = { ...dns.value, ...rest };
+    } else {
+      // Spread the remaining properties of presetData into dns.value
+      dns.value = { ...dns.value, ...presetData };
+    }
   } else {
     console.error('Preset not found:', preset);
   }
@@ -524,35 +576,6 @@ const loadPreset = (preset) => {
 const delPreset = (preset) => {
   localStorage.removeItem('cf-dns-preset-' + preset);
   getPresets();
-};
-
-const preDel = (record) => {
-  const toast = useToast();
-  toast.add({
-    id: 'delete-record' + Date.now(),
-    title: 'Delete record',
-    description: 'Are you sure you want to delete this record?',
-    icon: 'i-clarity-warning-solid',
-    timeout: 3000,
-    color: 'red',
-    actions: [
-      {
-        label: 'Delete',
-        color: 'red',
-        click: () => {
-          delDns(record);
-          toast.remove('delete-record' + Date.now());
-        },
-      },
-      {
-        label: 'Cancel',
-        color: 'white',
-        click: () => {
-          toast.remove('delete-record' + Date.now());
-        },
-      },
-    ],
-  });
 };
 
 const getPresets = () => {
@@ -568,28 +591,6 @@ const getPresets = () => {
       }
     }
   }
-};
-
-const clearDns = () => {
-  localStorage.removeItem('cf-dns-id');
-  localStorage.removeItem('cf-dns-name');
-};
-
-const getSrvFullName = () => {
-  if (!data.value.service || !data.value.proto || !data.value.name) return '';
-  return `${data.value.service}.${data.value.proto}.${data.value.name}`;
-};
-
-// Add function to get icon based on record type
-const getRecordTypeIcon = () => {
-  const iconMap = {
-    'A': 'mdi:alpha-a-circle',
-    'CNAME': 'mdi:alpha-c-circle',
-    'MX': 'mdi:email',
-    'SRV': 'mdi:server',
-    'TXT': 'mdi:text-box'
-  };
-  return iconMap[dns.value.type] || 'mdi:dns';
 };
 
 // Helper to load SRV presets
@@ -619,13 +620,21 @@ const updateSrvFromSimple = () => {
 
 // Update SRV preview
 const updateSrvPreview = () => {
-  // Function called by input updates to trigger reactivity
+  // This function is called by input handlers to trigger reactivity
 };
 
 // Detect service type on load
 const detectServiceType = () => {
   if (data.value.service && data.value.proto) {
+    // Format with underscore for proper comparison
     const serviceProto = `${data.value.service}._${data.value.proto}`;
+    
+    // Special case for Minecraft which might be using _minecraft._tcp
+    if (data.value.service === '_minecraft' && data.value.proto === 'tcp') {
+      srvSimpleService.value = '_minecraft._tcp';
+      return;
+    }
+    
     const found = commonServices.find(s => s.value === serviceProto);
     if (found) {
       srvSimpleService.value = found.value;
@@ -636,49 +645,36 @@ const detectServiceType = () => {
   }
 };
 
-// Add DNS type descriptions
-const getDnsTypeDescription = (type) => {
-  const descriptions = {
-    'A': 'A Record: Maps a domain to an IPv4 address',
-    'AAAA': 'AAAA Record: Maps a domain to an IPv6 address',
-    'CNAME': 'CNAME Record: Creates an alias pointing to another domain',
-    'MX': 'MX Record: Directs email to a mail server',
-    'SRV': 'SRV Record: Maps services to specific servers and ports',
-    'TXT': 'TXT Record: Stores text information for verification or other purposes'
-  };
-  return descriptions[type] || `${type} Record`;
-};
-
-// Add DNS type help text
-const getDnsTypeHelp = (type) => {
-  const help = {
-    'A': 'Enter an IPv4 address like 192.168.1.1 in the Endpoint field.',
-    'AAAA': 'Enter an IPv6 address in the Endpoint field.',
-    'CNAME': 'Enter a domain name that this domain should point to.',
-    'MX': 'Enter a mail server hostname and set the Priority (lower numbers have higher priority).',
-    'SRV': 'Configure service location by specifying service, protocol, target server and port.',
-    'TXT': 'Enter verification codes or other text-based information.'
-  };
-  return help[type] || 'Configure your DNS record settings below.';
-};
-
-onMounted(() => {
-  apiKey.value = localStorage.getItem('cf-api-key');
-  if (!apiKey.value) {
-    router.push('/login');
-    return;
+// Get full SRV record name
+const getSrvFullName = () => {
+  if (!data.value.service || !data.value.proto || !data.value.name) return '';
+  
+  // Make sure we have the correct name for the SRV record
+  let name = data.value.name;
+  
+  // If this is a Minecraft record and the name starts with 'mc.', remove the prefix
+  // as it will be added by the service part
+  if (data.value.service === '_minecraft' && data.value.proto === 'tcp' && name.startsWith('mc.')) {
+    name = name.substring(3); // Remove 'mc.' prefix
   }
   
-  // Redirect to the new zone-based structure
-  if (localStorage.getItem('cf-zone-id') && localStorage.getItem('cf-dns-id')) {
-    const zoneId = localStorage.getItem('cf-zone-id');
-    const recordId = localStorage.getItem('cf-dns-id');
-    router.push(`/zones/${zoneId}/records/${recordId}`);
-  } else if (localStorage.getItem('cf-zone-id')) {
-    const zoneId = localStorage.getItem('cf-zone-id');
-    router.push(`/zones/${zoneId}/records`);
-  } else {
-    router.push('/zones');
+  return `${data.value.service}.${data.value.proto}.${name}`;
+};
+
+// Format SRV display name for better readability
+const formatSrvDisplayName = () => {
+  if (!data.value.service || !data.value.proto || !data.value.name) return '';
+  
+  // For display purposes, show a more user-friendly format that highlights the domain
+  const domainPart = data.value.name;
+  
+  // Special case for Minecraft
+  if (data.value.service === '_minecraft' && data.value.proto === 'tcp') {
+    return `${domainPart} → ${data.value.target}:${data.value.port || '25565'}`;
   }
-});
-</script>
+  
+  // Strip leading underscores for display
+  const cleanServicePart = `${data.value.service.replace(/_/g, '')}.${data.value.proto}`;
+  return `${cleanServicePart}.${domainPart}`;
+};
+</script> 

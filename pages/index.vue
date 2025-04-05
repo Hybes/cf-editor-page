@@ -111,6 +111,7 @@
 
 <script setup>
 import moment from 'moment';
+const router = useRouter();
 const apiKey = ref('');
 const zones = ref([]);
 const loading = ref(true);
@@ -152,13 +153,15 @@ const filteredZones = computed(() => {
   });
 });
 
-onMounted(async () => {
+onMounted(() => {
   apiKey.value = localStorage.getItem('cf-api-key');
   if (!apiKey.value) {
-    useRouter().push('/login');
-  } else {
-    await getZones();
+    router.push('/login');
+    return;
   }
+  
+  // Redirect to zones page directly
+  router.push('/zones');
 });
 
 const setZone = (zone) => {

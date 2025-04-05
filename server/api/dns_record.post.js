@@ -9,10 +9,23 @@ export default defineEventHandler(async (event) => {
                 'Content-Type': 'application/json'
             }
         })
-        const data = await response.json()
-        return data
+        const data = await response.json();
+        
+        // Handle non-successful responses
+        if (!data.success) {
+            console.error('DNS Editor: Error fetching individual record:', data.errors);
+            return { 
+                success: false, 
+                errors: data.errors || [{ message: 'Unknown error fetching record' }]
+            };
+        }
+        
+        return data;
     } catch (error) {
         console.error('DNS Editor: Error Making GET request for individual record', error);
-        throw error;
+        return {
+            success: false,
+            errors: [{ message: `Error fetching DNS record: ${error.message}` }]
+        };
     }
 })
