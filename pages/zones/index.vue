@@ -24,22 +24,46 @@
           </svg>
         </div>
       </div>
-      <div v-else class="flex w-full max-w-4xl flex-col items-center justify-center gap-6">
+      <div v-else class="flex w-full max-w-4xl flex-col items-center justify-center gap-6 pt-6">
         <h1 class="text-center text-2xl font-semibold">Cloudflare DNS Editor</h1>
         <div class="flex w-full flex-col rounded-lg border p-4 dark:border-gray-700">
           <div class="mb-4 flex flex-col gap-2">
             <h2 class="text-lg font-medium">Your Zones</h2>
             <div class="text-sm text-gray-500">Select a zone to manage its DNS records</div>
           </div>
+          <div class="relative mb-4 w-full">
+            <UTooltip text="Press '/' to search">
+              <UInput
+                icon="i-heroicons-magnifying-glass-20-solid"
+                v-model="searchQuery"
+                type="text"
+                placeholder="Search zones..."
+                ref="searchInput"
+                color="white"
+                class="w-full transition-all focus-within:shadow-md"
+                size="lg"
+                @focus="focusSearchInput"
+              />
+            </UTooltip>
+            <span v-if="searchQuery" class="absolute right-2 top-2 cursor-pointer text-gray-500 hover:text-gray-700" @click="searchQuery = ''">
+              <UIcon name="i-heroicons-x-mark-20-solid" class="h-5 w-5" />
+            </span>
+          </div>
           <div class="w-full rounded">
             <UTable
-              :rows="zones"
+              :rows="filteredZones"
               :columns="[
                 { key: 'name', label: 'Domain' },
                 { key: 'status', label: 'Status' },
                 { key: 'actions', label: 'Actions' },
               ]"
               :loading="loading"
+              :ui="{
+                tr: {
+                  base: 'cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800'
+                }
+              }"
+              @row-click="(row) => navigateToZone(row.id)"
             >
               <template #name-data="{ row }">
                 <div class="flex items-center gap-3">
@@ -59,7 +83,7 @@
               <template #actions-data="{ row }">
                 <div class="flex gap-2">
                   <UButton 
-                    @click="navigateToZone(row.id)" 
+                    @click.stop="navigateToZone(row.id)" 
                     color="blue" 
                     variant="soft" 
                     size="sm"
@@ -82,6 +106,29 @@ const apiKey = ref('');
 const zones = ref([]);
 const loading = ref(true);
 const router = useRouter();
+const searchInput = ref(null);
+const searchQuery = ref('');
+
+// Function to focus and select text in search input
+const focusSearchInput = () => {
+  setTimeout(() => {
+    const input = searchInput.value?.$el.querySelector('input');
+    if (input) {
+      input.select();
+    }
+  }, 100);
+};
+
+// Filtered zones based on search query
+const filteredZones = computed(() => {
+  if (!searchQuery.value) return zones.value;
+  
+  const query = searchQuery.value.toLowerCase();
+  return zones.value.filter(zone => 
+    zone.name.toLowerCase().includes(query) || 
+    zone.status.toLowerCase().includes(query)
+  );
+});
 
 onMounted(async () => {
   apiKey.value = localStorage.getItem('cf-api-key');
@@ -89,8 +136,26 @@ onMounted(async () => {
     router.push('/login');
     return;
   }
+  
+  // Add keyboard shortcut for search
+  window.addEventListener('keydown', handleKeyDown);
+  
   await getZones();
 });
+
+onUnmounted(() => {
+  // Remove event listener when component is unmounted
+  window.removeEventListener('keydown', handleKeyDown);
+});
+
+// Keyboard shortcut handler
+const handleKeyDown = (e) => {
+  // Focus search box when '/' is pressed and not in an input field
+  if (e.key === '/' && !['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) {
+    e.preventDefault();
+    searchInput.value?.$el.querySelector('input')?.focus();
+  }
+};
 
 const getZones = async () => {
   try {

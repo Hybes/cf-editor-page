@@ -8,7 +8,7 @@
         class="absolute left-8 top-4"
         variant="outline"
         icon="i-clarity-undo-line"
-        :to="`/zones/${zoneId}/records`"
+        @click="goBack"
       >
         Back
       </UButton>
@@ -680,5 +680,27 @@ const formatSrvDisplayName = () => {
   // Strip leading underscores for display
   const cleanServicePart = `${data.value.service.replace(/_/g, '')}.${data.value.proto}`;
   return `${cleanServicePart}.${domainPart}`;
+};
+
+// Function to go back preserving filter state
+const goBack = () => {
+  // Check if we have return parameters
+  if (route.query.return) {
+    try {
+      // Parse the stored query state
+      const returnQuery = JSON.parse(decodeURIComponent(route.query.return));
+      // Navigate back with the saved query
+      router.push({
+        path: `/zones/${zoneId.value}/records`,
+        query: returnQuery
+      });
+    } catch (e) {
+      // If there's an error parsing, just go back without query params
+      router.push(`/zones/${zoneId.value}/records`);
+    }
+  } else {
+    // No return parameters, just go back
+    router.push(`/zones/${zoneId.value}/records`);
+  }
 };
 </script> 

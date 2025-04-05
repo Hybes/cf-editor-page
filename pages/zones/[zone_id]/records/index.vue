@@ -9,13 +9,18 @@
           <UButton variant="outline" icon="i-clarity-undo-line" to="/zones">
             Back to Zones
           </UButton>
-          <UButton :to="`/zones/${zoneId}/records/create`" variant="outline" color="green" icon="i-clarity-plus-circle-solid">
+          <UButton @click="navigateToCreate" variant="outline" color="green" icon="i-clarity-plus-circle-solid">
             Create Record
           </UButton>
+          <UBadge v-if="searchQuery || selectedStatus.length > 0" color="blue" class="flex items-center gap-2">
+            <span v-if="searchQuery">Search: {{ searchQuery }}</span>
+            <span v-if="selectedStatus.length > 0">Types: {{ selectedStatus.join(', ') }}</span>
+            <UIcon @click="clearFilters" name="i-heroicons-x-mark" class="h-4 w-4 cursor-pointer" />
+          </UBadge>
         </div>
       </div>
       <div class="flex flex-col items-center justify-center gap-4 px-4 md:px-8">
-        <div class="flex w-full max-w-7xl flex-col justify-center gap-4">
+        <div class="flex w-full max-w-7xl flex-col justify-center gap-4 mt-6">
           <div class="flex items-center justify-center gap-2">
             <NuxtLink
               :to="'http://' + zoneName"
@@ -110,15 +115,24 @@
                 placeholder="Type"
                 class="min-w-[6rem]"
               />
-              <UInput
-                icon="i-heroicons-magnifying-glass-20-solid"
-                v-model="searchQuery"
-                type="text"
-                placeholder="Search"
-                ref="searchInput"
-                color="white"
-                class="min-w-[12rem] flex-grow"
-              />
+              <div class="relative flex-grow">
+                <UTooltip text="Press '/' to search">
+                  <UInput
+                    icon="i-heroicons-magnifying-glass-20-solid"
+                    v-model="searchQuery"
+                    type="text"
+                    placeholder="Search records..."
+                    ref="searchInput"
+                    color="white"
+                    class="min-w-[12rem] w-full transition-all focus-within:shadow-md"
+                    size="lg"
+                    @focus="() => { setTimeout(() => searchInput.value?.$el.querySelector('input')?.select(), 100) }"
+                  />
+                </UTooltip>
+                <span v-if="searchQuery" class="absolute right-2 top-2 cursor-pointer text-gray-500 hover:text-gray-700" @click="searchQuery = ''">
+                  <UIcon name="i-heroicons-x-mark-20-solid" class="h-5 w-5" />
+                </span>
+              </div>
             </div>
             <div class="flex w-full gap-4 md:w-[calc(50%-0.5rem)]">
               <USelectMenu
@@ -219,6 +233,7 @@
 
 <script setup>
 import moment from 'moment';
+import { useDebounceFn } from '@vueuse/core';
 
 const route = useRoute();
 const router = useRouter();
@@ -448,14 +463,107 @@ const rows = computed(() => {
   return filteredRecords.value.slice(startIndex, endIndex);
 });
 
+// Add watch to update URL when filter changes
+watch(selectedStatus, (newValue) => {
+  if (newValue.length) {
+    router.push({
+      query: { 
+        ...route.query,
+        types: newValue.join(',') 
+      }
+    });
+  } else if (route.query.types) {
+    // Remove the types param if no filters are selected
+    const { types, ...restQuery } = route.query;
+    router.push({ query: restQuery });
+  }
+}, { deep: true });
+
+// Add debounced function to update URL when search changes
+const debouncedUpdateSearchQuery = useDebounceFn((newValue) => {
+  if (newValue) {
+    router.push({
+      query: { 
+        ...route.query,
+        search: newValue 
+      }
+    });
+  } else if (route.query.search) {
+    // Remove the search param if query is empty
+    const { search, ...restQuery } = route.query;
+    router.push({ query: restQuery });
+  }
+}, 300);
+
+// Watch search query changes
+watch(searchQuery, (newValue) => {
+  debouncedUpdateSearchQuery(newValue);
+});
+
+// Add watch to update URL when page changes
+watch(page, (newValue) => {
+  if (newValue > 1) {
+    router.push({
+      query: { 
+        ...route.query,
+        page: newValue.toString()
+      }
+    });
+  } else if (route.query.page) {
+    // Remove the page param if on page 1
+    const { page, ...restQuery } = route.query;
+    router.push({ query: restQuery });
+  }
+});
+
+// Initialize from URL params
 onMounted(async () => {
   apiKey.value = localStorage.getItem('cf-api-key');
   if (!apiKey.value) {
     router.push('/login');
     return;
   }
+  
+  // Check if we have types in the URL
+  if (route.query.types) {
+    const typesParam = route.query.types;
+    selectedStatus.value = typesParam.includes(',') 
+      ? typesParam.split(',') 
+      : [typesParam];
+  }
+  
+  // Check if we have search in the URL
+  if (route.query.search) {
+    searchQuery.value = route.query.search;
+  }
+  
+  // Check if we have page in the URL
+  if (route.query.page) {
+    const pageNum = parseInt(route.query.page);
+    if (!isNaN(pageNum) && pageNum > 0) {
+      page.value = pageNum;
+    }
+  }
+  
+  // Add keyboard shortcut for search
+  window.addEventListener('keydown', handleKeyDown);
+  
   await getAll();
 });
+
+onUnmounted(() => {
+  // Remove event listener when component is unmounted
+  window.removeEventListener('keydown', handleKeyDown);
+});
+
+// Keyboard shortcut handler
+const handleKeyDown = (e) => {
+  // Focus search box when '/' is pressed and not in an input field
+  if (e.key === '/' && !['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) {
+    e.preventDefault();
+    searchInput.value?.$el.querySelector('input')?.focus();
+  }
+};
 
 const getDns = async () => {
   const toast = useToast();
@@ -585,7 +693,21 @@ const navigateToRecord = (recordId) => {
     localStorage.setItem('cf-dns-name', record.name);
   }
   
-  router.push(`/zones/${zoneId.value}/records/${recordId}`);
+  // Add return query parameters to preserve filter state
+  let returnQuery = '';
+  if (Object.keys(route.query).length > 0) {
+    // Encode the current query state
+    returnQuery = encodeURIComponent(
+      JSON.stringify(route.query)
+    );
+  }
+  
+  // Navigate with return query param if we have filters
+  if (returnQuery) {
+    router.push(`/zones/${zoneId.value}/records/${recordId}?return=${returnQuery}`);
+  } else {
+    router.push(`/zones/${zoneId.value}/records/${recordId}`);
+  }
 };
 
 const copyToClipboard = (text) => {
@@ -678,5 +800,34 @@ const formatSrvRecordName = (record) => {
   }
   
   return name;
+};
+
+// Add function to navigate to create page with return state
+const navigateToCreate = () => {
+  // Add return query parameters to preserve filter state
+  let returnQuery = '';
+  if (Object.keys(route.query).length > 0) {
+    // Encode the current query state
+    returnQuery = encodeURIComponent(
+      JSON.stringify(route.query)
+    );
+  }
+  
+  // Navigate with return query param if we have filters
+  if (returnQuery) {
+    router.push(`/zones/${zoneId.value}/records/create?return=${returnQuery}`);
+  } else {
+    router.push(`/zones/${zoneId.value}/records/create`);
+  }
+};
+
+// Add the clearFilters method
+const clearFilters = () => {
+  searchQuery.value = '';
+  selectedStatus.value = [];
+  page.value = 1;
+  
+  // Clear URL query params
+  router.push({ query: {} });
 };
 </script> 
