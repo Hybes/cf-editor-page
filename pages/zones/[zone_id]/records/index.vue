@@ -162,12 +162,7 @@
               >
                 <UIcon :name="getRecordTypeIcon(row.type)" class="h-4 w-4 text-gray-500" />
                 <p class="truncate text-xs font-medium group-hover:underline md:text-sm">
-                  {{
-                    row.type === 'SRV' ? formatSrvRecordName(row) :
-                    row[column.key] === zoneName || !row[column.key].endsWith(zoneName)
-                      ? row[column.key]
-                      : row[column.key].slice(0, -zoneName.length - 1)
-                  }}
+                  {{ row._displayName }}
                 </p>
               </div>
             </template>
@@ -179,7 +174,7 @@
                   @click="navigateToRecord(row.id)"
                   class="truncate text-xs font-medium group-hover:underline md:text-sm"
                 >
-                  {{ formatContent(row) }}
+                  {{ row._displayContent }}
                 </p>
                 <UToggle
                   v-if="row.proxiable"
@@ -397,8 +392,37 @@ const items = (row) => {
   ];
 };
 
+const formatDisplayName = (record) => {
+  // First handle SRV records with special logic
+  if (record.type === 'SRV') {
+    return formatSrvRecordName(record);
+  }
+  
+  // For standard records, handle zone name trimming
+  const name = record.name;
+  if (!name) return '';
+  
+  if (name === zoneName.value || !name.endsWith(zoneName.value)) {
+    return name;
+  }
+  
+  // Remove zone name and the preceding dot
+  return name.slice(0, -zoneName.value.length - 1);
+};
+
+// Add a computed property for processed records to avoid repeated calculations
+const processedRecords = computed(() => {
+  if (!dnsRecords.value || !zoneName.value) return [];
+  
+  return dnsRecords.value.map(record => ({
+    ...record,
+    _displayName: formatDisplayName(record),
+    _displayContent: formatContent(record)
+  }));
+});
+
 const filteredRecords = computed(() => {
-  let records = dnsRecords.value || [];
+  let records = processedRecords.value || [];
   
   if (selectedStatus.value.length > 0) {
     records = records.filter(record => selectedStatus.value.includes(record.type));
@@ -456,7 +480,14 @@ const getDns = async () => {
       router.push('/zones');
       return;
     }
-    dnsRecords.value = data.result;
+    
+    // Ensure the zoneName is available before updating the dnsRecords
+    if (!zoneName.value && data.result && data.result.length > 0) {
+      await getZone();
+    }
+    
+    // Update the records array
+    dnsRecords.value = data.result || [];
   } else {
     console.error('HTTP-Error: ' + response.status);
   }
@@ -472,8 +503,10 @@ const getZone = async () => {
   });
   if (response.ok) {
     const data = await response.json();
-    zone.value = data.result;
-    zoneName.value = data.result.name;
+    if (data.success && data.result) {
+      zone.value = data.result;
+      zoneName.value = data.result.name;
+    }
   } else {
     console.error('HTTP-Error: ' + response.status);
   }
@@ -481,7 +514,9 @@ const getZone = async () => {
 
 const getAll = async () => {
   loading.value = true;
-  await Promise.all([getDns(), getZone()]);
+  // Get zone info first, then DNS records
+  await getZone();
+  await getDns();
   loading.value = false;
 };
 
@@ -570,16 +605,22 @@ const copyToClipboard = (text) => {
 const formatContent = (record) => {
   if (record.type === 'SRV' && record.data) {
     // For Minecraft SRV records, use a special format
-    if (record.name.includes('_minecraft._tcp')) {
+    if (record.name && record.name.includes('_minecraft._tcp')) {
       // Extract just what follows after _minecraft._tcp.
       const domainPart = record.name.split('_minecraft._tcp.')[1];
       if (domainPart) {
         return `${domainPart} → ${record.data.target}:${record.data.port}`;
       }
     }
-    return `➡️ ${record.data.target}:${record.data.port} (Weight: ${record.data.weight})`;
+    
+    // Make sure we have all the required fields before showing them
+    if (record.data.target && record.data.port) {
+      return `➡️ ${record.data.target}:${record.data.port}${record.data.weight ? ` (Weight: ${record.data.weight})` : ''}`;
+    }
   }
-  return record.content;
+  
+  // For all other record types or if SRV is missing data
+  return record.content || '';
 };
 
 // Get color for record type badge

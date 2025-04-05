@@ -658,7 +658,11 @@ const getSrvFullName = () => {
     name = name.substring(3); // Remove 'mc.' prefix
   }
   
-  return `${data.value.service}.${data.value.proto}.${name}`;
+  // Always ensure both service and protocol have leading underscores
+  const service = data.value.service.startsWith('_') ? data.value.service : `_${data.value.service}`;
+  const proto = data.value.proto.startsWith('_') ? data.value.proto : `_${data.value.proto}`;
+  
+  return `${service}.${proto}.${name}`;
 };
 
 // Format SRV display name for better readability
