@@ -12,6 +12,9 @@
           <UButton @click="navigateToCreate" variant="outline" color="green" icon="i-clarity-plus-circle-solid">
             Create Record
           </UButton>
+          <UButton variant="outline" color="blue" icon="i-heroicons-shield-check" :to="`/zones/${zoneId}/rules`">
+            Rules
+          </UButton>
           <UBadge v-if="searchQuery || selectedStatus.length > 0" color="blue" class="flex items-center gap-2">
             <span v-if="searchQuery">Search: {{ searchQuery }}</span>
             <span v-if="selectedStatus.length > 0">Types: {{ selectedStatus.join(', ') }}</span>
@@ -21,7 +24,7 @@
       </div>
       <div class="flex flex-col items-center justify-center gap-4 px-4 md:px-8">
         <div class="flex w-full max-w-7xl flex-col justify-center gap-4 mt-6">
-          <div class="flex items-center justify-center gap-2">
+          <div class="flex flex-col items-center justify-center gap-3 sm:flex-row">
             <NuxtLink
               :to="'http://' + zoneName"
               external
@@ -29,6 +32,38 @@
               class="text-center text-2xl font-semibold text-stone-900 hover:underline dark:text-stone-100"
               >{{ zoneName }}</NuxtLink
             >
+            <UTooltip :text="botUnavailable ? (botUnavailableReason || 'Bot Fight Mode is unavailable for this zone/token') : 'Toggle Bot Fight Mode'">
+              <div
+                class="flex items-center gap-3 rounded-full border border-stone-300 bg-white/70 px-3 py-1.5 shadow-sm backdrop-blur dark:border-stone-700 dark:bg-stone-900/40"
+              >
+                <div class="flex items-center gap-2">
+                  <UIcon name="i-heroicons-bug-ant" class="h-5 w-5 text-stone-700 dark:text-stone-200" />
+                  <span class="text-sm font-medium text-stone-800 dark:text-stone-100">Bot Fight Mode</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <UBadge
+                    v-if="botUnavailable"
+                    color="gray"
+                    variant="subtle"
+                  >
+                    Unavailable
+                  </UBadge>
+                  <UBadge
+                    v-else
+                    :color="botFightMode ? 'green' : 'yellow'"
+                    variant="subtle"
+                  >
+                    {{ botFightMode ? 'On' : 'Off' }}
+                  </UBadge>
+                  <UIcon v-if="botLoading" name="i-heroicons-arrow-path" class="h-4 w-4 animate-spin text-stone-500" />
+                  <UToggle
+                    :model-value="botFightMode"
+                    :disabled="botLoading || botUnavailable"
+                    @update:modelValue="updateBotFightMode"
+                  />
+                </div>
+              </div>
+            </UTooltip>
             <div class="relative">
               <div @click="showDropdown = !showDropdown" class="cursor-pointer">
                 <UIcon
@@ -250,6 +285,10 @@ const selectedStatus = ref([]);
 const showDropdown = ref(false);
 const windowSize = useWindowSize();
 const isLargeScreen = computed(() => windowSize.width.value >= 768);
+const botFightMode = ref(false);
+const botLoading = ref(false);
+const botUnavailable = ref(false);
+const botUnavailableReason = ref('');
 
 const updateProxyStatus = async (record) => {
   const toast = useToast();
@@ -326,6 +365,102 @@ const updateSslSetting = async (sslMode) => {
     }
   } else {
     console.error('HTTP-Error: ' + response.status);
+  }
+};
+
+const getBotManagement = async () => {
+  botLoading.value = true;
+  botUnavailable.value = false;
+  botUnavailableReason.value = '';
+  try {
+    const response = await fetch('/api/bot_management', {
+      method: 'POST',
+      body: JSON.stringify({
+        apiKey: apiKey.value,
+        currZone: zoneId.value,
+      }),
+    });
+
+    const data = await response.json();
+    if (!response.ok || !data.success) {
+      botUnavailable.value = true;
+      botUnavailableReason.value = data?.errors?.[0]?.message || `HTTP ${response.status}`;
+      return;
+    }
+
+    const fight = data?.result?.fight_mode;
+    if (typeof fight === 'boolean') {
+      botFightMode.value = fight;
+      return;
+    }
+
+    if (typeof fight === 'string') {
+      if (fight === 'on' || fight === 'true') {
+        botFightMode.value = true;
+        return;
+      }
+      if (fight === 'off' || fight === 'false') {
+        botFightMode.value = false;
+        return;
+      }
+    }
+
+    botUnavailable.value = true;
+    botUnavailableReason.value = 'fight_mode not present in response';
+  } finally {
+    botLoading.value = false;
+  }
+};
+
+const updateBotFightMode = async (value) => {
+  const toast = useToast();
+  const previous = botFightMode.value;
+  botFightMode.value = value;
+  botLoading.value = true;
+  try {
+    const response = await fetch('/api/update_bot_fight_mode', {
+      method: 'POST',
+      body: JSON.stringify({
+        apiKey: apiKey.value,
+        currZone: zoneId.value,
+        fight_mode: value,
+      }),
+    });
+
+    const data = await response.json();
+    if (!data.success) {
+      botFightMode.value = previous;
+      toast.add({
+        id: 'bot-fight-mode-error' + Date.now(),
+        title: 'Update failed',
+        description: data.errors?.[0]?.message || 'Failed to update Bot Fight Mode',
+        icon: 'i-clarity-warning-solid',
+        timeout: 4000,
+        color: 'red',
+      });
+      return;
+    }
+
+    toast.add({
+      id: 'bot-fight-mode-success' + Date.now(),
+      title: 'Updated',
+      description: `Bot Fight Mode ${value ? 'enabled' : 'disabled'}`,
+      icon: 'i-clarity-check-circle-solid',
+      timeout: 2500,
+      color: 'green',
+    });
+  } catch (e) {
+    botFightMode.value = previous;
+    toast.add({
+      id: 'bot-fight-mode-error' + Date.now(),
+      title: 'Update failed',
+      description: e.message || 'Failed to update Bot Fight Mode',
+      icon: 'i-clarity-warning-solid',
+      timeout: 4000,
+      color: 'red',
+    });
+  } finally {
+    botLoading.value = false;
   }
 };
 
@@ -625,6 +760,7 @@ const getAll = async () => {
   // Get zone info first, then DNS records
   await getZone();
   await getDns();
+  await getBotManagement();
   loading.value = false;
 };
 
