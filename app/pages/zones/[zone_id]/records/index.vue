@@ -1,0 +1,1122 @@
+<template>
+	<PageContainer>
+			<div class="mb-6 flex flex-col items-center gap-4 sm:flex-row sm:justify-between">
+				<div class="flex flex-wrap items-center justify-center gap-3">
+					<UButton variant="outline" icon="i-clarity-undo-line" to="/zones">Back to Zones</UButton>
+						<UButton
+							variant="outline"
+							color="success"
+							icon="i-clarity-plus-circle-solid"
+							@click="navigateToCreate"
+						>
+							Create Record
+						</UButton>
+						<UButton
+							variant="outline"
+							color="primary"
+							icon="i-heroicons-shield-check"
+							:to="`/zones/${zoneId}/rules`"
+							v-if="canRulesets"
+						>
+							Rules
+						</UButton>
+						<UButton
+							variant="outline"
+							color="primary"
+							icon="i-heroicons-chart-bar"
+							:to="`/zones/${zoneId}/analytics`"
+							v-if="canAccountAnalytics"
+						>
+							Analytics
+						</UButton>
+						<UButton
+							variant="outline"
+							color="primary"
+							icon="i-heroicons-shield-exclamation"
+							:to="`/zones/${zoneId}/turnstile`"
+							v-if="canTurnstile"
+						>
+							Turnstile
+						</UButton>
+						<UButton
+							variant="outline"
+							color="primary"
+							icon="i-heroicons-squares-plus"
+							:to="`/zones/${zoneId}/dns-views`"
+							v-if="canDnsViews"
+						>
+							DNS Views
+						</UButton>
+						<UButton
+							variant="outline"
+							color="primary"
+							icon="i-heroicons-shield-check"
+							:to="`/zones/${zoneId}/dns-firewall`"
+							v-if="canDnsFirewall"
+						>
+							DNS Firewall
+						</UButton>
+						<UBadge
+							v-if="searchQuery || selectedStatus.length > 0"
+							color="primary"
+							class="flex items-center gap-2"
+						>
+							<span v-if="searchQuery">Search: {{ searchQuery }}</span>
+							<span v-if="selectedStatus.length > 0">Types: {{ selectedStatus.join(', ') }}</span>
+							<UIcon name="i-heroicons-x-mark" class="h-4 w-4 cursor-pointer" @click="clearFilters" />
+						</UBadge>
+				</div>
+			</div>
+				<div class="flex flex-col items-center justify-center gap-4">
+					<div class="flex w-full flex-col justify-center gap-4">
+					<div class="flex flex-col items-center justify-center gap-3 sm:flex-row">
+						<NuxtLink
+							:to="'http://' + zoneName"
+							external
+							target="_blank"
+							class="text-center text-2xl font-semibold text-stone-900 hover:underline dark:text-stone-100"
+						>
+							{{ zoneName }}
+						</NuxtLink>
+						<CapabilityIndicator :missing-items="capabilityMissing" />
+						<UTooltip
+							:text="
+								botUnavailable
+									? botUnavailableReason || 'Bot Fight Mode is unavailable for this zone/token'
+									: 'Toggle Bot Fight Mode'
+							"
+						>
+							<div
+								v-if="canBotFight"
+								class="flex items-center gap-3 rounded-full border border-stone-300 bg-white/70 px-3 py-1.5 shadow-xs backdrop-blur-sm dark:border-stone-700 dark:bg-stone-900/40"
+							>
+								<div class="flex items-center gap-2">
+									<UIcon
+										name="i-heroicons-bug-ant"
+										class="h-5 w-5 text-stone-700 dark:text-stone-200"
+									/>
+									<span class="text-sm font-medium text-stone-800 dark:text-stone-100">Bot Fight Mode</span>
+								</div>
+								<div class="flex items-center gap-2">
+									<UBadge v-if="botUnavailable" color="neutral" variant="subtle">
+										Unavailable
+									</UBadge>
+									<UBadge v-else :color="botFightMode ? 'success' : 'warning'" variant="subtle">
+										{{ botFightMode ? 'On' : 'Off' }}
+									</UBadge>
+									<UIcon
+										v-if="botLoading"
+										name="i-heroicons-arrow-path"
+										class="h-4 w-4 animate-spin text-stone-500"
+									/>
+									<USwitch
+										:model-value="botFightMode"
+										:disabled="botLoading || botUnavailable"
+										@update:model-value="updateBotFightMode"
+									/>
+								</div>
+							</div>
+						</UTooltip>
+						<div v-if="canSsl" class="relative">
+							<div class="cursor-pointer" @click="showDropdown = !showDropdown">
+								<UIcon
+									v-if="zone.ssl?.value === 'strict'"
+									name="i-clarity-lock-solid"
+									class="h-6 w-6"
+								/>
+								<UIcon v-if="zone.ssl?.value === 'full'" name="i-clarity-lock-line" class="h-6 w-6" />
+								<UIcon
+									v-if="zone.ssl?.value === 'flexible'"
+									name="i-clarity-curve-chart-solid"
+									class="h-6 w-6"
+								/>
+								<UIcon
+									v-if="zone.ssl?.value === 'off'"
+									name="i-clarity-no-access-solid"
+									class="h-6 w-6"
+								/>
+							</div>
+							<div
+								v-if="showDropdown"
+								class="absolute right-0 z-10 mt-2 w-48 rounded-sm border border-stone-600 bg-stone-300 shadow-lg dark:border-stone-400 dark:bg-stone-700"
+							>
+								<div
+									class="flex cursor-pointer items-center gap-2 px-4 py-2 hover:bg-gray-100 dark:hover:bg-stone-800"
+									:class="{ 'bg-gray-200 dark:bg-gray-800': zone.ssl?.value === 'strict' }"
+									@click="updateSslSetting('strict')"
+								>
+									<UIcon name="i-clarity-lock-solid" class="h-4 w-4" />
+									Strict
+								</div>
+								<div class="border-t border-stone-400 dark:border-stone-600"></div>
+								<div
+									class="flex cursor-pointer items-center gap-2 px-4 py-2 hover:bg-gray-100 dark:hover:bg-stone-800"
+									:class="{ 'bg-gray-200 dark:bg-gray-800': zone.ssl?.value === 'full' }"
+									@click="updateSslSetting('full')"
+								>
+									<UIcon name="i-clarity-lock-line" class="h-4 w-4" />
+									Full
+								</div>
+								<div class="border-t border-stone-400 dark:border-stone-600"></div>
+								<div
+									class="flex cursor-pointer items-center gap-2 px-4 py-2 hover:bg-gray-100 dark:hover:bg-stone-800"
+									:class="{ 'bg-gray-200 dark:bg-gray-800': zone.ssl?.value === 'flexible' }"
+									@click="updateSslSetting('flexible')"
+								>
+									<UIcon name="i-clarity-curve-chart-solid" class="h-4 w-4" />
+									Flexible
+								</div>
+								<div class="border-t border-stone-400 dark:border-stone-600"></div>
+								<div
+									class="flex cursor-pointer items-center gap-2 px-4 py-2 hover:bg-gray-100 dark:hover:bg-stone-800"
+									:class="{ 'bg-gray-200 dark:bg-gray-800': zone.ssl?.value === 'off' }"
+									@click="updateSslSetting('off')"
+								>
+									<UIcon name="i-clarity-no-access-solid" class="h-4 w-4" />
+									Off
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="grid w-full grid-cols-2 gap-3 md:grid-cols-4">
+						<div class="rounded-lg border border-stone-200 bg-white/70 p-3 dark:border-stone-700 dark:bg-stone-900/40">
+							<div class="text-xs text-stone-500">Records</div>
+							<div class="text-lg font-semibold text-stone-900 dark:text-stone-100">{{ totalRecords }}</div>
+						</div>
+						<div class="rounded-lg border border-stone-200 bg-white/70 p-3 dark:border-stone-700 dark:bg-stone-900/40">
+							<div class="text-xs text-stone-500">Filtered</div>
+							<div class="text-lg font-semibold text-stone-900 dark:text-stone-100">{{ filteredCount }}</div>
+						</div>
+						<div class="rounded-lg border border-stone-200 bg-white/70 p-3 dark:border-stone-700 dark:bg-stone-900/40">
+							<div class="text-xs text-stone-500">Proxied</div>
+							<div class="text-lg font-semibold text-stone-900 dark:text-stone-100">{{ proxiedCount }}</div>
+						</div>
+						<div class="rounded-lg border border-stone-200 bg-white/70 p-3 dark:border-stone-700 dark:bg-stone-900/40">
+							<div class="text-xs text-stone-500">Types</div>
+							<div class="text-lg font-semibold text-stone-900 dark:text-stone-100">{{ typesCount }}</div>
+						</div>
+					</div>
+					<div class="flex translate-x-[12px] flex-wrap items-center justify-center gap-4">
+						<div
+							v-for="ns in zone.name_servers || []"
+							:key="ns"
+							class="group flex cursor-pointer items-center gap-4"
+							@click="copyToClipboard(ns)"
+						>
+							<p class="font-bold text-stone-600 italic dark:text-stone-400">{{ ns }}</p>
+							<UIcon name="i-clarity-clipboard-line" class="opacity-0 group-hover:opacity-100" />
+						</div>
+					</div>
+				</div>
+				<div class="flex w-full flex-col items-center justify-center gap-4">
+					<div
+						v-if="dnsLoadError"
+						class="w-full rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-800 dark:bg-red-950/40 dark:text-red-200"
+					>
+						{{ dnsLoadError }}
+					</div>
+					<div class="flex w-full flex-wrap items-center justify-between gap-4">
+						<div class="flex w-full gap-4 md:w-[calc(50%-0.5rem)]">
+							<USelectMenu
+								v-model="selectedStatus"
+								:items="dnsTypes"
+								multiple
+								placeholder="Type"
+								class="min-w-24"
+							/>
+							<div class="relative grow">
+								<UTooltip text="Press '/' to search">
+									<UInput
+										ref="searchInput"
+										v-model="searchQuery"
+										icon="i-heroicons-magnifying-glass-20-solid"
+										type="text"
+										placeholder="Search records..."
+										color="neutral"
+										class="w-full min-w-48 transition-all focus-within:shadow-md"
+										size="lg"
+										@focus="
+											() => {
+												setTimeout(
+													() => searchInput.value?.$el.querySelector('input')?.select(),
+													100
+												)
+											}
+										"
+									/>
+								</UTooltip>
+								<span
+									v-if="searchQuery"
+									class="absolute top-2 right-2 cursor-pointer text-gray-500 hover:text-gray-700"
+									@click="searchQuery = ''"
+								>
+									<UIcon name="i-heroicons-x-mark-20-solid" class="h-5 w-5" />
+								</span>
+							</div>
+						</div>
+						<div class="flex w-full items-center gap-4 md:w-[calc(50%-0.5rem)] md:justify-end">
+							<UDropdownMenu
+								:items="
+									columns.map((c) => ({
+										label: c.header,
+										type: 'checkbox',
+										checked: columnVisibility[c.id] !== false,
+										onUpdateChecked(checked) {
+											columnVisibility[c.id] = checked
+										},
+										onSelect(e) {
+											e.preventDefault()
+										}
+									}))
+								"
+								:content="{ align: 'end' }"
+							>
+								<UButton
+									label="Columns"
+									color="neutral"
+									variant="outline"
+									trailing-icon="i-heroicons-chevron-down-20-solid"
+									class="grow md:grow-0"
+								/>
+							</UDropdownMenu>
+							<UPagination
+								v-model:page="page"
+								:page-count="pageCount"
+								:total="filteredRecords.length"
+								class="shrink-0 md:ml-2"
+							/>
+						</div>
+					</div>
+					<UTable
+						:data="rows"
+						:columns="columns"
+						:loading="loading"
+						class="w-full rounded-lg border border-stone-300 dark:border-stone-700"
+						v-model:column-visibility="columnVisibility"
+						:ui="{
+							tr: {
+								base: 'cursor-pointer even:bg-stone-100 dark:even:bg-stone-950/50 hover:bg-stone-200 dark:hover:bg-stone-800'
+							},
+							td: {
+								color: 'text-stone-700 dark:text-stone-200'
+							}
+						}"
+						@select="onSelectRecord"
+					>
+						<template #type-cell="{ row }">
+							<div class="flex items-center gap-2">
+								<UBadge :color="getRecordTypeColor(row.original.type)" class="uppercase">
+									{{ row.original.type }}
+								</UBadge>
+								<UTooltip
+									v-if="row.original.type === 'SRV'"
+									text="Service Record - Maps services to hostnames and ports"
+								>
+									<UIcon name="i-heroicons-question-mark-circle" class="h-4 w-4 text-gray-500" />
+								</UTooltip>
+							</div>
+						</template>
+						<template #name-cell="{ row }">
+							<div
+								class="group flex max-w-[120px] cursor-pointer items-center gap-2 overflow-hidden sm:max-w-[200px]"
+								@click="navigateToRecord(row.original.id)"
+							>
+								<UIcon :name="getRecordTypeIcon(row.original.type)" class="h-4 w-4 text-gray-500" />
+								<p class="truncate text-xs font-medium group-hover:underline md:text-sm">
+									{{ row.original._displayName }}
+								</p>
+							</div>
+						</template>
+						<template #content-cell="{ row }">
+							<div
+								class="group flex max-w-[120px] items-center gap-4 overflow-hidden sm:max-w-[200px] md:max-w-[280px] lg:max-w-[360px]"
+							>
+								<p
+									class="truncate text-xs font-medium group-hover:underline md:text-sm"
+									@click="navigateToRecord(row.original.id)"
+								>
+									{{ row.original._displayContent }}
+								</p>
+								<div v-if="row.original.proxiable" @click.stop>
+									<USwitch
+										v-model="row.original.proxied"
+										color="warning"
+										@update:model-value="() => updateProxyStatus(row.original)"
+									/>
+								</div>
+							</div>
+						</template>
+						<template #created_on-cell="{ row }">
+							<div
+								v-if="isLargeScreen"
+								class="flex max-w-[200px] items-center gap-4 truncate overflow-hidden text-xs md:text-sm"
+							>
+								<p class="truncate">{{ dayjs(row.original.created_on).format('DD/MM/YYYY') }}</p>
+							</div>
+						</template>
+						<template #modified_on-cell="{ row }">
+							<div
+								v-if="isLargeScreen"
+								class="flex max-w-[200px] items-center gap-4 truncate overflow-hidden text-xs md:text-sm"
+							>
+								<p class="truncate">{{ dayjs(row.original.modified_on).format('DD/MM/YYYY') }}</p>
+							</div>
+						</template>
+						<template #actions-cell="{ row }">
+							<UDropdownMenu :items="items(row.original)">
+								<UButton
+									color="neutral"
+									variant="ghost"
+									icon="i-heroicons-ellipsis-horizontal-20-solid"
+									@click.stop
+								/>
+							</UDropdownMenu>
+						</template>
+					</UTable>
+					<div class="flex w-full justify-end">
+						<UPagination v-model:page="page" :page-count="pageCount" :total="filteredRecords.length" />
+					</div>
+				</div>
+			</div>
+	</PageContainer>
+</template>
+
+<script setup>
+import dayjs from 'dayjs'
+import { useDebounceFn } from '@vueuse/core'
+
+const route = useRoute()
+const router = useRouter()
+const zoneId = computed(() => route.params.zone_id)
+const apiKey = ref('')
+const zoneName = ref('')
+const dnsRecords = ref([])
+const zone = ref({})
+const loading = ref(true)
+const searchQuery = ref('')
+const page = ref(1)
+const pageCount = 25
+const selectedStatus = ref([])
+const showDropdown = ref(false)
+const windowSize = useWindowSize()
+const isLargeScreen = computed(() => windowSize.width.value >= 768)
+const botFightMode = ref(false)
+const botLoading = ref(false)
+const botUnavailable = ref(false)
+const botUnavailableReason = ref('')
+const dnsLoadError = ref('')
+const capabilities = ref(null)
+const capabilityMissing = ref([])
+const canSsl = computed(() => Boolean(capabilities.value && capabilities.value.ssl && capabilities.value.ssl.available))
+const canBotFight = computed(() =>
+	Boolean(capabilities.value && capabilities.value.botFightMode && capabilities.value.botFightMode.available)
+)
+const canRulesets = computed(() =>
+	Boolean(capabilities.value && capabilities.value.rulesets && capabilities.value.rulesets.available)
+)
+const canTurnstile = computed(() => Boolean(capabilities.value && capabilities.value.turnstile && capabilities.value.turnstile.available))
+const canDnsViews = computed(() => Boolean(capabilities.value && capabilities.value.dnsViews && capabilities.value.dnsViews.available))
+const canDnsFirewall = computed(() => Boolean(capabilities.value && capabilities.value.dnsFirewall && capabilities.value.dnsFirewall.available))
+const canAccountAnalytics = computed(() =>
+	Boolean(capabilities.value && capabilities.value.accountAnalytics && capabilities.value.accountAnalytics.available)
+)
+
+const seoZoneLabel = computed(() => zoneName.value || zone.value?.name || zoneId.value || 'Zone')
+useDynamicSeo({
+	title: computed(() => `DNS Records — ${seoZoneLabel.value}`),
+	description: computed(() => `Manage DNS records for ${seoZoneLabel.value}.`)
+})
+
+const updateProxyStatus = async (record) => {
+	const toast = useToast()
+	const response = await fetch('/api/update_record', {
+		method: 'POST',
+		body: JSON.stringify({
+			apiKey: apiKey.value,
+			currZone: zoneId.value,
+			currDnsRecord: record.id,
+			dns: { ...record, proxied: record.proxied ? true : false }
+		})
+	})
+	if (response.ok) {
+		const data = await response.json()
+		if (data.success) {
+			toast.add({
+				id: 'update-proxy-success' + Date.now(),
+				title: 'Update success',
+				description: 'Proxy status updated successfully',
+				icon: 'i-clarity-check-circle-solid',
+				duration: 3000,
+				color: 'success'
+			})
+			await getDns() // Refresh the DNS records
+		} else {
+			console.error(data.errors[0].message)
+			toast.add({
+				id: 'update-proxy-error' + Date.now(),
+				title: 'Update failed',
+				description: data.errors[0].message,
+				icon: 'i-clarity-warning-solid',
+				duration: 3000,
+				color: 'error'
+			})
+		}
+	} else {
+		console.error('HTTP-Error: ' + response.status)
+	}
+}
+
+const updateSslSetting = async (sslMode) => {
+	const toast = useToast()
+	const response = await fetch('/api/update_ssl', {
+		method: 'POST',
+		body: JSON.stringify({
+			apiKey: apiKey.value,
+			currZone: zoneId.value,
+			ssl: sslMode
+		})
+	})
+	if (response.ok) {
+		const data = await response.json()
+		if (data.success) {
+			toast.add({
+				id: 'update-ssl-success' + Date.now(),
+				title: 'Update success',
+				description: 'SSL status updated successfully',
+				icon: 'i-clarity-check-circle-solid',
+				duration: 3000,
+				color: 'success'
+			})
+			showDropdown.value = false
+			await getAll()
+		} else {
+			console.error(data.errors[0].message)
+			toast.add({
+				id: 'update-ssl-error' + Date.now(),
+				title: 'Update failed',
+				description: data.errors[0].message,
+				icon: 'i-clarity-warning-solid',
+				duration: 3000,
+				color: 'error'
+			})
+		}
+	} else {
+		console.error('HTTP-Error: ' + response.status)
+	}
+}
+
+const getBotManagement = async () => {
+	botLoading.value = true
+	botUnavailable.value = false
+	botUnavailableReason.value = ''
+	try {
+		const response = await fetch('/api/bot_management', {
+			method: 'POST',
+			body: JSON.stringify({
+				apiKey: apiKey.value,
+				currZone: zoneId.value
+			})
+		})
+
+		const data = await response.json()
+		if (!response.ok || !data.success) {
+			botUnavailable.value = true
+			botUnavailableReason.value = data?.errors?.[0]?.message || `HTTP ${response.status}`
+			return
+		}
+
+		const fight = data?.result?.fight_mode
+		if (typeof fight === 'boolean') {
+			botFightMode.value = fight
+			return
+		}
+
+		if (typeof fight === 'string') {
+			if (fight === 'on' || fight === 'true') {
+				botFightMode.value = true
+				return
+			}
+			if (fight === 'off' || fight === 'false') {
+				botFightMode.value = false
+				return
+			}
+		}
+
+		botUnavailable.value = true
+		botUnavailableReason.value = 'fight_mode not present in response'
+	} finally {
+		botLoading.value = false
+	}
+}
+
+const updateBotFightMode = async (value) => {
+	const toast = useToast()
+	const previous = botFightMode.value
+	botFightMode.value = value
+	botLoading.value = true
+	try {
+		const response = await fetch('/api/update_bot_fight_mode', {
+			method: 'POST',
+			body: JSON.stringify({
+				apiKey: apiKey.value,
+				currZone: zoneId.value,
+				fight_mode: value
+			})
+		})
+
+		const data = await response.json()
+		if (!data.success) {
+			botFightMode.value = previous
+			toast.add({
+				id: 'bot-fight-mode-error' + Date.now(),
+				title: 'Update failed',
+				description: data.errors?.[0]?.message || 'Failed to update Bot Fight Mode',
+				icon: 'i-clarity-warning-solid',
+				duration: 4000,
+				color: 'error'
+			})
+			return
+		}
+
+		toast.add({
+			id: 'bot-fight-mode-success' + Date.now(),
+			title: 'Updated',
+			description: `Bot Fight Mode ${value ? 'enabled' : 'disabled'}`,
+			icon: 'i-clarity-check-circle-solid',
+			duration: 2500,
+			color: 'success'
+		})
+	} catch (e) {
+		botFightMode.value = previous
+		toast.add({
+			id: 'bot-fight-mode-error' + Date.now(),
+			title: 'Update failed',
+			description: e.message || 'Failed to update Bot Fight Mode',
+			icon: 'i-clarity-warning-solid',
+			duration: 4000,
+			color: 'error'
+		})
+	} finally {
+		botLoading.value = false
+	}
+}
+
+const dnsTypes = computed(() => {
+	if (!dnsRecords.value) return []
+	return dnsRecords.value
+		.filter((record) => record && record.type)
+		.map((record) => record.type)
+		.filter((value, index, self) => self.indexOf(value) === index)
+})
+
+const columns = [
+	{
+		id: 'type',
+		accessorKey: 'type',
+		header: 'Type'
+	},
+	{
+		id: 'name',
+		accessorKey: '_displayName',
+		header: 'Name'
+	},
+	{
+		id: 'content',
+		accessorKey: '_displayContent',
+		header: 'Content'
+	},
+	{
+		id: 'created_on',
+		accessorKey: 'created_on',
+		header: 'Created'
+	},
+	{
+		id: 'modified_on',
+		accessorKey: 'modified_on',
+		header: 'Modified'
+	},
+	{
+		id: 'actions',
+		header: 'Actions',
+		enableSorting: false
+	}
+]
+
+const columnVisibility = ref({})
+
+const items = (row) => {
+	return [
+		[
+			{
+				label: 'Edit',
+				icon: 'i-heroicons-pencil-square-20-solid',
+				onClick: () => navigateToRecord(row.id)
+			},
+			{
+				label: row.proxiable ? 'Proxiable' : 'Not Proxiable',
+				disabled: true,
+				icon: row.proxiable ? 'i-heroicons-check-circle-20-solid' : 'i-heroicons-x-circle-20-solid'
+			}
+		],
+		[
+			{
+				label: 'Delete',
+				icon: 'i-heroicons-trash-20-solid',
+				color: 'error',
+				onClick: () => preDel(row)
+			}
+		]
+	]
+}
+
+const formatDisplayName = (record) => {
+	// First handle SRV records with special logic
+	if (record.type === 'SRV') {
+		return formatSrvRecordName(record)
+	}
+
+	// For standard records, handle zone name trimming
+	const name = record.name
+	if (!name) return ''
+
+	if (name === zoneName.value || !name.endsWith(zoneName.value)) {
+		return name
+	}
+
+	// Remove zone name and the preceding dot
+	return name.slice(0, -zoneName.value.length - 1)
+}
+
+// Add a computed property for processed records to avoid repeated calculations
+const processedRecords = computed(() => {
+	if (!dnsRecords.value || !zoneName.value) return []
+
+	return dnsRecords.value.map((record) => ({
+		...record,
+		_displayName: formatDisplayName(record),
+		_displayContent: formatContent(record)
+	}))
+})
+
+const filteredRecords = computed(() => {
+	let records = processedRecords.value || []
+
+	if (selectedStatus.value.length > 0) {
+		records = records.filter((record) => selectedStatus.value.includes(record.type))
+	}
+
+	if (searchQuery.value) {
+		const query = searchQuery.value.toLowerCase()
+		records = records.filter((record) => {
+			return (
+				(record.name && record.name.toLowerCase().includes(query)) ||
+				(record.content && record.content.toLowerCase().includes(query)) ||
+				(record.comment && record.comment.toLowerCase().includes(query))
+			)
+		})
+	}
+
+	return records
+})
+
+const totalRecords = computed(() => (dnsRecords.value || []).length)
+const filteredCount = computed(() => (filteredRecords.value || []).length)
+const proxiedCount = computed(() => (dnsRecords.value || []).filter((r) => r && r.proxied === true).length)
+const typesCount = computed(() => (dnsTypes.value || []).length)
+
+const rows = computed(() => {
+	const startIndex = (page.value - 1) * pageCount
+	const endIndex = startIndex + pageCount
+	return filteredRecords.value.slice(startIndex, endIndex)
+})
+
+// Add watch to update URL when filter changes
+watch(
+	selectedStatus,
+	(newValue) => {
+		if (newValue.length) {
+			router.push({
+				query: {
+					...route.query,
+					types: newValue.join(',')
+				}
+			})
+		} else if (route.query.types) {
+			// Remove the types param if no filters are selected
+			const { types: _types, ...restQuery } = route.query
+			router.push({ query: restQuery })
+		}
+	},
+	{ deep: true }
+)
+
+// Add debounced function to update URL when search changes
+const debouncedUpdateSearchQuery = useDebounceFn((newValue) => {
+	if (newValue) {
+		router.push({
+			query: {
+				...route.query,
+				search: newValue
+			}
+		})
+	} else if (route.query.search) {
+		// Remove the search param if query is empty
+		const { search: _search, ...restQuery } = route.query
+		router.push({ query: restQuery })
+	}
+}, 300)
+
+// Watch search query changes
+watch(searchQuery, (newValue) => {
+	debouncedUpdateSearchQuery(newValue)
+})
+
+// Add watch to update URL when page changes
+watch(page, (newValue) => {
+	if (newValue > 1) {
+		router.push({
+			query: {
+				...route.query,
+				page: newValue.toString()
+			}
+		})
+	} else if (route.query.page) {
+		// Remove the page param if on page 1
+		const { page: _page, ...restQuery } = route.query
+		router.push({ query: restQuery })
+	}
+})
+
+// Initialize from URL params
+onMounted(async () => {
+	apiKey.value = (localStorage.getItem('cf-api-key') || '').trim()
+	if (!apiKey.value) {
+		router.push('/login')
+		return
+	}
+
+	// Check if we have types in the URL
+	if (route.query.types) {
+		const typesParam = route.query.types
+		selectedStatus.value = typesParam.includes(',') ? typesParam.split(',') : [typesParam]
+	}
+
+	// Check if we have search in the URL
+	if (route.query.search) {
+		searchQuery.value = route.query.search
+	}
+
+	// Check if we have page in the URL
+	if (route.query.page) {
+		const pageNum = parseInt(route.query.page)
+		if (!isNaN(pageNum) && pageNum > 0) {
+			page.value = pageNum
+		}
+	}
+
+	// Add keyboard shortcut for search
+	window.addEventListener('keydown', handleKeyDown)
+
+	await getAll()
+})
+
+onUnmounted(() => {
+	// Remove event listener when component is unmounted
+	window.removeEventListener('keydown', handleKeyDown)
+})
+
+// Keyboard shortcut handler
+const handleKeyDown = (e) => {
+	// Focus search box when '/' is pressed and not in an input field
+	if (e.key === '/' && !['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) {
+		e.preventDefault()
+		searchInput.value?.$el.querySelector('input')?.focus()
+	}
+}
+
+const getDns = async () => {
+	const toast = useToast()
+	dnsLoadError.value = ''
+	const response = await fetch('/api/records', {
+		method: 'POST',
+		body: JSON.stringify({
+			apiKey: apiKey.value,
+			currZone: zoneId.value
+		})
+	})
+	if (response.ok) {
+		const data = await response.json()
+		if (data.success === false) {
+			dnsLoadError.value = data.errors?.[0]?.message || 'Failed to get records'
+			toast.add({
+				id: 'get-records-failed' + Date.now(),
+				title: 'Failed to get records',
+				description: dnsLoadError.value,
+				icon: 'i-clarity-warning-solid',
+				duration: 3000,
+				color: 'error'
+			})
+			dnsRecords.value = []
+			return
+		}
+
+		// Update the records array
+		dnsRecords.value = data.result || []
+	} else {
+		dnsLoadError.value = `HTTP ${response.status}`
+		toast.add({
+			id: 'get-records-http-failed' + Date.now(),
+			title: 'Failed to get records',
+			description: dnsLoadError.value,
+			icon: 'i-clarity-warning-solid',
+			duration: 3000,
+			color: 'error'
+		})
+	}
+}
+
+const getZone = async () => {
+	const response = await fetch('/api/zone', {
+		method: 'POST',
+		body: JSON.stringify({
+			apiKey: apiKey.value,
+			currZone: zoneId.value
+		})
+	})
+	if (response.ok) {
+		const data = await response.json()
+		if (data.success && data.result) {
+			zone.value = data.result
+			zoneName.value = data.result.name
+			if (data.result.account && data.result.account.id) {
+				localStorage.setItem('cf-account-id', data.result.account.id)
+				if (data.result.account.name) localStorage.setItem('cf-account-name', data.result.account.name)
+			}
+		}
+	} else {
+		console.error('HTTP-Error: ' + response.status)
+	}
+}
+
+const getAll = async () => {
+	loading.value = true
+	await Promise.all([getZone(), getDns(), loadCapabilities()])
+	if (canBotFight.value) await getBotManagement()
+	loading.value = false
+}
+
+const loadCapabilities = async () => {
+	try {
+		const { loadZone, missing } = useCapabilities()
+		const caps = await loadZone(apiKey.value, zoneId.value)
+		capabilities.value = caps
+		capabilityMissing.value = missing(caps)
+	} catch {
+		capabilities.value = null
+		capabilityMissing.value = []
+	}
+}
+
+const delDns = async (record) => {
+	const toast = useToast()
+	const response = await fetch('/api/delete_record', {
+		method: 'POST',
+		body: JSON.stringify({
+			apiKey: apiKey.value,
+			currZone: zoneId.value,
+			currDnsRecord: record.id
+		})
+	})
+	if (response.ok) {
+		const _data = await response.json()
+		toast.add({
+			id: 'delete-record-success' + Date.now(),
+			title: 'Delete success',
+			description: 'Record deleted successfully',
+			icon: 'i-clarity-check-circle-solid',
+			duration: 3000,
+			color: 'success'
+		})
+		await getDns()
+	} else {
+		console.error('HTTP-Error: ' + response.status)
+	}
+}
+
+const preDel = (record) => {
+	const toast = useToast()
+	toast.add({
+		id: 'delete-record' + Date.now(),
+		title: 'Delete record',
+		description: 'Are you sure you want to delete this record?',
+		icon: 'i-clarity-warning-solid',
+		duration: 3000,
+		color: 'error',
+		actions: [
+			{
+				label: 'Delete',
+				color: 'error',
+				onClick: () => {
+					delDns(record)
+					toast.remove('delete-record' + Date.now())
+				}
+			},
+			{
+				label: 'Cancel',
+				color: 'neutral',
+				onClick: () => {
+					toast.remove('delete-record' + Date.now())
+				}
+			}
+		]
+	})
+}
+
+const navigateToRecord = (recordId) => {
+	// Also store in localStorage for compatibility with older pages
+	localStorage.setItem('cf-dns-id', recordId)
+
+	// Find record to store its name
+	const record = dnsRecords.value.find((r) => r.id === recordId)
+	if (record) {
+		localStorage.setItem('cf-dns-name', record.name)
+	}
+
+	// Add return query parameters to preserve filter state
+	let returnQuery = ''
+	if (Object.keys(route.query).length > 0) {
+		// Encode the current query state
+		returnQuery = encodeURIComponent(JSON.stringify(route.query))
+	}
+
+	// Navigate with return query param if we have filters
+	if (returnQuery) {
+		router.push(`/zones/${zoneId.value}/records/${recordId}?return=${returnQuery}`)
+	} else {
+		router.push(`/zones/${zoneId.value}/records/${recordId}`)
+	}
+}
+
+const onSelectRecord = (_e, row) => {
+	navigateToRecord(row.original.id)
+}
+
+const copyToClipboard = (text) => {
+	navigator.clipboard.writeText(text)
+	const toast = useToast()
+	toast.add({
+		id: 'copy-ns' + Date.now(),
+		title: 'Copied to clipboard',
+		description: 'Nameserver copied to clipboard',
+		icon: 'i-clarity-check-circle-solid',
+		duration: 3000,
+		color: 'success'
+	})
+}
+
+// Utility function to format content based on record type
+const formatContent = (record) => {
+	if (record.type === 'SRV' && record.data) {
+		// For Minecraft SRV records, use a special format
+		if (record.name && record.name.includes('_minecraft._tcp')) {
+			// Extract just what follows after _minecraft._tcp.
+			const domainPart = record.name.split('_minecraft._tcp.')[1]
+			if (domainPart) {
+				return `${domainPart} → ${record.data.target}:${record.data.port}`
+			}
+		}
+
+		// Make sure we have all the required fields before showing them
+		if (record.data.target && record.data.port) {
+			return `➡️ ${record.data.target}:${record.data.port}${record.data.weight ? ` (Weight: ${record.data.weight})` : ''}`
+		}
+	}
+
+	// For all other record types or if SRV is missing data
+	return record.content || ''
+}
+
+// Get color for record type badge
+const getRecordTypeColor = (type) => {
+	const colorMap = {
+		A: 'primary',
+		AAAA: 'secondary',
+		CNAME: 'success',
+		MX: 'info',
+		SRV: 'warning',
+		TXT: 'neutral'
+	}
+	return colorMap[type] || 'neutral'
+}
+
+// Get icon for record types
+const getRecordTypeIcon = (type) => {
+	const iconMap = {
+		A: 'mdi:alpha-a-circle',
+		AAAA: 'mdi:alpha-a-circle',
+		CNAME: 'mdi:alpha-c-circle',
+		MX: 'mdi:email',
+		SRV: 'mdi:server',
+		TXT: 'mdi:text-box'
+	}
+	return iconMap[type] || 'mdi:dns'
+}
+
+// Format SRV record name for display
+const formatSrvRecordName = (record) => {
+	const name = record.name
+
+	// Handle Minecraft SRV
+	if (name.includes('_minecraft._tcp')) {
+		// Extract just what follows after _minecraft._tcp.
+		const domainPart = name.split('_minecraft._tcp.')[1]
+		if (domainPart) {
+			return domainPart
+		}
+	}
+
+	// Handle general SRV records
+	// Remove the service and proto parts, display them in a cleaner way
+	const parts = name.split('.')
+
+	// Try to find service and proto parts (with leading underscores)
+	const serviceParts = parts.filter((p) => p.startsWith('_'))
+	if (serviceParts.length >= 2) {
+		// Get domain by removing service parts
+		const domainParts = parts.filter((p) => !p.startsWith('_'))
+
+		// Create a cleaner display version
+		const service = serviceParts.map((p) => p.replace('_', '')).join('.')
+		return `${service}.${domainParts.join('.')}`
+	}
+
+	return name
+}
+
+// Add function to navigate to create page with return state
+const navigateToCreate = () => {
+	// Add return query parameters to preserve filter state
+	let returnQuery = ''
+	if (Object.keys(route.query).length > 0) {
+		// Encode the current query state
+		returnQuery = encodeURIComponent(JSON.stringify(route.query))
+	}
+
+	// Navigate with return query param if we have filters
+	if (returnQuery) {
+		router.push(`/zones/${zoneId.value}/records/create?return=${returnQuery}`)
+	} else {
+		router.push(`/zones/${zoneId.value}/records/create`)
+	}
+}
+
+// Add the clearFilters method
+const clearFilters = () => {
+	searchQuery.value = ''
+	selectedStatus.value = []
+	page.value = 1
+
+	// Clear URL query params
+	router.push({ query: {} })
+}
+</script>

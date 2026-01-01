@@ -1,0 +1,100 @@
+@import 'tailwindcss';
+@import '@nuxt/ui';
+
+@plugin '@tailwindcss/forms';
+
+:root {
+	--ui-bg: white;
+	--ui-bg-muted: var(--ui-color-neutral-50);
+	--ui-bg-elevated: var(--ui-color-neutral-100);
+	--ui-bg-accented: var(--ui-color-neutral-200);
+	--ui-bg-inverted: var(--ui-color-neutral-900);
+}
+
+.dark {
+	--ui-bg: var(--ui-color-neutral-950);
+	--ui-bg-muted: var(--ui-color-neutral-950);
+	--ui-bg-elevated: var(--ui-color-neutral-900);
+	--ui-bg-accented: var(--ui-color-neutral-800);
+	--ui-bg-inverted: white;
+
+	--ui-border: var(--ui-color-neutral-800);
+	--ui-border-muted: var(--ui-color-neutral-900);
+	--ui-border-accented: var(--ui-color-neutral-800);
+
+	--ui-text-dimmed: var(--ui-color-neutral-500);
+	--ui-text-muted: var(--ui-color-neutral-400);
+	--ui-text-toned: var(--ui-color-neutral-300);
+	--ui-text: var(--ui-color-neutral-200);
+	--ui-text-highlighted: white;
+	--ui-text-inverted: var(--ui-color-neutral-950);
+}
+
+@theme {
+	--color-comet-50: #f7f7f8;
+	--color-comet-100: #eeeff1;
+	--color-comet-200: #d5d8dd;
+	--color-comet-300: #bcc0c8;
+	--color-comet-400: #8a919f;
+	--color-comet-500: #586276;
+	--color-comet-600: #4f586a;
+	--color-comet-700: #424a59;
+	--color-comet-800: #353b47;
+	--color-comet-900: #2b303a;
+
+	--color-main: #2c323c;
+	--color-primary: #f48120;
+	--color-secondary: #424a59;
+	--color-accent: #f48120;
+
+	--breakpoint-xs: 375px;
+	--breakpoint-full: 2160px;
+	--breakpoint-8xl: 90rem;
+
+	--font-sans: 'Figtree', sans-serif;
+}
+@layer base {
+	*,
+	::after,
+	::before,
+	::backdrop,
+	::file-selector-button {
+		border-color: var(--color-gray-200, currentcolor);
+	}
+}
+
+input,
+textarea,
+select {
+	@apply border border-default bg-elevated text-default;
+}
+
+html {
+	@apply overflow-x-hidden;
+}
+
+@layer components {
+	.page {
+		@apply min-h-screen w-full;
+	}
+
+	.page-inner {
+		@apply mx-auto w-full px-4 py-6 md:px-8;
+		max-width: 90rem;
+	}
+
+	.page-header {
+		@apply mb-6 flex flex-wrap items-center justify-between gap-4;
+	}
+
+	.clickable {
+		@apply cursor-pointer;
+	}
+}
+
+@layer utilities {
+	.max-w-8xl {
+		max-width: var(--breakpoint-8xl);
+	}
+}
+
