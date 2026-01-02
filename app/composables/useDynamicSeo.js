@@ -30,5 +30,3 @@ export function useDynamicSeo({ title, description }) {
 		twitterDescription: resolvedDescription
 	})
 }
-
-

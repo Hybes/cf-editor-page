@@ -25,8 +25,7 @@ export default defineEventHandler(async (event) => {
 				method: 'POST',
 				path: '/graphql',
 				body: {
-					query:
-						'query ($accountTag: string!, $date_geq: Date!, $date_leq: Date!) { viewer { accounts(filter: { accountTag: $accountTag }) { dnsAnalyticsAdaptiveGroups(filter: { date_geq: $date_geq, date_leq: $date_leq } limit: 1) { count } } } }',
+					query: 'query ($accountTag: string!, $date_geq: Date!, $date_leq: Date!) { viewer { accounts(filter: { accountTag: $accountTag }) { dnsAnalyticsAdaptiveGroups(filter: { date_geq: $date_geq, date_leq: $date_leq } limit: 1) { count } } } }',
 					variables: { accountTag: accountId, date_geq: dateGeq, date_leq: dateLeq }
 				}
 			})
@@ -38,5 +37,3 @@ export default defineEventHandler(async (event) => {
 		return { success: false, errors: [{ message: error.message || 'Unknown error' }] }
 	}
 })
-
-

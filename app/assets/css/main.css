@@ -66,7 +66,7 @@
 input,
 textarea,
 select {
-	@apply border border-default bg-elevated text-default;
+	@apply border-default bg-elevated text-default border;
 }
 
 html {
@@ -97,4 +97,3 @@ html {
 		max-width: var(--breakpoint-8xl);
 	}
 }
-

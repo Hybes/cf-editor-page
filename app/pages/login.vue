@@ -20,9 +20,7 @@
 				>
 					Create an API token in Cloudflare
 				</UButton>
-				<p class="text-xs text-stone-600 dark:text-stone-400">
-					You will paste it here afterwards.
-				</p>
+				<p class="text-xs text-stone-600 dark:text-stone-400">You will paste it here afterwards.</p>
 			</div>
 			<UInput
 				id="cf-api-key"
@@ -34,9 +32,7 @@
 				placeholder="Paste your API token"
 				@keydown.enter="saveApiToken"
 			/>
-			<UButton color="primary" @click="saveApiToken">
-				Continue
-			</UButton>
+			<UButton color="primary" @click="saveApiToken"> Continue </UButton>
 		</div>
 	</PageContainer>
 </template>

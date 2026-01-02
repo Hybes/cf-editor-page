@@ -5,7 +5,9 @@
 		</Head>
 
 		<div class="mb-6 flex flex-wrap items-center justify-between gap-3">
-			<UButton variant="outline" icon="i-clarity-undo-line" :to="`/zones/${zoneId}/records`">Back to Records</UButton>
+			<UButton variant="outline" icon="i-clarity-undo-line" :to="`/zones/${zoneId}/records`"
+				>Back to Records</UButton
+			>
 		</div>
 
 		<div class="flex flex-col gap-6">
@@ -42,7 +44,11 @@
 
 					<div v-if="error" class="text-sm text-red-600 dark:text-red-400">{{ error }}</div>
 
-					<pre v-if="result" class="max-h-[520px] overflow-auto rounded-lg bg-stone-100 p-4 text-xs dark:bg-stone-950">{{ result }}</pre>
+					<pre
+						v-if="result"
+						class="max-h-[520px] overflow-auto rounded-lg bg-stone-100 p-4 text-xs dark:bg-stone-950"
+						>{{ result }}</pre
+					>
 				</div>
 			</div>
 		</div>
@@ -116,5 +122,3 @@ onMounted(async () => {
 	await loadCaps()
 })
 </script>
-
-

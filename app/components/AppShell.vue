@@ -1,6 +1,6 @@
 <template>
-	<div class="min-h-screen bg-muted/30">
-		<header class="sticky top-0 z-40 border-b border-default bg-default/70 backdrop-blur">
+	<div class="bg-muted/30 min-h-screen">
+		<header class="border-default bg-default/70 sticky top-0 z-40 border-b backdrop-blur">
 			<UContainer>
 				<div class="flex items-center justify-between gap-3 py-3">
 					<div class="flex min-w-0 items-center gap-3">
@@ -16,12 +16,12 @@
 						</UButton>
 						<div class="min-w-0">
 							<div class="flex items-center gap-2">
-								<UIcon name="i-clarity-cloud-line" class="h-5 w-5 text-primary" />
-								<p class="truncate text-sm font-semibold text-highlighted">
+								<UIcon name="i-clarity-cloud-line" class="text-primary h-5 w-5" />
+								<p class="text-highlighted truncate text-sm font-semibold">
 									{{ title }}
 								</p>
 							</div>
-							<p v-if="subtitle" class="truncate text-xs text-muted">
+							<p v-if="subtitle" class="text-muted truncate text-xs">
 								{{ subtitle }}
 							</p>
 						</div>
@@ -68,7 +68,7 @@
 				<a
 					href="https://connectdorset.com"
 					target="_blank"
-					class="flex items-center justify-center gap-2 text-sm text-muted hover:text-default"
+					class="text-muted hover:text-default flex items-center justify-center gap-2 text-sm"
 				>
 					<span>Built by Connect</span>
 					<UIcon name="i-heroicons-arrow-top-right-on-square" class="h-4 w-4" />
@@ -108,5 +108,3 @@ const resetConfig = () => {
 	useRouter().push('/login')
 }
 </script>
-
-

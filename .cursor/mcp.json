@@ -1,20 +1,20 @@
 {
-  "mcpServers": {
-    "nuxt-seo": {
-      "type": "http",
-      "url": "https://nuxtseo.com/mcp"
-    },
-    "cloudflare": {
-      "type": "http",
-      "url": "https://docs.mcp.cloudflare.com/mcp"
-    },
-    "tailwindcss-docs": {
-      "command": "npx",
-      "args": ["-y", "tailwindcss-mcp-server"]
-    },
-    "nuxt-ui": {
-      "type": "http",
-      "url": "https://ui.nuxt.com/mcp"
-    }
-  }
+	"mcpServers": {
+		"nuxt-seo": {
+			"type": "http",
+			"url": "https://nuxtseo.com/mcp"
+		},
+		"cloudflare": {
+			"type": "http",
+			"url": "https://docs.mcp.cloudflare.com/mcp"
+		},
+		"tailwindcss-docs": {
+			"command": "npx",
+			"args": ["-y", "tailwindcss-mcp-server"]
+		},
+		"nuxt-ui": {
+			"type": "http",
+			"url": "https://ui.nuxt.com/mcp"
+		}
+	}
 }

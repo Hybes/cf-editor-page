@@ -36,7 +36,8 @@ export default defineNuxtConfig({
 		meta: {
 			applicationName: 'DNS Manager',
 			description: 'API Key editor for Cloudflare DNS records',
-			keywords: 'cloudflare editor, cloudflare api, cloudflare api editor, dns api, cloudflare edit dns, cloudflare api dns edit',
+			keywords:
+				'cloudflare editor, cloudflare api, cloudflare api editor, dns api, cloudflare edit dns, cloudflare api dns edit',
 			themeColor: '#0c0a09',
 			colorScheme: 'dark light',
 			twitterCard: 'summary_large_image',

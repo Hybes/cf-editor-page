@@ -4,119 +4,117 @@
 			<Title>Zones</Title>
 		</Head>
 		<div class="flex min-h-[70vh] w-full flex-col items-center justify-center">
-				<Loader
-					v-if="loading && !appBootLoading"
-					fullscreen
-					title="Loading your zones"
-					subtitle="Fetching zone list from Cloudflare…"
-				/>
-				<div v-else-if="!loading" class="flex w-full flex-col items-center justify-center gap-6">
-					<div class="flex flex-col items-center justify-center gap-2">
-						<h1 class="text-center text-2xl font-semibold">Cloudflare DNS Editor</h1>
-						<CapabilityIndicator :missing-items="capabilityMissing" />
+			<Loader
+				v-if="loading && !appBootLoading"
+				fullscreen
+				title="Loading your zones"
+				subtitle="Fetching zone list from Cloudflare…"
+			/>
+			<div v-else-if="!loading" class="flex w-full flex-col items-center justify-center gap-6">
+				<div class="flex flex-col items-center justify-center gap-2">
+					<h1 class="text-center text-2xl font-semibold">Cloudflare DNS Editor</h1>
+					<CapabilityIndicator :missing-items="capabilityMissing" />
+				</div>
+				<div class="max-w-8xl flex w-full flex-col rounded-lg border p-4 dark:border-gray-700">
+					<div class="mb-4 flex flex-col gap-2">
+						<h2 class="text-lg font-medium">Your Zones</h2>
+						<div class="text-sm text-gray-500">Select a zone to manage its DNS records</div>
 					</div>
-					<div class="flex w-full flex-col rounded-lg border p-4 dark:border-gray-700 max-w-8xl">
-						<div class="mb-4 flex flex-col gap-2">
-							<h2 class="text-lg font-medium">Your Zones</h2>
-							<div class="text-sm text-gray-500">Select a zone to manage its DNS records</div>
-						</div>
-						<div class="relative mb-4 w-full">
-							<UTooltip text="Press '/' to search">
-								<UInput
-									ref="searchInput"
-									v-model="searchQuery"
-									icon="i-heroicons-magnifying-glass-20-solid"
-									type="text"
-									placeholder="Search zones..."
-									color="neutral"
-									class="w-full transition-all focus-within:shadow-md"
-									size="lg"
-									@focus="focusSearchInput"
-								/>
-							</UTooltip>
-							<span
-								v-if="searchQuery"
-								class="absolute top-2 right-2 cursor-pointer text-gray-500 hover:text-gray-700"
-								@click="searchQuery = ''"
+					<div class="relative mb-4 w-full">
+						<UTooltip text="Press '/' to search">
+							<UInput
+								ref="searchInput"
+								v-model="searchQuery"
+								icon="i-heroicons-magnifying-glass-20-solid"
+								type="text"
+								placeholder="Search zones..."
+								color="neutral"
+								class="w-full transition-all focus-within:shadow-md"
+								size="lg"
+								@focus="focusSearchInput"
+							/>
+						</UTooltip>
+						<span
+							v-if="searchQuery"
+							class="absolute top-2 right-2 cursor-pointer text-gray-500 hover:text-gray-700"
+							@click="searchQuery = ''"
+						>
+							<UIcon name="i-heroicons-x-mark-20-solid" class="h-5 w-5" />
+						</span>
+					</div>
+					<div class="mb-4 flex w-full flex-wrap items-center justify-between gap-3">
+						<div class="text-sm text-gray-500">{{ filteredZones.length }} zones</div>
+						<div class="flex items-center gap-2">
+							<UButton
+								size="sm"
+								variant="outline"
+								:color="viewMode === 'grid' ? 'primary' : 'neutral'"
+								icon="i-heroicons-squares-2x2"
+								@click="viewMode = 'grid'"
 							>
-								<UIcon name="i-heroicons-x-mark-20-solid" class="h-5 w-5" />
-							</span>
+								Grid
+							</UButton>
+							<UButton
+								size="sm"
+								variant="outline"
+								:color="viewMode === 'table' ? 'primary' : 'neutral'"
+								icon="i-heroicons-table-cells"
+								@click="viewMode = 'table'"
+							>
+								Table
+							</UButton>
 						</div>
-						<div class="mb-4 flex w-full flex-wrap items-center justify-between gap-3">
-							<div class="text-sm text-gray-500">
-								{{ filteredZones.length }} zones
-							</div>
-							<div class="flex items-center gap-2">
-								<UButton
-									size="sm"
-									variant="outline"
-									:color="viewMode === 'grid' ? 'primary' : 'neutral'"
-									icon="i-heroicons-squares-2x2"
-									@click="viewMode = 'grid'"
-								>
-									Grid
-								</UButton>
-								<UButton
-									size="sm"
-									variant="outline"
-									:color="viewMode === 'table' ? 'primary' : 'neutral'"
-									icon="i-heroicons-table-cells"
-									@click="viewMode = 'table'"
-								>
-									Table
-								</UButton>
-							</div>
-						</div>
+					</div>
 
-						<div v-if="viewMode === 'grid'" class="grid w-full grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-							<div
-								v-for="zone in filteredZones"
-								:key="zone.id"
-								class="flex cursor-pointer flex-col gap-3 rounded-lg border border-gray-200 p-4 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800"
-								@click="navigateToZone(zone.id)"
-							>
-								<div class="flex items-start justify-between gap-3">
-									<div class="min-w-0">
-										<div class="flex items-center gap-2">
-											<UIcon name="i-heroicons-globe-alt" class="text-blue-500" />
-											<div class="truncate font-medium">{{ zone.name }}</div>
-										</div>
-										<div class="mt-1 text-xs text-gray-500">{{ zone.id }}</div>
+					<div v-if="viewMode === 'grid'" class="grid w-full grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+						<div
+							v-for="zone in filteredZones"
+							:key="zone.id"
+							class="flex cursor-pointer flex-col gap-3 rounded-lg border border-gray-200 p-4 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800"
+							@click="navigateToZone(zone.id)"
+						>
+							<div class="flex items-start justify-between gap-3">
+								<div class="min-w-0">
+									<div class="flex items-center gap-2">
+										<UIcon name="i-heroicons-globe-alt" class="text-blue-500" />
+										<div class="truncate font-medium">{{ zone.name }}</div>
 									</div>
-									<UBadge
-										:color="zone.status === 'active' ? 'success' : 'warning'"
-										variant="subtle"
-										class="uppercase"
-									>
-										{{ zone.status }}
-									</UBadge>
+									<div class="mt-1 text-xs text-gray-500">{{ zone.id }}</div>
 								</div>
-								<div class="flex justify-end">
-									<UButton
-										color="primary"
-										variant="soft"
-										size="sm"
-										icon="i-heroicons-pencil-square"
-										@click.stop="navigateToZone(zone.id)"
-									>
-										Manage Records
-									</UButton>
-								</div>
+								<UBadge
+									:color="zone.status === 'active' ? 'success' : 'warning'"
+									variant="subtle"
+									class="uppercase"
+								>
+									{{ zone.status }}
+								</UBadge>
+							</div>
+							<div class="flex justify-end">
+								<UButton
+									color="primary"
+									variant="soft"
+									size="sm"
+									icon="i-heroicons-pencil-square"
+									@click.stop="navigateToZone(zone.id)"
+								>
+									Manage Records
+								</UButton>
 							</div>
 						</div>
+					</div>
 
-						<div v-else class="w-full rounded-sm">
-							<UTable
-								:data="filteredZones"
-								:columns="columns"
-								:loading="loading"
-								:ui="{
-									tr: {
-										base: 'cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800'
-									}
-								}"
-								@select="onSelectZone"
-							>
+					<div v-else class="w-full rounded-sm">
+						<UTable
+							:data="filteredZones"
+							:columns="columns"
+							:loading="loading"
+							:ui="{
+								tr: {
+									base: 'cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800'
+								}
+							}"
+							@select="onSelectZone"
+						>
 							<template #name-cell="{ row }">
 								<div class="flex items-center gap-3">
 									<UIcon name="i-heroicons-globe-alt" class="text-blue-500" />
@@ -145,10 +143,10 @@
 									</UButton>
 								</div>
 							</template>
-							</UTable>
-						</div>
+						</UTable>
 					</div>
 				</div>
+			</div>
 		</div>
 	</PageContainer>
 </template>

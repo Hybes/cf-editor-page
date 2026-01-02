@@ -1,383 +1,371 @@
 <template>
 	<PageContainer>
-			<div class="mb-6 flex flex-col items-center gap-4 sm:flex-row sm:justify-between">
-				<div class="flex flex-wrap items-center justify-center gap-3">
-					<UButton variant="outline" icon="i-clarity-undo-line" to="/zones">Back to Zones</UButton>
-						<UButton
-							variant="outline"
-							color="success"
-							icon="i-clarity-plus-circle-solid"
-							@click="navigateToCreate"
+		<div class="mb-6 flex flex-col items-center gap-4 sm:flex-row sm:justify-between">
+			<div class="flex flex-wrap items-center justify-center gap-3">
+				<UButton variant="outline" icon="i-clarity-undo-line" to="/zones">Back to Zones</UButton>
+				<UButton variant="outline" color="success" icon="i-clarity-plus-circle-solid" @click="navigateToCreate">
+					Create Record
+				</UButton>
+				<UButton
+					v-if="canRulesets"
+					variant="outline"
+					color="primary"
+					icon="i-heroicons-shield-check"
+					:to="`/zones/${zoneId}/rules`"
+				>
+					Rules
+				</UButton>
+				<UButton
+					v-if="canAccountAnalytics"
+					variant="outline"
+					color="primary"
+					icon="i-heroicons-chart-bar"
+					:to="`/zones/${zoneId}/analytics`"
+				>
+					Analytics
+				</UButton>
+				<UButton
+					v-if="canTurnstile"
+					variant="outline"
+					color="primary"
+					icon="i-heroicons-shield-exclamation"
+					:to="`/zones/${zoneId}/turnstile`"
+				>
+					Turnstile
+				</UButton>
+				<UButton
+					v-if="canDnsViews"
+					variant="outline"
+					color="primary"
+					icon="i-heroicons-squares-plus"
+					:to="`/zones/${zoneId}/dns-views`"
+				>
+					DNS Views
+				</UButton>
+				<UButton
+					v-if="canDnsFirewall"
+					variant="outline"
+					color="primary"
+					icon="i-heroicons-shield-check"
+					:to="`/zones/${zoneId}/dns-firewall`"
+				>
+					DNS Firewall
+				</UButton>
+				<UBadge v-if="searchQuery || selectedStatus.length > 0" color="primary" class="flex items-center gap-2">
+					<span v-if="searchQuery">Search: {{ searchQuery }}</span>
+					<span v-if="selectedStatus.length > 0">Types: {{ selectedStatus.join(', ') }}</span>
+					<UIcon name="i-heroicons-x-mark" class="h-4 w-4 cursor-pointer" @click="clearFilters" />
+				</UBadge>
+			</div>
+		</div>
+		<div class="flex flex-col items-center justify-center gap-4">
+			<div class="flex w-full flex-col justify-center gap-4">
+				<div class="flex flex-col items-center justify-center gap-3 sm:flex-row">
+					<NuxtLink
+						:to="'http://' + zoneName"
+						external
+						target="_blank"
+						class="text-center text-2xl font-semibold text-stone-900 hover:underline dark:text-stone-100"
+					>
+						{{ zoneName }}
+					</NuxtLink>
+					<CapabilityIndicator :missing-items="capabilityMissing" />
+					<UTooltip
+						:text="
+							botUnavailable
+								? botUnavailableReason || 'Bot Fight Mode is unavailable for this zone/token'
+								: 'Toggle Bot Fight Mode'
+						"
+					>
+						<div
+							v-if="canBotFight"
+							class="flex items-center gap-3 rounded-full border border-stone-300 bg-white/70 px-3 py-1.5 shadow-xs backdrop-blur-sm dark:border-stone-700 dark:bg-stone-900/40"
 						>
-							Create Record
-						</UButton>
-						<UButton
-							variant="outline"
-							color="primary"
-							icon="i-heroicons-shield-check"
-							:to="`/zones/${zoneId}/rules`"
-							v-if="canRulesets"
+							<div class="flex items-center gap-2">
+								<UIcon name="i-heroicons-bug-ant" class="h-5 w-5 text-stone-700 dark:text-stone-200" />
+								<span class="text-sm font-medium text-stone-800 dark:text-stone-100"
+									>Bot Fight Mode</span
+								>
+							</div>
+							<div class="flex items-center gap-2">
+								<UBadge v-if="botUnavailable" color="neutral" variant="subtle"> Unavailable </UBadge>
+								<UBadge v-else :color="botFightMode ? 'success' : 'warning'" variant="subtle">
+									{{ botFightMode ? 'On' : 'Off' }}
+								</UBadge>
+								<UIcon
+									v-if="botLoading"
+									name="i-heroicons-arrow-path"
+									class="h-4 w-4 animate-spin text-stone-500"
+								/>
+								<USwitch
+									:model-value="botFightMode"
+									:disabled="botLoading || botUnavailable"
+									@update:model-value="updateBotFightMode"
+								/>
+							</div>
+						</div>
+					</UTooltip>
+					<div v-if="canSsl" class="relative">
+						<div class="cursor-pointer" @click="showDropdown = !showDropdown">
+							<UIcon v-if="zone.ssl?.value === 'strict'" name="i-clarity-lock-solid" class="h-6 w-6" />
+							<UIcon v-if="zone.ssl?.value === 'full'" name="i-clarity-lock-line" class="h-6 w-6" />
+							<UIcon
+								v-if="zone.ssl?.value === 'flexible'"
+								name="i-clarity-curve-chart-solid"
+								class="h-6 w-6"
+							/>
+							<UIcon v-if="zone.ssl?.value === 'off'" name="i-clarity-no-access-solid" class="h-6 w-6" />
+						</div>
+						<div
+							v-if="showDropdown"
+							class="absolute right-0 z-10 mt-2 w-48 rounded-sm border border-stone-600 bg-stone-300 shadow-lg dark:border-stone-400 dark:bg-stone-700"
 						>
-							Rules
-						</UButton>
-						<UButton
-							variant="outline"
-							color="primary"
-							icon="i-heroicons-chart-bar"
-							:to="`/zones/${zoneId}/analytics`"
-							v-if="canAccountAnalytics"
-						>
-							Analytics
-						</UButton>
-						<UButton
-							variant="outline"
-							color="primary"
-							icon="i-heroicons-shield-exclamation"
-							:to="`/zones/${zoneId}/turnstile`"
-							v-if="canTurnstile"
-						>
-							Turnstile
-						</UButton>
-						<UButton
-							variant="outline"
-							color="primary"
-							icon="i-heroicons-squares-plus"
-							:to="`/zones/${zoneId}/dns-views`"
-							v-if="canDnsViews"
-						>
-							DNS Views
-						</UButton>
-						<UButton
-							variant="outline"
-							color="primary"
-							icon="i-heroicons-shield-check"
-							:to="`/zones/${zoneId}/dns-firewall`"
-							v-if="canDnsFirewall"
-						>
-							DNS Firewall
-						</UButton>
-						<UBadge
-							v-if="searchQuery || selectedStatus.length > 0"
-							color="primary"
-							class="flex items-center gap-2"
-						>
-							<span v-if="searchQuery">Search: {{ searchQuery }}</span>
-							<span v-if="selectedStatus.length > 0">Types: {{ selectedStatus.join(', ') }}</span>
-							<UIcon name="i-heroicons-x-mark" class="h-4 w-4 cursor-pointer" @click="clearFilters" />
-						</UBadge>
+							<div
+								class="flex cursor-pointer items-center gap-2 px-4 py-2 hover:bg-gray-100 dark:hover:bg-stone-800"
+								:class="{ 'bg-gray-200 dark:bg-gray-800': zone.ssl?.value === 'strict' }"
+								@click="updateSslSetting('strict')"
+							>
+								<UIcon name="i-clarity-lock-solid" class="h-4 w-4" />
+								Strict
+							</div>
+							<div class="border-t border-stone-400 dark:border-stone-600"></div>
+							<div
+								class="flex cursor-pointer items-center gap-2 px-4 py-2 hover:bg-gray-100 dark:hover:bg-stone-800"
+								:class="{ 'bg-gray-200 dark:bg-gray-800': zone.ssl?.value === 'full' }"
+								@click="updateSslSetting('full')"
+							>
+								<UIcon name="i-clarity-lock-line" class="h-4 w-4" />
+								Full
+							</div>
+							<div class="border-t border-stone-400 dark:border-stone-600"></div>
+							<div
+								class="flex cursor-pointer items-center gap-2 px-4 py-2 hover:bg-gray-100 dark:hover:bg-stone-800"
+								:class="{ 'bg-gray-200 dark:bg-gray-800': zone.ssl?.value === 'flexible' }"
+								@click="updateSslSetting('flexible')"
+							>
+								<UIcon name="i-clarity-curve-chart-solid" class="h-4 w-4" />
+								Flexible
+							</div>
+							<div class="border-t border-stone-400 dark:border-stone-600"></div>
+							<div
+								class="flex cursor-pointer items-center gap-2 px-4 py-2 hover:bg-gray-100 dark:hover:bg-stone-800"
+								:class="{ 'bg-gray-200 dark:bg-gray-800': zone.ssl?.value === 'off' }"
+								@click="updateSslSetting('off')"
+							>
+								<UIcon name="i-clarity-no-access-solid" class="h-4 w-4" />
+								Off
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="grid w-full grid-cols-2 gap-3 md:grid-cols-4">
+					<div
+						class="rounded-lg border border-stone-200 bg-white/70 p-3 dark:border-stone-700 dark:bg-stone-900/40"
+					>
+						<div class="text-xs text-stone-500">Records</div>
+						<div class="text-lg font-semibold text-stone-900 dark:text-stone-100">{{ totalRecords }}</div>
+					</div>
+					<div
+						class="rounded-lg border border-stone-200 bg-white/70 p-3 dark:border-stone-700 dark:bg-stone-900/40"
+					>
+						<div class="text-xs text-stone-500">Filtered</div>
+						<div class="text-lg font-semibold text-stone-900 dark:text-stone-100">{{ filteredCount }}</div>
+					</div>
+					<div
+						class="rounded-lg border border-stone-200 bg-white/70 p-3 dark:border-stone-700 dark:bg-stone-900/40"
+					>
+						<div class="text-xs text-stone-500">Proxied</div>
+						<div class="text-lg font-semibold text-stone-900 dark:text-stone-100">{{ proxiedCount }}</div>
+					</div>
+					<div
+						class="rounded-lg border border-stone-200 bg-white/70 p-3 dark:border-stone-700 dark:bg-stone-900/40"
+					>
+						<div class="text-xs text-stone-500">Types</div>
+						<div class="text-lg font-semibold text-stone-900 dark:text-stone-100">{{ typesCount }}</div>
+					</div>
+				</div>
+				<div class="flex translate-x-[12px] flex-wrap items-center justify-center gap-4">
+					<div
+						v-for="ns in zone.name_servers || []"
+						:key="ns"
+						class="group flex cursor-pointer items-center gap-4"
+						@click="copyToClipboard(ns)"
+					>
+						<p class="font-bold text-stone-600 italic dark:text-stone-400">{{ ns }}</p>
+						<UIcon name="i-clarity-clipboard-line" class="opacity-0 group-hover:opacity-100" />
+					</div>
 				</div>
 			</div>
-				<div class="flex flex-col items-center justify-center gap-4">
-					<div class="flex w-full flex-col justify-center gap-4">
-					<div class="flex flex-col items-center justify-center gap-3 sm:flex-row">
-						<NuxtLink
-							:to="'http://' + zoneName"
-							external
-							target="_blank"
-							class="text-center text-2xl font-semibold text-stone-900 hover:underline dark:text-stone-100"
-						>
-							{{ zoneName }}
-						</NuxtLink>
-						<CapabilityIndicator :missing-items="capabilityMissing" />
-						<UTooltip
-							:text="
-								botUnavailable
-									? botUnavailableReason || 'Bot Fight Mode is unavailable for this zone/token'
-									: 'Toggle Bot Fight Mode'
+			<div class="flex w-full flex-col items-center justify-center gap-4">
+				<div
+					v-if="dnsLoadError"
+					class="w-full rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-800 dark:bg-red-950/40 dark:text-red-200"
+				>
+					{{ dnsLoadError }}
+				</div>
+				<div class="flex w-full flex-wrap items-center justify-between gap-4">
+					<div class="flex w-full gap-4 md:w-[calc(50%-0.5rem)]">
+						<USelectMenu
+							v-model="selectedStatus"
+							:items="dnsTypes"
+							multiple
+							placeholder="Type"
+							class="min-w-24"
+						/>
+						<div class="relative grow">
+							<UTooltip text="Press '/' to search">
+								<UInput
+									ref="searchInput"
+									v-model="searchQuery"
+									icon="i-heroicons-magnifying-glass-20-solid"
+									type="text"
+									placeholder="Search records..."
+									color="neutral"
+									class="w-full min-w-48 transition-all focus-within:shadow-md"
+									size="lg"
+									@focus="
+										() => {
+											setTimeout(
+												() => searchInput.value?.$el.querySelector('input')?.select(),
+												100
+											)
+										}
+									"
+								/>
+							</UTooltip>
+							<span
+								v-if="searchQuery"
+								class="absolute top-2 right-2 cursor-pointer text-gray-500 hover:text-gray-700"
+								@click="searchQuery = ''"
+							>
+								<UIcon name="i-heroicons-x-mark-20-solid" class="h-5 w-5" />
+							</span>
+						</div>
+					</div>
+					<div class="flex w-full items-center gap-4 md:w-[calc(50%-0.5rem)] md:justify-end">
+						<UDropdownMenu
+							:items="
+								columns.map((c) => ({
+									label: c.header,
+									type: 'checkbox',
+									checked: columnVisibility[c.id] !== false,
+									onUpdateChecked(checked) {
+										columnVisibility[c.id] = checked
+									},
+									onSelect(e) {
+										e.preventDefault()
+									}
+								}))
 							"
+							:content="{ align: 'end' }"
 						>
-							<div
-								v-if="canBotFight"
-								class="flex items-center gap-3 rounded-full border border-stone-300 bg-white/70 px-3 py-1.5 shadow-xs backdrop-blur-sm dark:border-stone-700 dark:bg-stone-900/40"
-							>
-								<div class="flex items-center gap-2">
-									<UIcon
-										name="i-heroicons-bug-ant"
-										class="h-5 w-5 text-stone-700 dark:text-stone-200"
-									/>
-									<span class="text-sm font-medium text-stone-800 dark:text-stone-100">Bot Fight Mode</span>
-								</div>
-								<div class="flex items-center gap-2">
-									<UBadge v-if="botUnavailable" color="neutral" variant="subtle">
-										Unavailable
-									</UBadge>
-									<UBadge v-else :color="botFightMode ? 'success' : 'warning'" variant="subtle">
-										{{ botFightMode ? 'On' : 'Off' }}
-									</UBadge>
-									<UIcon
-										v-if="botLoading"
-										name="i-heroicons-arrow-path"
-										class="h-4 w-4 animate-spin text-stone-500"
-									/>
-									<USwitch
-										:model-value="botFightMode"
-										:disabled="botLoading || botUnavailable"
-										@update:model-value="updateBotFightMode"
-									/>
-								</div>
-							</div>
-						</UTooltip>
-						<div v-if="canSsl" class="relative">
-							<div class="cursor-pointer" @click="showDropdown = !showDropdown">
-								<UIcon
-									v-if="zone.ssl?.value === 'strict'"
-									name="i-clarity-lock-solid"
-									class="h-6 w-6"
-								/>
-								<UIcon v-if="zone.ssl?.value === 'full'" name="i-clarity-lock-line" class="h-6 w-6" />
-								<UIcon
-									v-if="zone.ssl?.value === 'flexible'"
-									name="i-clarity-curve-chart-solid"
-									class="h-6 w-6"
-								/>
-								<UIcon
-									v-if="zone.ssl?.value === 'off'"
-									name="i-clarity-no-access-solid"
-									class="h-6 w-6"
-								/>
-							</div>
-							<div
-								v-if="showDropdown"
-								class="absolute right-0 z-10 mt-2 w-48 rounded-sm border border-stone-600 bg-stone-300 shadow-lg dark:border-stone-400 dark:bg-stone-700"
-							>
-								<div
-									class="flex cursor-pointer items-center gap-2 px-4 py-2 hover:bg-gray-100 dark:hover:bg-stone-800"
-									:class="{ 'bg-gray-200 dark:bg-gray-800': zone.ssl?.value === 'strict' }"
-									@click="updateSslSetting('strict')"
-								>
-									<UIcon name="i-clarity-lock-solid" class="h-4 w-4" />
-									Strict
-								</div>
-								<div class="border-t border-stone-400 dark:border-stone-600"></div>
-								<div
-									class="flex cursor-pointer items-center gap-2 px-4 py-2 hover:bg-gray-100 dark:hover:bg-stone-800"
-									:class="{ 'bg-gray-200 dark:bg-gray-800': zone.ssl?.value === 'full' }"
-									@click="updateSslSetting('full')"
-								>
-									<UIcon name="i-clarity-lock-line" class="h-4 w-4" />
-									Full
-								</div>
-								<div class="border-t border-stone-400 dark:border-stone-600"></div>
-								<div
-									class="flex cursor-pointer items-center gap-2 px-4 py-2 hover:bg-gray-100 dark:hover:bg-stone-800"
-									:class="{ 'bg-gray-200 dark:bg-gray-800': zone.ssl?.value === 'flexible' }"
-									@click="updateSslSetting('flexible')"
-								>
-									<UIcon name="i-clarity-curve-chart-solid" class="h-4 w-4" />
-									Flexible
-								</div>
-								<div class="border-t border-stone-400 dark:border-stone-600"></div>
-								<div
-									class="flex cursor-pointer items-center gap-2 px-4 py-2 hover:bg-gray-100 dark:hover:bg-stone-800"
-									:class="{ 'bg-gray-200 dark:bg-gray-800': zone.ssl?.value === 'off' }"
-									@click="updateSslSetting('off')"
-								>
-									<UIcon name="i-clarity-no-access-solid" class="h-4 w-4" />
-									Off
-								</div>
-							</div>
-						</div>
-					</div>
-					<div class="grid w-full grid-cols-2 gap-3 md:grid-cols-4">
-						<div class="rounded-lg border border-stone-200 bg-white/70 p-3 dark:border-stone-700 dark:bg-stone-900/40">
-							<div class="text-xs text-stone-500">Records</div>
-							<div class="text-lg font-semibold text-stone-900 dark:text-stone-100">{{ totalRecords }}</div>
-						</div>
-						<div class="rounded-lg border border-stone-200 bg-white/70 p-3 dark:border-stone-700 dark:bg-stone-900/40">
-							<div class="text-xs text-stone-500">Filtered</div>
-							<div class="text-lg font-semibold text-stone-900 dark:text-stone-100">{{ filteredCount }}</div>
-						</div>
-						<div class="rounded-lg border border-stone-200 bg-white/70 p-3 dark:border-stone-700 dark:bg-stone-900/40">
-							<div class="text-xs text-stone-500">Proxied</div>
-							<div class="text-lg font-semibold text-stone-900 dark:text-stone-100">{{ proxiedCount }}</div>
-						</div>
-						<div class="rounded-lg border border-stone-200 bg-white/70 p-3 dark:border-stone-700 dark:bg-stone-900/40">
-							<div class="text-xs text-stone-500">Types</div>
-							<div class="text-lg font-semibold text-stone-900 dark:text-stone-100">{{ typesCount }}</div>
-						</div>
-					</div>
-					<div class="flex translate-x-[12px] flex-wrap items-center justify-center gap-4">
-						<div
-							v-for="ns in zone.name_servers || []"
-							:key="ns"
-							class="group flex cursor-pointer items-center gap-4"
-							@click="copyToClipboard(ns)"
-						>
-							<p class="font-bold text-stone-600 italic dark:text-stone-400">{{ ns }}</p>
-							<UIcon name="i-clarity-clipboard-line" class="opacity-0 group-hover:opacity-100" />
-						</div>
+							<UButton
+								label="Columns"
+								color="neutral"
+								variant="outline"
+								trailing-icon="i-heroicons-chevron-down-20-solid"
+								class="grow md:grow-0"
+							/>
+						</UDropdownMenu>
+						<UPagination
+							v-model:page="page"
+							:page-count="pageCount"
+							:total="filteredRecords.length"
+							class="shrink-0 md:ml-2"
+						/>
 					</div>
 				</div>
-				<div class="flex w-full flex-col items-center justify-center gap-4">
-					<div
-						v-if="dnsLoadError"
-						class="w-full rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-800 dark:bg-red-950/40 dark:text-red-200"
-					>
-						{{ dnsLoadError }}
-					</div>
-					<div class="flex w-full flex-wrap items-center justify-between gap-4">
-						<div class="flex w-full gap-4 md:w-[calc(50%-0.5rem)]">
-							<USelectMenu
-								v-model="selectedStatus"
-								:items="dnsTypes"
-								multiple
-								placeholder="Type"
-								class="min-w-24"
-							/>
-							<div class="relative grow">
-								<UTooltip text="Press '/' to search">
-									<UInput
-										ref="searchInput"
-										v-model="searchQuery"
-										icon="i-heroicons-magnifying-glass-20-solid"
-										type="text"
-										placeholder="Search records..."
-										color="neutral"
-										class="w-full min-w-48 transition-all focus-within:shadow-md"
-										size="lg"
-										@focus="
-											() => {
-												setTimeout(
-													() => searchInput.value?.$el.querySelector('input')?.select(),
-													100
-												)
-											}
-										"
-									/>
-								</UTooltip>
-								<span
-									v-if="searchQuery"
-									class="absolute top-2 right-2 cursor-pointer text-gray-500 hover:text-gray-700"
-									@click="searchQuery = ''"
-								>
-									<UIcon name="i-heroicons-x-mark-20-solid" class="h-5 w-5" />
-								</span>
-							</div>
-						</div>
-						<div class="flex w-full items-center gap-4 md:w-[calc(50%-0.5rem)] md:justify-end">
-							<UDropdownMenu
-								:items="
-									columns.map((c) => ({
-										label: c.header,
-										type: 'checkbox',
-										checked: columnVisibility[c.id] !== false,
-										onUpdateChecked(checked) {
-											columnVisibility[c.id] = checked
-										},
-										onSelect(e) {
-											e.preventDefault()
-										}
-									}))
-								"
-								:content="{ align: 'end' }"
+				<UTable
+					v-model:column-visibility="columnVisibility"
+					:data="rows"
+					:columns="columns"
+					:loading="loading"
+					class="w-full rounded-lg border border-stone-300 dark:border-stone-700"
+					:ui="{
+						tr: {
+							base: 'cursor-pointer even:bg-stone-100 dark:even:bg-stone-950/50 hover:bg-stone-200 dark:hover:bg-stone-800'
+						},
+						td: {
+							color: 'text-stone-700 dark:text-stone-200'
+						}
+					}"
+					@select="onSelectRecord"
+				>
+					<template #type-cell="{ row }">
+						<div class="flex items-center gap-2">
+							<UBadge :color="getRecordTypeColor(row.original.type)" class="uppercase">
+								{{ row.original.type }}
+							</UBadge>
+							<UTooltip
+								v-if="row.original.type === 'SRV'"
+								text="Service Record - Maps services to hostnames and ports"
 							>
-								<UButton
-									label="Columns"
-									color="neutral"
-									variant="outline"
-									trailing-icon="i-heroicons-chevron-down-20-solid"
-									class="grow md:grow-0"
-								/>
-							</UDropdownMenu>
-							<UPagination
-								v-model:page="page"
-								:page-count="pageCount"
-								:total="filteredRecords.length"
-								class="shrink-0 md:ml-2"
-							/>
+								<UIcon name="i-heroicons-question-mark-circle" class="h-4 w-4 text-gray-500" />
+							</UTooltip>
 						</div>
-					</div>
-					<UTable
-						:data="rows"
-						:columns="columns"
-						:loading="loading"
-						class="w-full rounded-lg border border-stone-300 dark:border-stone-700"
-						v-model:column-visibility="columnVisibility"
-						:ui="{
-							tr: {
-								base: 'cursor-pointer even:bg-stone-100 dark:even:bg-stone-950/50 hover:bg-stone-200 dark:hover:bg-stone-800'
-							},
-							td: {
-								color: 'text-stone-700 dark:text-stone-200'
-							}
-						}"
-						@select="onSelectRecord"
-					>
-						<template #type-cell="{ row }">
-							<div class="flex items-center gap-2">
-								<UBadge :color="getRecordTypeColor(row.original.type)" class="uppercase">
-									{{ row.original.type }}
-								</UBadge>
-								<UTooltip
-									v-if="row.original.type === 'SRV'"
-									text="Service Record - Maps services to hostnames and ports"
-								>
-									<UIcon name="i-heroicons-question-mark-circle" class="h-4 w-4 text-gray-500" />
-								</UTooltip>
-							</div>
-						</template>
-						<template #name-cell="{ row }">
-							<div
-								class="group flex max-w-[120px] cursor-pointer items-center gap-2 overflow-hidden sm:max-w-[200px]"
+					</template>
+					<template #name-cell="{ row }">
+						<div
+							class="group flex max-w-[120px] cursor-pointer items-center gap-2 overflow-hidden sm:max-w-[200px]"
+							@click="navigateToRecord(row.original.id)"
+						>
+							<UIcon :name="getRecordTypeIcon(row.original.type)" class="h-4 w-4 text-gray-500" />
+							<p class="truncate text-xs font-medium group-hover:underline md:text-sm">
+								{{ row.original._displayName }}
+							</p>
+						</div>
+					</template>
+					<template #content-cell="{ row }">
+						<div
+							class="group flex max-w-[120px] items-center gap-4 overflow-hidden sm:max-w-[200px] md:max-w-[280px] lg:max-w-[360px]"
+						>
+							<p
+								class="truncate text-xs font-medium group-hover:underline md:text-sm"
 								@click="navigateToRecord(row.original.id)"
 							>
-								<UIcon :name="getRecordTypeIcon(row.original.type)" class="h-4 w-4 text-gray-500" />
-								<p class="truncate text-xs font-medium group-hover:underline md:text-sm">
-									{{ row.original._displayName }}
-								</p>
-							</div>
-						</template>
-						<template #content-cell="{ row }">
-							<div
-								class="group flex max-w-[120px] items-center gap-4 overflow-hidden sm:max-w-[200px] md:max-w-[280px] lg:max-w-[360px]"
-							>
-								<p
-									class="truncate text-xs font-medium group-hover:underline md:text-sm"
-									@click="navigateToRecord(row.original.id)"
-								>
-									{{ row.original._displayContent }}
-								</p>
-								<div v-if="row.original.proxiable" @click.stop>
-									<USwitch
-										v-model="row.original.proxied"
-										color="warning"
-										@update:model-value="() => updateProxyStatus(row.original)"
-									/>
-								</div>
-							</div>
-						</template>
-						<template #created_on-cell="{ row }">
-							<div
-								v-if="isLargeScreen"
-								class="flex max-w-[200px] items-center gap-4 truncate overflow-hidden text-xs md:text-sm"
-							>
-								<p class="truncate">{{ dayjs(row.original.created_on).format('DD/MM/YYYY') }}</p>
-							</div>
-						</template>
-						<template #modified_on-cell="{ row }">
-							<div
-								v-if="isLargeScreen"
-								class="flex max-w-[200px] items-center gap-4 truncate overflow-hidden text-xs md:text-sm"
-							>
-								<p class="truncate">{{ dayjs(row.original.modified_on).format('DD/MM/YYYY') }}</p>
-							</div>
-						</template>
-						<template #actions-cell="{ row }">
-							<UDropdownMenu :items="items(row.original)">
-								<UButton
-									color="neutral"
-									variant="ghost"
-									icon="i-heroicons-ellipsis-horizontal-20-solid"
-									@click.stop
+								{{ row.original._displayContent }}
+							</p>
+							<div v-if="row.original.proxiable" @click.stop>
+								<USwitch
+									v-model="row.original.proxied"
+									color="warning"
+									@update:model-value="() => updateProxyStatus(row.original)"
 								/>
-							</UDropdownMenu>
-						</template>
-					</UTable>
-					<div class="flex w-full justify-end">
-						<UPagination v-model:page="page" :page-count="pageCount" :total="filteredRecords.length" />
-					</div>
+							</div>
+						</div>
+					</template>
+					<template #created_on-cell="{ row }">
+						<div
+							v-if="isLargeScreen"
+							class="flex max-w-[200px] items-center gap-4 truncate overflow-hidden text-xs md:text-sm"
+						>
+							<p class="truncate">{{ dayjs(row.original.created_on).format('DD/MM/YYYY') }}</p>
+						</div>
+					</template>
+					<template #modified_on-cell="{ row }">
+						<div
+							v-if="isLargeScreen"
+							class="flex max-w-[200px] items-center gap-4 truncate overflow-hidden text-xs md:text-sm"
+						>
+							<p class="truncate">{{ dayjs(row.original.modified_on).format('DD/MM/YYYY') }}</p>
+						</div>
+					</template>
+					<template #actions-cell="{ row }">
+						<UDropdownMenu :items="items(row.original)">
+							<UButton
+								color="neutral"
+								variant="ghost"
+								icon="i-heroicons-ellipsis-horizontal-20-solid"
+								@click.stop
+							/>
+						</UDropdownMenu>
+					</template>
+				</UTable>
+				<div class="flex w-full justify-end">
+					<UPagination v-model:page="page" :page-count="pageCount" :total="filteredRecords.length" />
 				</div>
 			</div>
+		</div>
 	</PageContainer>
 </template>
 
@@ -414,9 +402,15 @@ const canBotFight = computed(() =>
 const canRulesets = computed(() =>
 	Boolean(capabilities.value && capabilities.value.rulesets && capabilities.value.rulesets.available)
 )
-const canTurnstile = computed(() => Boolean(capabilities.value && capabilities.value.turnstile && capabilities.value.turnstile.available))
-const canDnsViews = computed(() => Boolean(capabilities.value && capabilities.value.dnsViews && capabilities.value.dnsViews.available))
-const canDnsFirewall = computed(() => Boolean(capabilities.value && capabilities.value.dnsFirewall && capabilities.value.dnsFirewall.available))
+const canTurnstile = computed(() =>
+	Boolean(capabilities.value && capabilities.value.turnstile && capabilities.value.turnstile.available)
+)
+const canDnsViews = computed(() =>
+	Boolean(capabilities.value && capabilities.value.dnsViews && capabilities.value.dnsViews.available)
+)
+const canDnsFirewall = computed(() =>
+	Boolean(capabilities.value && capabilities.value.dnsFirewall && capabilities.value.dnsFirewall.available)
+)
 const canAccountAnalytics = computed(() =>
 	Boolean(capabilities.value && capabilities.value.accountAnalytics && capabilities.value.accountAnalytics.available)
 )

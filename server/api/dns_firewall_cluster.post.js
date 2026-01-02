@@ -33,5 +33,3 @@ export default defineEventHandler(async (event) => {
 		return { success: false, errors: [{ message: error.message || 'Unknown error' }] }
 	}
 })
-
-

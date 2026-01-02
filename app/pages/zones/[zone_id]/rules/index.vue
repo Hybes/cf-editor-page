@@ -6,182 +6,182 @@
 			</UButton>
 		</div>
 
-			<div class="flex flex-col items-center justify-center gap-6">
-				<div class="flex w-full flex-col gap-4">
-					<div class="flex flex-col items-center justify-center gap-2">
-						<h1 class="text-center text-2xl font-semibold text-stone-900 dark:text-stone-100">
-							{{ zoneName }}
-						</h1>
-						<CapabilityIndicator :missing-items="capabilityMissing" />
-						<p class="text-sm text-stone-600 dark:text-stone-400">
-							View rulesets rules by phase and add bypass-token skip rules
-						</p>
+		<div class="flex flex-col items-center justify-center gap-6">
+			<div class="flex w-full flex-col gap-4">
+				<div class="flex flex-col items-center justify-center gap-2">
+					<h1 class="text-center text-2xl font-semibold text-stone-900 dark:text-stone-100">
+						{{ zoneName }}
+					</h1>
+					<CapabilityIndicator :missing-items="capabilityMissing" />
+					<p class="text-sm text-stone-600 dark:text-stone-400">
+						View rulesets rules by phase and add bypass-token skip rules
+					</p>
+				</div>
+
+				<div
+					v-if="canRulesets"
+					class="flex w-full flex-wrap gap-4 rounded-lg border border-stone-300 p-4 dark:border-stone-700"
+				>
+					<div class="flex min-w-[220px] flex-col gap-1">
+						<span class="text-sm font-medium text-stone-700 dark:text-stone-200">Phase</span>
+						<USelect v-model="selectedPhase" :items="phaseOptions" class="w-full" />
 					</div>
 
-					<div
-						v-if="canRulesets"
-						class="flex w-full flex-wrap gap-4 rounded-lg border border-stone-300 p-4 dark:border-stone-700"
-					>
-						<div class="flex min-w-[220px] flex-col gap-1">
-							<span class="text-sm font-medium text-stone-700 dark:text-stone-200">Phase</span>
-							<USelect v-model="selectedPhase" :items="phaseOptions" class="w-full" />
-						</div>
-
-						<div class="flex min-w-[280px] flex-1 flex-col gap-1">
-							<span class="text-sm font-medium text-stone-700 dark:text-stone-200">Ruleset</span>
-							<USelectMenu
-								v-model="selectedRulesetId"
-								:items="rulesetOptions"
-								value-attribute="value"
-								option-attribute="label"
-								placeholder="Select a ruleset"
-								class="w-full"
-							/>
-						</div>
-
-						<div class="flex items-end">
-							<UButton
-								variant="outline"
-								color="primary"
-								icon="i-heroicons-arrow-path"
-								:loading="loadingRulesets"
-								@click="refreshRulesets"
-							>
-								Refresh
-							</UButton>
-						</div>
+					<div class="flex min-w-[280px] flex-1 flex-col gap-1">
+						<span class="text-sm font-medium text-stone-700 dark:text-stone-200">Ruleset</span>
+						<USelectMenu
+							v-model="selectedRulesetId"
+							:items="rulesetOptions"
+							value-attribute="value"
+							option-attribute="label"
+							placeholder="Select a ruleset"
+							class="w-full"
+						/>
 					</div>
 
-					<div v-if="canRulesets" class="w-full rounded-lg border border-stone-300 dark:border-stone-700">
-						<UTable :data="rulesRows" :columns="rulesColumns" :loading="loadingRules" />
+					<div class="flex items-end">
+						<UButton
+							variant="outline"
+							color="primary"
+							icon="i-heroicons-arrow-path"
+							:loading="loadingRulesets"
+							@click="refreshRulesets"
+						>
+							Refresh
+						</UButton>
 					</div>
+				</div>
 
-					<div
-						v-if="canRulesets"
-						class="w-full max-w-7xl rounded-xl border border-stone-300 p-6 shadow-xs dark:border-stone-700"
-					>
-						<h2 class="mb-4 text-lg font-semibold text-stone-900 dark:text-stone-100">
-							Add bypass-token skip rule
-						</h2>
+				<div v-if="canRulesets" class="w-full rounded-lg border border-stone-300 dark:border-stone-700">
+					<UTable :data="rulesRows" :columns="rulesColumns" :loading="loadingRules" />
+				</div>
 
-						<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-							<div class="flex flex-col gap-1">
-								<span class="text-sm font-medium text-stone-700 dark:text-stone-200">Bypass token</span>
-								<div class="flex flex-col gap-2 sm:flex-row sm:items-center">
-									<UInput v-model="bypassToken" placeholder="Token value" class="flex-1" />
-									<div class="flex gap-2">
-										<UButton
-											variant="outline"
-											color="primary"
-											icon="i-heroicons-key"
-											@click="generateToken"
-										>
-											Generate token
-										</UButton>
-										<UButton
-											variant="outline"
-											color="neutral"
-											icon="i-clarity-clipboard-line"
-											:disabled="!bypassToken"
-											@click="copyToken"
-										>
-											Copy token
-										</UButton>
-									</div>
+				<div
+					v-if="canRulesets"
+					class="w-full max-w-7xl rounded-xl border border-stone-300 p-6 shadow-xs dark:border-stone-700"
+				>
+					<h2 class="mb-4 text-lg font-semibold text-stone-900 dark:text-stone-100">
+						Add bypass-token skip rule
+					</h2>
+
+					<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+						<div class="flex flex-col gap-1">
+							<span class="text-sm font-medium text-stone-700 dark:text-stone-200">Bypass token</span>
+							<div class="flex flex-col gap-2 sm:flex-row sm:items-center">
+								<UInput v-model="bypassToken" placeholder="Token value" class="flex-1" />
+								<div class="flex gap-2">
+									<UButton
+										variant="outline"
+										color="primary"
+										icon="i-heroicons-key"
+										@click="generateToken"
+									>
+										Generate token
+									</UButton>
+									<UButton
+										variant="outline"
+										color="neutral"
+										icon="i-clarity-clipboard-line"
+										:disabled="!bypassToken"
+										@click="copyToken"
+									>
+										Copy token
+									</UButton>
 								</div>
+							</div>
+						</div>
+
+						<div class="flex flex-col gap-1">
+							<span class="text-sm font-medium text-stone-700 dark:text-stone-200">Description</span>
+							<UInput v-model="description" placeholder="Allow Rules" />
+						</div>
+					</div>
+
+					<div class="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+						<div class="flex flex-col gap-2">
+							<div class="flex items-center justify-between">
+								<span class="text-sm font-medium text-stone-700 dark:text-stone-200"
+									>Skip current ruleset</span
+								>
+								<USwitch v-model="skipCurrentRuleset" />
 							</div>
 
 							<div class="flex flex-col gap-1">
-								<span class="text-sm font-medium text-stone-700 dark:text-stone-200">Description</span>
-								<UInput v-model="description" placeholder="Allow Rules" />
+								<span class="text-sm font-medium text-stone-700 dark:text-stone-200">Skip phases</span>
+								<USelectMenu
+									v-model="skipPhases"
+									:items="phaseOptions"
+									multiple
+									placeholder="Select phases"
+								/>
+							</div>
+
+							<div class="flex flex-col gap-1">
+								<span class="text-sm font-medium text-stone-700 dark:text-stone-200"
+									>Skip products</span
+								>
+								<USelectMenu
+									v-model="skipProducts"
+									:items="productOptions"
+									multiple
+									placeholder="Select products"
+								/>
 							</div>
 						</div>
 
-						<div class="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
-							<div class="flex flex-col gap-2">
-								<div class="flex items-center justify-between">
-									<span class="text-sm font-medium text-stone-700 dark:text-stone-200"
-										>Skip current ruleset</span
-									>
-									<USwitch v-model="skipCurrentRuleset" />
-								</div>
-
-								<div class="flex flex-col gap-1">
-									<span class="text-sm font-medium text-stone-700 dark:text-stone-200"
-										>Skip phases</span
-									>
-									<USelectMenu
-										v-model="skipPhases"
-										:items="phaseOptions"
-										multiple
-										placeholder="Select phases"
-									/>
-								</div>
-
-								<div class="flex flex-col gap-1">
-									<span class="text-sm font-medium text-stone-700 dark:text-stone-200"
-										>Skip products</span
-									>
-									<USelectMenu
-										v-model="skipProducts"
-										:items="productOptions"
-										multiple
-										placeholder="Select products"
-									/>
-								</div>
+						<div class="flex flex-col gap-2">
+							<div class="flex items-center justify-between">
+								<span class="text-sm font-medium text-stone-700 dark:text-stone-200">Enabled</span>
+								<USwitch v-model="enabled" />
 							</div>
 
-							<div class="flex flex-col gap-2">
-								<div class="flex items-center justify-between">
-									<span class="text-sm font-medium text-stone-700 dark:text-stone-200">Enabled</span>
-									<USwitch v-model="enabled" />
-								</div>
-
-								<div class="flex items-center justify-between">
-									<span class="text-sm font-medium text-stone-700 dark:text-stone-200">Logging</span>
-									<USwitch v-model="loggingEnabled" />
-								</div>
-
-								<div class="flex flex-col gap-1">
-									<span class="text-sm font-medium text-stone-700 dark:text-stone-200"
-										>Expression preview</span
-									>
-									<UInput :model-value="expressionPreview" disabled />
-								</div>
+							<div class="flex items-center justify-between">
+								<span class="text-sm font-medium text-stone-700 dark:text-stone-200">Logging</span>
+								<USwitch v-model="loggingEnabled" />
 							</div>
-						</div>
 
-						<div class="mt-6 flex flex-wrap gap-3">
-							<UButton
-								color="success"
-								variant="outline"
-								icon="i-clarity-plus-circle-solid"
-								:disabled="!canSubmit"
-								:loading="creating"
-								@click="createRule"
-							>
-								Add Rule
-							</UButton>
-							<UButton
-								variant="outline"
-								color="neutral"
-								icon="i-clarity-clipboard-line"
-								:disabled="!expressionPreview"
-								@click="copyExpression"
-							>
-								Copy expression
-							</UButton>
-						</div>
-
-						<div v-if="!selectedRulesetId" class="mt-4 text-sm text-stone-600 dark:text-stone-400">
-							Select a ruleset to enable rule creation.
+							<div class="flex flex-col gap-1">
+								<span class="text-sm font-medium text-stone-700 dark:text-stone-200"
+									>Expression preview</span
+								>
+								<UInput :model-value="expressionPreview" disabled />
+							</div>
 						</div>
 					</div>
-					<div v-else class="w-full max-w-7xl rounded-xl border border-stone-300 p-6 dark:border-stone-700">
-						<div class="text-sm text-stone-700 dark:text-stone-200">Rulesets are unavailable for this token/zone.</div>
+
+					<div class="mt-6 flex flex-wrap gap-3">
+						<UButton
+							color="success"
+							variant="outline"
+							icon="i-clarity-plus-circle-solid"
+							:disabled="!canSubmit"
+							:loading="creating"
+							@click="createRule"
+						>
+							Add Rule
+						</UButton>
+						<UButton
+							variant="outline"
+							color="neutral"
+							icon="i-clarity-clipboard-line"
+							:disabled="!expressionPreview"
+							@click="copyExpression"
+						>
+							Copy expression
+						</UButton>
+					</div>
+
+					<div v-if="!selectedRulesetId" class="mt-4 text-sm text-stone-600 dark:text-stone-400">
+						Select a ruleset to enable rule creation.
+					</div>
+				</div>
+				<div v-else class="w-full max-w-7xl rounded-xl border border-stone-300 p-6 dark:border-stone-700">
+					<div class="text-sm text-stone-700 dark:text-stone-200">
+						Rulesets are unavailable for this token/zone.
 					</div>
 				</div>
 			</div>
+		</div>
 	</PageContainer>
 </template>
 
@@ -195,7 +195,9 @@ const apiKey = ref('')
 const zoneName = ref(localStorage.getItem('cf-zone-name') || '')
 const capabilities = ref(null)
 const capabilityMissing = ref([])
-const canRulesets = computed(() => Boolean(capabilities.value && capabilities.value.rulesets && capabilities.value.rulesets.available))
+const canRulesets = computed(() =>
+	Boolean(capabilities.value && capabilities.value.rulesets && capabilities.value.rulesets.available)
+)
 
 const seoZoneLabel = computed(() => zoneName.value || zoneId.value || 'Zone')
 useDynamicSeo({

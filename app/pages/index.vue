@@ -20,44 +20,38 @@
 				<UButton variant="outline" color="error" @click="resetConfig()">Logout</UButton>
 			</div>
 		</div>
-			<div class="flex min-h-[70vh] items-center justify-center gap-4">
-				<div class="flex w-full flex-col items-center justify-center gap-4">
-					<h1 class="text-xl font-semibold">Zones</h1>
-					<UInput
-						ref="searchInput"
-						v-model="searchQuery"
-						icon="i-heroicons-magnifying-glass-20-solid"
-						type="text"
-						placeholder="Search"
-						autofocus
-						color="neutral"
-						class="w-full md:w-1/2"
-					/>
-					<UButton
-						variant="outline"
-						color="primary"
-						:loading="loadingSsl"
-						:disabled="gotSSL"
-						@click="getSsl()"
+		<div class="flex min-h-[70vh] items-center justify-center gap-4">
+			<div class="flex w-full flex-col items-center justify-center gap-4">
+				<h1 class="text-xl font-semibold">Zones</h1>
+				<UInput
+					ref="searchInput"
+					v-model="searchQuery"
+					icon="i-heroicons-magnifying-glass-20-solid"
+					type="text"
+					placeholder="Search"
+					autofocus
+					color="neutral"
+					class="w-full md:w-1/2"
+				/>
+				<UButton variant="outline" color="primary" :loading="loadingSsl" :disabled="gotSSL" @click="getSsl()">
+					Get SSL Mode
+				</UButton>
+				<div class="w-full">
+					<UTable
+						:data="filteredZones"
+						:columns="columns"
+						:loading="loading"
+						:ui="{
+							tr: {
+								base: 'cursor-pointer even:bg-stone-100 dark:even:bg-stone-950/50 hover:bg-stone-200 dark:hover:bg-stone-800'
+							},
+							td: {
+								color: 'text-stone-700 dark:text-stone-200'
+							}
+						}"
+						class="rounded-lg border border-stone-300 dark:border-stone-700"
+						@select="setZone"
 					>
-						Get SSL Mode
-					</UButton>
-					<div class="w-full">
-						<UTable
-							:data="filteredZones"
-							:columns="columns"
-							:loading="loading"
-							:ui="{
-								tr: {
-									base: 'cursor-pointer even:bg-stone-100 dark:even:bg-stone-950/50 hover:bg-stone-200 dark:hover:bg-stone-800'
-								},
-								td: {
-									color: 'text-stone-700 dark:text-stone-200'
-								}
-							}"
-							class="rounded-lg border border-stone-300 dark:border-stone-700"
-							@select="setZone"
-						>
 						<template #name-cell="{ row }">
 							<div class="flex items-center gap-4">
 								<UIcon
@@ -114,10 +108,10 @@
 								}}
 							</p>
 						</template>
-						</UTable>
-					</div>
+					</UTable>
 				</div>
 			</div>
+		</div>
 	</PageContainer>
 </template>
 
