@@ -10,9 +10,7 @@ export function useDynamicSeo({ title, description }) {
 		const t = (unref(title) || '').trim()
 		const n = (unref(siteName) || '').trim()
 		if (!t) return n
-		if (!n) return t
-		if (t.includes(n)) return t
-		return `${t} | ${n}`
+		return t
 	})
 
 	const resolvedDescription = computed(() => {
@@ -23,10 +21,6 @@ export function useDynamicSeo({ title, description }) {
 
 	useSeoMeta({
 		title: resolvedTitle,
-		description: resolvedDescription,
-		ogTitle: resolvedTitle,
-		ogDescription: resolvedDescription,
-		twitterTitle: resolvedTitle,
-		twitterDescription: resolvedDescription
+		description: resolvedDescription
 	})
 }

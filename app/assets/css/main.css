@@ -83,6 +83,7 @@ select {
 
 html {
 	@apply overflow-x-hidden;
+	scrollbar-gutter: stable;
 }
 
 @layer components {

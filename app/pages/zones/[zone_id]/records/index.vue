@@ -65,7 +65,7 @@
 						:to="'http://' + zoneName"
 						external
 						target="_blank"
-						class="text-center text-2xl font-semibold text-comet-900 hover:underline dark:text-comet-100"
+						class="text-comet-900 dark:text-comet-100 text-center text-2xl font-semibold hover:underline"
 					>
 						{{ zoneName }}
 					</NuxtLink>
@@ -79,11 +79,11 @@
 					>
 						<div
 							v-if="canBotFight"
-							class="flex items-center gap-3 rounded-full border border-comet-300 bg-white/70 px-3 py-1.5 shadow-xs backdrop-blur-sm dark:border-comet-700 dark:bg-comet-900/40"
+							class="border-comet-300 dark:border-comet-700 dark:bg-comet-900/40 flex items-center gap-3 rounded-full border bg-white/70 px-3 py-1.5 shadow-xs backdrop-blur-sm"
 						>
 							<div class="flex items-center gap-2">
-								<UIcon name="i-heroicons-bug-ant" class="h-5 w-5 text-comet-700 dark:text-comet-200" />
-								<span class="text-sm font-medium text-comet-800 dark:text-comet-100"
+								<UIcon name="i-heroicons-bug-ant" class="text-comet-700 dark:text-comet-200 h-5 w-5" />
+								<span class="text-comet-800 dark:text-comet-100 text-sm font-medium"
 									>Bot Fight Mode</span
 								>
 							</div>
@@ -95,7 +95,7 @@
 								<UIcon
 									v-if="botLoading"
 									name="i-heroicons-arrow-path"
-									class="h-4 w-4 animate-spin text-comet-500"
+									class="text-comet-500 h-4 w-4 animate-spin"
 								/>
 								<USwitch
 									:model-value="botFightMode"
@@ -108,7 +108,11 @@
 					<div v-if="canSsl" class="relative">
 						<UDropdownMenu :items="sslMenuItems" :content="{ align: 'end' }">
 							<UButton variant="ghost" color="neutral" size="sm" class="p-1">
-								<UIcon v-if="zone.ssl?.value === 'strict'" name="i-clarity-lock-solid" class="h-6 w-6" />
+								<UIcon
+									v-if="zone.ssl?.value === 'strict'"
+									name="i-clarity-lock-solid"
+									class="h-6 w-6"
+								/>
 								<UIcon v-if="zone.ssl?.value === 'full'" name="i-clarity-lock-line" class="h-6 w-6" />
 								<UIcon
 									v-if="zone.ssl?.value === 'flexible'"
@@ -126,28 +130,28 @@
 				</div>
 				<div class="grid w-full grid-cols-2 gap-3 md:grid-cols-4">
 					<div
-						class="rounded-lg border border-comet-200 bg-white/70 p-3 dark:border-comet-700 dark:bg-comet-900/40"
+						class="border-comet-200 dark:border-comet-700 dark:bg-comet-900/40 rounded-lg border bg-white/70 p-3"
 					>
-						<div class="text-xs text-comet-500">Records</div>
-						<div class="text-lg font-semibold text-comet-900 dark:text-comet-100">{{ totalRecords }}</div>
+						<div class="text-comet-500 text-xs">Records</div>
+						<div class="text-comet-900 dark:text-comet-100 text-lg font-semibold">{{ totalRecords }}</div>
 					</div>
 					<div
-						class="rounded-lg border border-comet-200 bg-white/70 p-3 dark:border-comet-700 dark:bg-comet-900/40"
+						class="border-comet-200 dark:border-comet-700 dark:bg-comet-900/40 rounded-lg border bg-white/70 p-3"
 					>
-						<div class="text-xs text-comet-500">Filtered</div>
-						<div class="text-lg font-semibold text-comet-900 dark:text-comet-100">{{ filteredCount }}</div>
+						<div class="text-comet-500 text-xs">Filtered</div>
+						<div class="text-comet-900 dark:text-comet-100 text-lg font-semibold">{{ filteredCount }}</div>
 					</div>
 					<div
-						class="rounded-lg border border-comet-200 bg-white/70 p-3 dark:border-comet-700 dark:bg-comet-900/40"
+						class="border-comet-200 dark:border-comet-700 dark:bg-comet-900/40 rounded-lg border bg-white/70 p-3"
 					>
-						<div class="text-xs text-comet-500">Proxied</div>
-						<div class="text-lg font-semibold text-comet-900 dark:text-comet-100">{{ proxiedCount }}</div>
+						<div class="text-comet-500 text-xs">Proxied</div>
+						<div class="text-comet-900 dark:text-comet-100 text-lg font-semibold">{{ proxiedCount }}</div>
 					</div>
 					<div
-						class="rounded-lg border border-comet-200 bg-white/70 p-3 dark:border-comet-700 dark:bg-comet-900/40"
+						class="border-comet-200 dark:border-comet-700 dark:bg-comet-900/40 rounded-lg border bg-white/70 p-3"
 					>
-						<div class="text-xs text-comet-500">Types</div>
-						<div class="text-lg font-semibold text-comet-900 dark:text-comet-100">{{ typesCount }}</div>
+						<div class="text-comet-500 text-xs">Types</div>
+						<div class="text-comet-900 dark:text-comet-100 text-lg font-semibold">{{ typesCount }}</div>
 					</div>
 				</div>
 				<div class="flex translate-x-[12px] flex-wrap items-center justify-center gap-4">
@@ -157,7 +161,7 @@
 						class="group flex cursor-pointer items-center gap-4"
 						@click="copyToClipboard(ns)"
 					>
-						<p class="font-bold text-comet-600 italic dark:text-comet-400">{{ ns }}</p>
+						<p class="text-comet-600 dark:text-comet-400 font-bold italic">{{ ns }}</p>
 						<UIcon name="i-clarity-clipboard-line" class="opacity-0 group-hover:opacity-100" />
 					</div>
 				</div>
@@ -220,22 +224,7 @@
 						>
 							Delete ({{ selectedRecordIds.length }})
 						</UButton>
-						<UDropdownMenu
-							:items="
-								columns.map((c) => ({
-									label: c.header,
-									type: 'checkbox',
-									checked: columnVisibility[c.id] !== false,
-									onUpdateChecked(checked) {
-										columnVisibility[c.id] = checked
-									},
-									onSelect(e) {
-										e.preventDefault()
-									}
-								}))
-							"
-							:content="{ align: 'end' }"
-						>
+						<UDropdownMenu :items="columnPickerItems" :content="{ align: 'end' }">
 							<UButton
 								label="Columns"
 								color="neutral"
@@ -257,7 +246,7 @@
 					:data="rows"
 					:columns="columns"
 					:loading="loading"
-					class="w-full rounded-lg border border-comet-300 dark:border-comet-700"
+					class="border-comet-300 dark:border-comet-700 w-full rounded-lg border"
 					:ui="{
 						tr: {
 							base: 'even:bg-comet-100 dark:even:bg-comet-950/50 hover:bg-comet-200 dark:hover:bg-comet-800'
@@ -295,13 +284,15 @@
 						</div>
 					</template>
 					<template #name-cell="{ row }">
-						<div class="group flex max-w-[120px] min-w-0 items-center gap-2 overflow-hidden sm:max-w-[200px]">
+						<div
+							class="group flex max-w-[120px] min-w-0 items-center gap-2 overflow-hidden sm:max-w-[200px]"
+						>
 							<UIcon
 								:name="getRecordTypeIcon(row.original.type)"
 								class="text-comet-500 h-4 w-4 shrink-0"
 							/>
 							<p
-								class="truncate text-xs font-medium group-hover:underline md:text-sm min-w-0"
+								class="min-w-0 truncate text-xs font-medium group-hover:underline md:text-sm"
 								@click="navigateToRecord(row.original.id)"
 							>
 								{{ row.original._displayName }}
@@ -374,7 +365,7 @@
 						</div>
 					</template>
 					<template #description>
-						<p class="text-sm text-comet-600 dark:text-comet-300">
+						<p class="text-comet-600 dark:text-comet-300 text-sm">
 							This will permanently delete
 							<span class="font-semibold">{{ deleteTargets.length }}</span>
 							record{{ deleteTargets.length === 1 ? '' : 's' }} from
@@ -385,7 +376,7 @@
 					<template #body>
 						<div class="space-y-4">
 							<div
-								class="rounded-md border border-comet-200 bg-comet-50 p-3 text-xs dark:border-comet-700 dark:bg-comet-900"
+								class="border-comet-200 bg-comet-50 dark:border-comet-700 dark:bg-comet-900 rounded-md border p-3 text-xs"
 							>
 								<div class="space-y-2">
 									<div
@@ -401,11 +392,11 @@
 										<span class="truncate">{{ record._displayContent }}</span>
 									</div>
 								</div>
-								<div v-if="deleteTargets.length > deletePreview.length" class="mt-2 text-comet-500">
+								<div v-if="deleteTargets.length > deletePreview.length" class="text-comet-500 mt-2">
 									+{{ deleteTargets.length - deletePreview.length }} more
 								</div>
 							</div>
-							<p class="text-xs text-comet-500 dark:text-comet-400">This action cannot be undone.</p>
+							<p class="text-comet-500 dark:text-comet-400 text-xs">This action cannot be undone.</p>
 						</div>
 					</template>
 					<template #footer>
@@ -435,8 +426,13 @@ const zone = ref({})
 const loading = ref(true)
 const searchQuery = ref('')
 const page = ref(1)
-const pageSize = ref(25)
-const pageSizeOptions = [10, 25, 50, 100]
+const pageSize = ref(50)
+const pageSizeOptions = [
+	{ label: '10 per page', value: 10 },
+	{ label: '25 per page', value: 25 },
+	{ label: '50 per page', value: 50 },
+	{ label: '100 per page', value: 100 }
+]
 const selectedRecordIds = ref([])
 const deleteModalOpen = ref(false)
 const deleteTargets = ref([])
@@ -505,7 +501,7 @@ const canAccountAnalytics = computed(() =>
 
 const seoZoneLabel = computed(() => zoneName.value || zone.value?.name || zoneId.value || 'Zone')
 useDynamicSeo({
-	title: computed(() => `DNS Records — ${seoZoneLabel.value}`),
+	title: computed(() => `${seoZoneLabel.value}`),
 	description: computed(() => `Manage DNS records for ${seoZoneLabel.value}.`)
 })
 
@@ -747,6 +743,21 @@ const columns = [
 ]
 
 const columnVisibility = ref({})
+const columnPickerItems = computed(() =>
+	columns
+		.filter((column) => column.header)
+		.map((column) => ({
+			label: column.header,
+			type: 'checkbox',
+			checked: columnVisibility.value[column.id] !== false,
+			onUpdateChecked(checked) {
+				columnVisibility.value[column.id] = checked
+			},
+			onSelect(e) {
+				e.preventDefault()
+			}
+		}))
+)
 
 const items = (row) => {
 	return [

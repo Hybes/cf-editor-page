@@ -29,9 +29,9 @@
 				<div class="text-highlighted text-lg font-semibold">{{ title }}</div>
 				<div v-if="subtitle" class="text-muted text-sm">{{ subtitle }}</div>
 			</div>
-			<ul v-if="hints?.length" class="text-muted w-full list-inside list-disc space-y-1 text-sm">
-				<li v-for="(hint, i) in hints" :key="i">{{ hint }}</li>
-			</ul>
+			<p v-if="hints?.length" class="text-muted w-full text-sm">
+				{{ hints.join(' ') }}
+			</p>
 		</div>
 	</div>
 </template>
