@@ -4,6 +4,17 @@
 @plugin '@tailwindcss/forms';
 
 :root {
+	--ui-color-neutral-50: var(--color-comet-50);
+	--ui-color-neutral-100: var(--color-comet-100);
+	--ui-color-neutral-200: var(--color-comet-200);
+	--ui-color-neutral-300: var(--color-comet-300);
+	--ui-color-neutral-400: var(--color-comet-400);
+	--ui-color-neutral-500: var(--color-comet-500);
+	--ui-color-neutral-600: var(--color-comet-600);
+	--ui-color-neutral-700: var(--color-comet-700);
+	--ui-color-neutral-800: var(--color-comet-800);
+	--ui-color-neutral-900: var(--color-comet-900);
+	--ui-color-neutral-950: var(--color-comet-950);
 	--ui-bg: white;
 	--ui-bg-muted: var(--ui-color-neutral-50);
 	--ui-bg-elevated: var(--ui-color-neutral-100);
@@ -30,7 +41,7 @@
 	--ui-text-inverted: var(--ui-color-neutral-950);
 }
 
-@theme {
+@theme static {
 	--color-comet-50: #f7f7f8;
 	--color-comet-100: #eeeff1;
 	--color-comet-200: #d5d8dd;

@@ -65,7 +65,7 @@
 						:to="'http://' + zoneName"
 						external
 						target="_blank"
-						class="text-center text-2xl font-semibold text-stone-900 hover:underline dark:text-stone-100"
+						class="text-center text-2xl font-semibold text-comet-900 hover:underline dark:text-comet-100"
 					>
 						{{ zoneName }}
 					</NuxtLink>
@@ -79,11 +79,11 @@
 					>
 						<div
 							v-if="canBotFight"
-							class="flex items-center gap-3 rounded-full border border-stone-300 bg-white/70 px-3 py-1.5 shadow-xs backdrop-blur-sm dark:border-stone-700 dark:bg-stone-900/40"
+							class="flex items-center gap-3 rounded-full border border-comet-300 bg-white/70 px-3 py-1.5 shadow-xs backdrop-blur-sm dark:border-comet-700 dark:bg-comet-900/40"
 						>
 							<div class="flex items-center gap-2">
-								<UIcon name="i-heroicons-bug-ant" class="h-5 w-5 text-stone-700 dark:text-stone-200" />
-								<span class="text-sm font-medium text-stone-800 dark:text-stone-100"
+								<UIcon name="i-heroicons-bug-ant" class="h-5 w-5 text-comet-700 dark:text-comet-200" />
+								<span class="text-sm font-medium text-comet-800 dark:text-comet-100"
 									>Bot Fight Mode</span
 								>
 							</div>
@@ -95,7 +95,7 @@
 								<UIcon
 									v-if="botLoading"
 									name="i-heroicons-arrow-path"
-									class="h-4 w-4 animate-spin text-stone-500"
+									class="h-4 w-4 animate-spin text-comet-500"
 								/>
 								<USwitch
 									:model-value="botFightMode"
@@ -118,37 +118,37 @@
 						</div>
 						<div
 							v-if="showDropdown"
-							class="absolute right-0 z-10 mt-2 w-48 rounded-sm border border-stone-600 bg-stone-300 shadow-lg dark:border-stone-400 dark:bg-stone-700"
+							class="absolute right-0 z-10 mt-2 w-48 rounded-sm border border-comet-600 bg-comet-300 shadow-lg dark:border-comet-400 dark:bg-comet-700"
 						>
 							<div
-								class="hover:bg-comet-100 flex cursor-pointer items-center gap-2 px-4 py-2 dark:hover:bg-stone-800"
+								class="hover:bg-comet-100 flex cursor-pointer items-center gap-2 px-4 py-2 dark:hover:bg-comet-800"
 								:class="{ 'bg-comet-200 dark:bg-comet-800': zone.ssl?.value === 'strict' }"
 								@click="updateSslSetting('strict')"
 							>
 								<UIcon name="i-clarity-lock-solid" class="h-4 w-4" />
 								Strict
 							</div>
-							<div class="border-t border-stone-400 dark:border-stone-600"></div>
+							<div class="border-t border-comet-400 dark:border-comet-600"></div>
 							<div
-								class="hover:bg-comet-100 flex cursor-pointer items-center gap-2 px-4 py-2 dark:hover:bg-stone-800"
+								class="hover:bg-comet-100 flex cursor-pointer items-center gap-2 px-4 py-2 dark:hover:bg-comet-800"
 								:class="{ 'bg-comet-200 dark:bg-comet-800': zone.ssl?.value === 'full' }"
 								@click="updateSslSetting('full')"
 							>
 								<UIcon name="i-clarity-lock-line" class="h-4 w-4" />
 								Full
 							</div>
-							<div class="border-t border-stone-400 dark:border-stone-600"></div>
+							<div class="border-t border-comet-400 dark:border-comet-600"></div>
 							<div
-								class="hover:bg-comet-100 flex cursor-pointer items-center gap-2 px-4 py-2 dark:hover:bg-stone-800"
+								class="hover:bg-comet-100 flex cursor-pointer items-center gap-2 px-4 py-2 dark:hover:bg-comet-800"
 								:class="{ 'bg-comet-200 dark:bg-comet-800': zone.ssl?.value === 'flexible' }"
 								@click="updateSslSetting('flexible')"
 							>
 								<UIcon name="i-clarity-curve-chart-solid" class="h-4 w-4" />
 								Flexible
 							</div>
-							<div class="border-t border-stone-400 dark:border-stone-600"></div>
+							<div class="border-t border-comet-400 dark:border-comet-600"></div>
 							<div
-								class="hover:bg-comet-100 flex cursor-pointer items-center gap-2 px-4 py-2 dark:hover:bg-stone-800"
+								class="hover:bg-comet-100 flex cursor-pointer items-center gap-2 px-4 py-2 dark:hover:bg-comet-800"
 								:class="{ 'bg-comet-200 dark:bg-comet-800': zone.ssl?.value === 'off' }"
 								@click="updateSslSetting('off')"
 							>
@@ -160,28 +160,28 @@
 				</div>
 				<div class="grid w-full grid-cols-2 gap-3 md:grid-cols-4">
 					<div
-						class="rounded-lg border border-stone-200 bg-white/70 p-3 dark:border-stone-700 dark:bg-stone-900/40"
+						class="rounded-lg border border-comet-200 bg-white/70 p-3 dark:border-comet-700 dark:bg-comet-900/40"
 					>
-						<div class="text-xs text-stone-500">Records</div>
-						<div class="text-lg font-semibold text-stone-900 dark:text-stone-100">{{ totalRecords }}</div>
+						<div class="text-xs text-comet-500">Records</div>
+						<div class="text-lg font-semibold text-comet-900 dark:text-comet-100">{{ totalRecords }}</div>
 					</div>
 					<div
-						class="rounded-lg border border-stone-200 bg-white/70 p-3 dark:border-stone-700 dark:bg-stone-900/40"
+						class="rounded-lg border border-comet-200 bg-white/70 p-3 dark:border-comet-700 dark:bg-comet-900/40"
 					>
-						<div class="text-xs text-stone-500">Filtered</div>
-						<div class="text-lg font-semibold text-stone-900 dark:text-stone-100">{{ filteredCount }}</div>
+						<div class="text-xs text-comet-500">Filtered</div>
+						<div class="text-lg font-semibold text-comet-900 dark:text-comet-100">{{ filteredCount }}</div>
 					</div>
 					<div
-						class="rounded-lg border border-stone-200 bg-white/70 p-3 dark:border-stone-700 dark:bg-stone-900/40"
+						class="rounded-lg border border-comet-200 bg-white/70 p-3 dark:border-comet-700 dark:bg-comet-900/40"
 					>
-						<div class="text-xs text-stone-500">Proxied</div>
-						<div class="text-lg font-semibold text-stone-900 dark:text-stone-100">{{ proxiedCount }}</div>
+						<div class="text-xs text-comet-500">Proxied</div>
+						<div class="text-lg font-semibold text-comet-900 dark:text-comet-100">{{ proxiedCount }}</div>
 					</div>
 					<div
-						class="rounded-lg border border-stone-200 bg-white/70 p-3 dark:border-stone-700 dark:bg-stone-900/40"
+						class="rounded-lg border border-comet-200 bg-white/70 p-3 dark:border-comet-700 dark:bg-comet-900/40"
 					>
-						<div class="text-xs text-stone-500">Types</div>
-						<div class="text-lg font-semibold text-stone-900 dark:text-stone-100">{{ typesCount }}</div>
+						<div class="text-xs text-comet-500">Types</div>
+						<div class="text-lg font-semibold text-comet-900 dark:text-comet-100">{{ typesCount }}</div>
 					</div>
 				</div>
 				<div class="flex translate-x-[12px] flex-wrap items-center justify-center gap-4">
@@ -191,7 +191,7 @@
 						class="group flex cursor-pointer items-center gap-4"
 						@click="copyToClipboard(ns)"
 					>
-						<p class="font-bold text-stone-600 italic dark:text-stone-400">{{ ns }}</p>
+						<p class="font-bold text-comet-600 italic dark:text-comet-400">{{ ns }}</p>
 						<UIcon name="i-clarity-clipboard-line" class="opacity-0 group-hover:opacity-100" />
 					</div>
 				</div>
@@ -291,13 +291,13 @@
 					:data="rows"
 					:columns="columns"
 					:loading="loading"
-					class="w-full rounded-lg border border-stone-300 dark:border-stone-700"
+					class="w-full rounded-lg border border-comet-300 dark:border-comet-700"
 					:ui="{
 						tr: {
-							base: 'even:bg-stone-100 dark:even:bg-stone-950/50 hover:bg-stone-200 dark:hover:bg-stone-800'
+							base: 'even:bg-comet-100 dark:even:bg-comet-950/50 hover:bg-comet-200 dark:hover:bg-comet-800'
 						},
 						td: {
-							color: 'text-stone-700 dark:text-stone-200'
+							color: 'text-comet-700 dark:text-comet-200'
 						}
 					}"
 				>
@@ -407,7 +407,7 @@
 								</div>
 							</template>
 							<div class="space-y-4">
-								<p class="text-sm text-stone-600 dark:text-stone-300">
+								<p class="text-sm text-comet-600 dark:text-comet-300">
 									This will permanently delete
 									<span class="font-semibold">{{ deleteTargets.length }}</span>
 									record{{ deleteTargets.length === 1 ? '' : 's' }} from
@@ -415,7 +415,7 @@
 									>.
 								</p>
 								<div
-									class="rounded-md border border-stone-200 bg-stone-50 p-3 text-xs dark:border-stone-700 dark:bg-stone-900"
+									class="rounded-md border border-comet-200 bg-comet-50 p-3 text-xs dark:border-comet-700 dark:bg-comet-900"
 								>
 									<div
 										v-for="record in deletePreview"
@@ -426,14 +426,14 @@
 											record.type
 										}}</UBadge>
 										<span class="truncate">{{ record._displayName }}</span>
-										<span class="text-stone-400">→</span>
+										<span class="text-comet-400">→</span>
 										<span class="truncate">{{ record._displayContent }}</span>
 									</div>
-									<div v-if="deleteTargets.length > deletePreview.length" class="mt-2 text-stone-500">
+									<div v-if="deleteTargets.length > deletePreview.length" class="mt-2 text-comet-500">
 										+{{ deleteTargets.length - deletePreview.length }} more
 									</div>
 								</div>
-								<p class="text-xs text-stone-500 dark:text-stone-400">This action cannot be undone.</p>
+								<p class="text-xs text-comet-500 dark:text-comet-400">This action cannot be undone.</p>
 							</div>
 							<template #footer>
 								<div class="flex justify-end gap-3">
