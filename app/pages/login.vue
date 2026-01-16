@@ -8,6 +8,23 @@
 			<p class="text-sm text-stone-600 dark:text-stone-400">
 				Your token is only used to call the Cloudflare API.
 			</p>
+			<div class="w-full max-w-2xl rounded-lg border border-stone-200 bg-white/70 p-4 text-sm text-stone-700 shadow-xs dark:border-stone-700 dark:bg-stone-900/40 dark:text-stone-200">
+				<p class="font-semibold text-stone-800 dark:text-stone-100">Quick setup</p>
+				<p class="mt-2">
+					Create a custom token, choose all accounts and all zones, then add these permissions.
+				</p>
+				<ul class="mt-3 list-inside list-disc space-y-1">
+					<li>Zone: Read, Edit</li>
+					<li>DNS: Read, Edit</li>
+					<li>Rulesets: Read, Edit</li>
+					<li>Bots: Read, Edit</li>
+					<li>Turnstile: Read, Edit</li>
+					<li>Analytics: Read</li>
+				</ul>
+				<p class="mt-3 text-xs text-stone-600 dark:text-stone-400">
+					Some features depend on your Cloudflare plan, even with the right permissions.
+				</p>
+			</div>
 			<div class="flex flex-col items-center gap-3">
 				<NuxtLink
 					to="https://dash.cloudflare.com/profile/api-tokens"
@@ -16,7 +33,7 @@
 					rel="noopener noreferrer"
 				>
 					<UButton variant="outline" color="primary" icon="i-heroicons-key">
-						Create an API token in Cloudflare
+						Open the Cloudflare token page
 					</UButton>
 				</NuxtLink>
 				<p class="text-xs text-stone-600 dark:text-stone-400">You will paste it here afterwards.</p>
