@@ -1,3 +1,4 @@
+import { createError } from 'h3'
 import { readJsonBody } from '../utils/readJsonBody'
 import { cfFetch } from '../utils/cfFetch'
 
@@ -6,15 +7,15 @@ export default defineEventHandler(async (event) => {
 		const body = await readJsonBody(event)
 
 		if (!body.apiKey) {
-			return { success: false, errors: [{ message: 'API key is required' }] }
+			throw createError({ statusCode: 400, statusMessage: 'API key is required' })
 		}
 
 		if (!body.currZone) {
-			return { success: false, errors: [{ message: 'Zone ID is required' }] }
+			throw createError({ statusCode: 400, statusMessage: 'Zone ID is required' })
 		}
 
 		if (typeof body.fight_mode !== 'boolean') {
-			return { success: false, errors: [{ message: 'fight_mode must be a boolean' }] }
+			throw createError({ statusCode: 400, statusMessage: 'fight_mode must be a boolean' })
 		}
 
 		return await cfFetch({
@@ -24,10 +25,10 @@ export default defineEventHandler(async (event) => {
 			body: { fight_mode: body.fight_mode }
 		})
 	} catch (error) {
-		console.error('DNS Editor: Error updating bot fight mode', error)
-		return {
-			success: false,
-			errors: [{ message: error.message || 'Unknown error occurred' }]
-		}
+		if (error?.statusCode) throw error
+		throw createError({
+			statusCode: 500,
+			statusMessage: error?.message || 'Unknown error'
+		})
 	}
 })

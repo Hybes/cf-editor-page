@@ -15,10 +15,10 @@
 					<h1 class="text-center text-2xl font-semibold">Cloudflare DNS Editor</h1>
 					<CapabilityIndicator :missing-items="capabilityMissing" />
 				</div>
-				<div class="max-w-8xl flex w-full flex-col rounded-lg border p-4 dark:border-gray-700">
+				<div class="max-w-8xl dark:border-comet-700 flex w-full flex-col rounded-lg border p-4">
 					<div class="mb-4 flex flex-col gap-2">
 						<h2 class="text-lg font-medium">Your Zones</h2>
-						<div class="text-sm text-gray-500">Select a zone to manage its DNS records</div>
+						<div class="text-comet-500 text-sm">Select a zone to manage its DNS records</div>
 					</div>
 					<div class="relative mb-4 w-full">
 						<UTooltip text="Press '/' to search">
@@ -36,14 +36,14 @@
 						</UTooltip>
 						<span
 							v-if="searchQuery"
-							class="absolute top-2 right-2 cursor-pointer text-gray-500 hover:text-gray-700"
+							class="text-comet-500 hover:text-comet-700 absolute top-2 right-2 cursor-pointer"
 							@click="searchQuery = ''"
 						>
 							<UIcon name="i-heroicons-x-mark-20-solid" class="h-5 w-5" />
 						</span>
 					</div>
 					<div class="mb-4 flex w-full flex-wrap items-center justify-between gap-3">
-						<div class="text-sm text-gray-500">{{ filteredZones.length }} zones</div>
+						<div class="text-comet-500 text-sm">{{ filteredZones.length }} zones</div>
 						<div class="flex items-center gap-2">
 							<UButton
 								size="sm"
@@ -70,7 +70,7 @@
 						<div
 							v-for="zone in filteredZones"
 							:key="zone.id"
-							class="flex cursor-pointer flex-col gap-3 rounded-lg border border-gray-200 p-4 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800"
+							class="border-comet-200 hover:bg-comet-50 dark:border-comet-700 dark:hover:bg-comet-800 flex cursor-pointer flex-col gap-3 rounded-lg border p-4"
 							@click="navigateToZone(zone.id)"
 						>
 							<div class="flex items-start justify-between gap-3">
@@ -79,7 +79,7 @@
 										<UIcon name="i-heroicons-globe-alt" class="text-blue-500" />
 										<div class="truncate font-medium">{{ zone.name }}</div>
 									</div>
-									<div class="mt-1 text-xs text-gray-500">{{ zone.id }}</div>
+									<div class="text-comet-500 mt-1 text-xs">{{ zone.id }}</div>
 								</div>
 								<UBadge
 									:color="zone.status === 'active' ? 'success' : 'warning'"
@@ -110,7 +110,7 @@
 							:loading="loading"
 							:ui="{
 								tr: {
-									base: 'cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800'
+									base: 'cursor-pointer hover:bg-comet-100 dark:hover:bg-comet-800'
 								}
 							}"
 							@select="onSelectZone"
@@ -161,6 +161,17 @@ const searchInput = ref(null)
 const searchQuery = ref('')
 const capabilityMissing = ref([])
 const viewMode = ref('grid')
+const zonesRequestBody = computed(() => ({ apiKey: apiKey.value }))
+const {
+	data: zonesData,
+	error: zonesError,
+	refresh: refreshZones
+} = useFetch('/api/zones', {
+	method: 'POST',
+	body: zonesRequestBody,
+	server: false,
+	immediate: false
+})
 
 const columns = [
 	{ id: 'name', accessorKey: 'name', header: 'Domain' },
@@ -230,28 +241,21 @@ watch(viewMode, (v) => {
 
 const getZones = async () => {
 	try {
-		const response = await fetch('/api/zones', {
-			method: 'POST',
-			body: JSON.stringify({ apiKey: apiKey.value })
-		})
-
-		if (response.ok) {
-			const data = await response.json()
-			zones.value = data.result || []
-		} else {
-			console.error('HTTP-Error: ' + response.status)
-			const toast = useToast()
-			toast.add({
-				id: 'get-zones-error' + Date.now(),
-				title: 'Error',
-				description: 'Failed to fetch zones',
-				icon: 'i-clarity-warning-solid',
-				duration: 3000,
-				color: 'error'
-			})
-		}
+		await refreshZones()
+		if (zonesError.value) throw zonesError.value
+		zones.value = zonesData.value?.result || []
 	} catch (error) {
 		console.error('Error fetching zones:', error)
+		const toast = useToast()
+		const message = error?.data?.statusMessage || error?.statusMessage || 'Failed to fetch zones'
+		toast.add({
+			id: 'get-zones-error' + Date.now(),
+			title: 'Error',
+			description: message,
+			icon: 'i-clarity-warning-solid',
+			duration: 3000,
+			color: 'error'
+		})
 	} finally {
 		loading.value = false
 	}

@@ -53,8 +53,8 @@
 							class="absolute right-0 z-10 mt-2 w-48 rounded-sm border border-stone-600 bg-stone-300 shadow-lg dark:border-stone-400 dark:bg-stone-700"
 						>
 							<div
-								class="flex cursor-pointer items-center gap-2 px-4 py-2 hover:bg-gray-100 dark:hover:bg-stone-800"
-								:class="{ 'bg-gray-200 dark:bg-gray-800': zone.ssl?.value === 'strict' }"
+								class="hover:bg-comet-100 flex cursor-pointer items-center gap-2 px-4 py-2 dark:hover:bg-stone-800"
+								:class="{ 'bg-comet-200 dark:bg-comet-800': zone.ssl?.value === 'strict' }"
 								@click="updateSslSetting('strict')"
 							>
 								<UIcon name="i-clarity-lock-solid" class="h-4 w-4" />
@@ -62,8 +62,8 @@
 							</div>
 							<div class="border-t border-stone-400 dark:border-stone-600"></div>
 							<div
-								class="flex cursor-pointer items-center gap-2 px-4 py-2 hover:bg-gray-100 dark:hover:bg-stone-800"
-								:class="{ 'bg-gray-200 dark:bg-gray-800': zone.ssl?.value === 'full' }"
+								class="hover:bg-comet-100 flex cursor-pointer items-center gap-2 px-4 py-2 dark:hover:bg-stone-800"
+								:class="{ 'bg-comet-200 dark:bg-comet-800': zone.ssl?.value === 'full' }"
 								@click="updateSslSetting('full')"
 							>
 								<UIcon name="i-clarity-lock-line" class="h-4 w-4" />
@@ -71,8 +71,8 @@
 							</div>
 							<div class="border-t border-stone-400 dark:border-stone-600"></div>
 							<div
-								class="flex cursor-pointer items-center gap-2 px-4 py-2 hover:bg-gray-100 dark:hover:bg-stone-800"
-								:class="{ 'bg-gray-200 dark:bg-gray-800': zone.ssl?.value === 'flexible' }"
+								class="hover:bg-comet-100 flex cursor-pointer items-center gap-2 px-4 py-2 dark:hover:bg-stone-800"
+								:class="{ 'bg-comet-200 dark:bg-comet-800': zone.ssl?.value === 'flexible' }"
 								@click="updateSslSetting('flexible')"
 							>
 								<UIcon name="i-clarity-curve-chart-solid" class="h-4 w-4" />
@@ -80,8 +80,8 @@
 							</div>
 							<div class="border-t border-stone-400 dark:border-stone-600"></div>
 							<div
-								class="flex cursor-pointer items-center gap-2 px-4 py-2 hover:bg-gray-100 dark:hover:bg-stone-800"
-								:class="{ 'bg-gray-200 dark:bg-gray-800': zone.ssl?.value === 'off' }"
+								class="hover:bg-comet-100 flex cursor-pointer items-center gap-2 px-4 py-2 dark:hover:bg-stone-800"
+								:class="{ 'bg-comet-200 dark:bg-comet-800': zone.ssl?.value === 'off' }"
 								@click="updateSslSetting('off')"
 							>
 								<UIcon name="i-clarity-no-access-solid" class="h-4 w-4" />
@@ -175,7 +175,7 @@
 								v-if="row.original.type === 'SRV'"
 								text="Service Record - Maps services to hostnames and ports"
 							>
-								<UIcon name="i-heroicons-question-mark-circle" class="h-4 w-4 text-gray-500" />
+								<UIcon name="i-heroicons-question-mark-circle" class="text-comet-500 h-4 w-4" />
 							</UTooltip>
 						</div>
 					</template>
@@ -184,7 +184,7 @@
 							class="group flex max-w-[120px] cursor-pointer items-center gap-2 overflow-hidden sm:max-w-[200px]"
 							@click="setDns(row.original)"
 						>
-							<UIcon :name="getRecordTypeIcon(row.original.type)" class="h-4 w-4 text-gray-500" />
+							<UIcon :name="getRecordTypeIcon(row.original.type)" class="text-comet-500 h-4 w-4" />
 							<p class="truncate text-xs font-medium group-hover:underline md:text-sm">
 								{{
 									row.original.name === currZoneName || !row.original.name.endsWith(currZoneName)
@@ -254,6 +254,28 @@ const apiKey = ref('')
 const currZone = ref('')
 const currZoneName = ref('')
 const dnsRecords = ref([])
+const recordsRequestBody = computed(() => ({ apiKey: apiKey.value, currZone: currZone.value }))
+const zoneRequestBody = computed(() => ({ apiKey: apiKey.value, currZone: currZone.value }))
+const {
+	data: recordsData,
+	error: recordsError,
+	refresh: refreshRecords
+} = useFetch('/api/records', {
+	method: 'POST',
+	body: recordsRequestBody,
+	server: false,
+	immediate: false
+})
+const {
+	data: zoneData,
+	error: zoneError,
+	refresh: refreshZone
+} = useFetch('/api/zone', {
+	method: 'POST',
+	body: zoneRequestBody,
+	server: false,
+	immediate: false
+})
 const zone = ref({})
 const loading = ref(true)
 const searchQuery = ref('')
@@ -467,45 +489,35 @@ onMounted(() => {
 
 const getDns = async () => {
 	const toast = useToast()
-	const response = await fetch('/api/records', {
-		method: 'POST',
-		body: JSON.stringify({
-			apiKey: apiKey.value,
-			currZone: currZone.value
-		})
-	})
-	if (response.ok) {
-		const data = await response.json()
-		if (data.success === false) {
+	try {
+		await refreshRecords()
+		if (recordsError.value) throw recordsError.value
+		const data = recordsData.value
+		if (data?.success === false) {
 			toast.add({
 				id: 'get-records-failed' + Date.now(),
 				title: 'Failed to get records',
-				description: data.errors[0].message,
+				description: data?.errors?.[0]?.message || 'Failed to get records',
 				icon: 'i-clarity-warning-solid',
 				duration: 3000,
 				color: 'error'
 			})
 			router.push('/')
 		}
-		dnsRecords.value = data.result
-	} else {
-		console.error('HTTP-Error: ' + response.status)
+		dnsRecords.value = data?.result || []
+	} catch (error) {
+		console.error('HTTP-Error: ' + (error?.data?.statusCode || error?.statusCode || ''))
 	}
 }
 
 const getZone = async () => {
-	const response = await fetch('/api/zone', {
-		method: 'POST',
-		body: JSON.stringify({
-			apiKey: apiKey.value,
-			currZone: currZone.value
-		})
-	})
-	if (response.ok) {
-		const data = await response.json()
-		zone.value = data.result
-	} else {
-		console.error('HTTP-Error: ' + response.status)
+	try {
+		await refreshZone()
+		if (zoneError.value) throw zoneError.value
+		const data = zoneData.value
+		zone.value = data?.result || {}
+	} catch (error) {
+		console.error('HTTP-Error: ' + (error?.data?.statusCode || error?.statusCode || ''))
 	}
 }
 

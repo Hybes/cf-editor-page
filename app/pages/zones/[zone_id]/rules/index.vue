@@ -222,6 +222,32 @@ const productOptions = ['zoneLockdown', 'uaBlock', 'hot', 'bic', 'securityLevel'
 const selectedPhase = ref('http_request_firewall_managed')
 const rulesets = ref([])
 const selectedRulesetId = ref('')
+const rulesetsRequestBody = computed(() => ({ apiKey: apiKey.value, currZone: zoneId.value }))
+const rulesetRequestBody = computed(() => ({
+	apiKey: apiKey.value,
+	currZone: zoneId.value,
+	rulesetId: selectedRulesetId.value
+}))
+const {
+	data: rulesetsData,
+	error: rulesetsError,
+	refresh: refreshRulesetsData
+} = useFetch('/api/rulesets', {
+	method: 'POST',
+	body: rulesetsRequestBody,
+	server: false,
+	immediate: false
+})
+const {
+	data: rulesetData,
+	error: rulesetError,
+	refresh: refreshRulesetData
+} = useFetch('/api/ruleset', {
+	method: 'POST',
+	body: rulesetRequestBody,
+	server: false,
+	immediate: false
+})
 
 const rulesetOptions = computed(() => {
 	const filtered = (rulesets.value || []).filter((r) => r && r.phase === selectedPhase.value)
@@ -248,20 +274,14 @@ const refreshRulesets = async () => {
 	if (!canRulesets.value) return
 	loadingRulesets.value = true
 	try {
-		const res = await fetch('/api/rulesets', {
-			method: 'POST',
-			body: JSON.stringify({
-				apiKey: apiKey.value,
-				currZone: zoneId.value
-			})
-		})
-
-		const data = await res.json()
-		if (!data.success) {
+		await refreshRulesetsData()
+		if (rulesetsError.value) throw rulesetsError.value
+		const data = rulesetsData.value
+		if (!data || !data.success) {
 			toast.add({
 				id: 'rulesets-error' + Date.now(),
 				title: 'Failed to load rulesets',
-				description: data.errors?.[0]?.message || 'Unknown error',
+				description: data?.errors?.[0]?.message || 'Unknown error',
 				icon: 'i-clarity-warning-solid',
 				duration: 4000,
 				color: 'error'
@@ -275,10 +295,11 @@ const refreshRulesets = async () => {
 		const zoneCandidate = candidates.find((r) => r.kind === 'zone')
 		selectedRulesetId.value = (zoneCandidate || candidates[0] || {}).id || ''
 	} catch (e) {
+		const message = e?.data?.statusMessage || e?.statusMessage || e?.message || 'Unknown error'
 		toast.add({
 			id: 'rulesets-error' + Date.now(),
 			title: 'Failed to load rulesets',
-			description: e.message || 'Unknown error',
+			description: message,
 			icon: 'i-clarity-warning-solid',
 			duration: 4000,
 			color: 'error'
@@ -297,21 +318,14 @@ const refreshRules = async () => {
 
 	loadingRules.value = true
 	try {
-		const res = await fetch('/api/ruleset', {
-			method: 'POST',
-			body: JSON.stringify({
-				apiKey: apiKey.value,
-				currZone: zoneId.value,
-				rulesetId: selectedRulesetId.value
-			})
-		})
-
-		const data = await res.json()
-		if (!data.success) {
+		await refreshRulesetData()
+		if (rulesetError.value) throw rulesetError.value
+		const data = rulesetData.value
+		if (!data || !data.success) {
 			toast.add({
 				id: 'ruleset-error' + Date.now(),
 				title: 'Failed to load rules',
-				description: data.errors?.[0]?.message || 'Unknown error',
+				description: data?.errors?.[0]?.message || 'Unknown error',
 				icon: 'i-clarity-warning-solid',
 				duration: 4000,
 				color: 'error'
@@ -329,10 +343,11 @@ const refreshRules = async () => {
 			expression: r.expression || ''
 		}))
 	} catch (e) {
+		const message = e?.data?.statusMessage || e?.statusMessage || e?.message || 'Unknown error'
 		toast.add({
 			id: 'ruleset-error' + Date.now(),
 			title: 'Failed to load rules',
-			description: e.message || 'Unknown error',
+			description: message,
 			icon: 'i-clarity-warning-solid',
 			duration: 4000,
 			color: 'error'

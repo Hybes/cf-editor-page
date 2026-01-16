@@ -183,12 +183,12 @@
 									type="text"
 									:model-value="getSrvFullName()"
 									placeholder="Preview"
-									class="grow text-gray-500"
+									class="text-comet-500 grow"
 									disabled
 								/>
 							</div>
 
-							<div class="mt-2 rounded-lg bg-gray-50 p-4 text-sm dark:bg-gray-900/20">
+							<div class="bg-comet-50 dark:bg-comet-900/20 mt-2 rounded-lg p-4 text-sm">
 								<p class="flex items-center">
 									<UIcon name="i-heroicons-information-circle" class="mr-2" />
 									Priority: {{ data.priority || 1 }} | Weight: {{ data.weight || 10 }}
@@ -280,7 +280,7 @@
 									type="text"
 									:model-value="getSrvFullName()"
 									placeholder="Preview"
-									class="grow text-gray-500"
+									class="text-comet-500 grow"
 									disabled
 								/>
 							</div>

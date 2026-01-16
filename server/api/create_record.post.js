@@ -1,3 +1,4 @@
+import { createError } from 'h3'
 import { readJsonBody } from '../utils/readJsonBody'
 import { cfFetch } from '../utils/cfFetch'
 export default defineEventHandler(async (event) => {
@@ -7,10 +8,10 @@ export default defineEventHandler(async (event) => {
 
 		if (body.data) {
 			if (!body.data.service || !body.data.proto || !body.data.name || !body.data.target) {
-				return {
-					success: false,
-					errors: [{ message: 'Missing required SRV fields (service, proto, name, target)' }]
-				}
+				throw createError({
+					statusCode: 400,
+					statusMessage: 'Missing required SRV fields (service, proto, name, target)'
+				})
 			}
 
 			bodyToSend.data = body.data
@@ -25,18 +26,12 @@ export default defineEventHandler(async (event) => {
 			bodyToSend.ttl = 1
 		} else if (body.dns) {
 			if (!body.dns.type) {
-				return {
-					success: false,
-					errors: [{ message: 'Record type is required' }]
-				}
+				throw createError({ statusCode: 400, statusMessage: 'Record type is required' })
 			}
 
 			if (body.dns.type !== 'SRV') {
 				if (!body.dns.name || !body.dns.content) {
-					return {
-						success: false,
-						errors: [{ message: 'Name and content are required' }]
-					}
+					throw createError({ statusCode: 400, statusMessage: 'Name and content are required' })
 				}
 
 				bodyToSend.content = body.dns.content
@@ -51,21 +46,15 @@ export default defineEventHandler(async (event) => {
 				bodyToSend.priority = Number(body.dns.priority) || 0
 			}
 		} else {
-			return {
-				success: false,
-				errors: [{ message: 'Invalid request: missing DNS data' }]
-			}
+			throw createError({ statusCode: 400, statusMessage: 'Invalid request: missing DNS data' })
 		}
 
 		if (!body.apiKey) {
-			return { success: false, errors: [{ message: 'API key is required' }] }
+			throw createError({ statusCode: 400, statusMessage: 'API key is required' })
 		}
 
 		if (!body.currZone) {
-			return {
-				success: false,
-				errors: [{ message: 'Zone ID is required' }]
-			}
+			throw createError({ statusCode: 400, statusMessage: 'Zone ID is required' })
 		}
 
 		return await cfFetch({
@@ -75,10 +64,10 @@ export default defineEventHandler(async (event) => {
 			body: bodyToSend
 		})
 	} catch (error) {
-		console.error('DNS Editor: Error Making POST request to create record', error)
-		return {
-			success: false,
-			errors: [{ message: error.message || 'Unknown error occurred' }]
-		}
+		if (error?.statusCode) throw error
+		throw createError({
+			statusCode: 500,
+			statusMessage: error?.message || 'Unknown error'
+		})
 	}
 })

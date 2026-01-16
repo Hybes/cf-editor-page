@@ -1,3 +1,4 @@
+import { createError } from 'h3'
 import { readJsonBody } from '../utils/readJsonBody'
 import { cfFetch } from '../utils/cfFetch'
 export default defineEventHandler(async (event) => {
@@ -5,22 +6,19 @@ export default defineEventHandler(async (event) => {
 		const body = await readJsonBody(event)
 
 		if (!body.dns || !body.dns.type) {
-			return {
-				success: false,
-				errors: [{ message: "Invalid DNS data: 'type' is required" }]
-			}
+			throw createError({ statusCode: 400, statusMessage: "Invalid DNS data: 'type' is required" })
 		}
 
 		if (!body.apiKey) {
-			return { success: false, errors: [{ message: 'API key is required' }] }
+			throw createError({ statusCode: 400, statusMessage: 'API key is required' })
 		}
 
 		if (!body.currZone) {
-			return { success: false, errors: [{ message: 'Zone ID is required' }] }
+			throw createError({ statusCode: 400, statusMessage: 'Zone ID is required' })
 		}
 
 		if (!body.currDnsRecord) {
-			return { success: false, errors: [{ message: 'DNS record ID is required' }] }
+			throw createError({ statusCode: 400, statusMessage: 'DNS record ID is required' })
 		}
 
 		const bodyToSend = {
@@ -31,10 +29,7 @@ export default defineEventHandler(async (event) => {
 
 		if (body.dns.type === 'SRV') {
 			if (!body.dns.data) {
-				return {
-					success: false,
-					errors: [{ message: 'Missing SRV data' }]
-				}
+				throw createError({ statusCode: 400, statusMessage: 'Missing SRV data' })
 			}
 
 			bodyToSend.data = body.dns.data
@@ -64,10 +59,10 @@ export default defineEventHandler(async (event) => {
 			body: bodyToSend
 		})
 	} catch (error) {
-		console.error('DNS Editor: Error Making PUT request to update record', error)
-		return {
-			success: false,
-			errors: [{ message: error.message || 'Unknown error occurred' }]
-		}
+		if (error?.statusCode) throw error
+		throw createError({
+			statusCode: 500,
+			statusMessage: error?.message || 'Unknown error'
+		})
 	}
 })

@@ -1,3 +1,4 @@
+import { createError } from 'h3'
 import { readJsonBody } from '../utils/readJsonBody'
 import { cfFetch } from '../utils/cfFetch'
 export default defineEventHandler(async (event) => {
@@ -5,7 +6,7 @@ export default defineEventHandler(async (event) => {
 		const body = await readJsonBody(event)
 
 		if (!body.apiKey) {
-			return { success: false, errors: [{ message: 'API key is required' }], result: [] }
+			throw createError({ statusCode: 400, statusMessage: 'API key is required' })
 		}
 
 		let data = await cfFetch({ apiKey: body.apiKey, method: 'GET', path: '/zones' })
@@ -45,11 +46,10 @@ export default defineEventHandler(async (event) => {
 
 		return data
 	} catch (error) {
-		console.error('DNS Editor: Error Making initial zones request', error)
-		return {
-			success: false,
-			errors: [{ message: error.message || 'Unknown error' }],
-			result: []
-		}
+		if (error?.statusCode) throw error
+		throw createError({
+			statusCode: 500,
+			statusMessage: error?.message || 'Unknown error'
+		})
 	}
 })

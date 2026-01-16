@@ -32,7 +32,7 @@
 				</div>
 				<h1 class="mt-6 mb-2 text-center text-xl font-semibold">{{ zone.name }}</h1>
 				<div
-					class="m-4 flex w-full flex-col justify-center gap-4 rounded-xl border p-6 text-center shadow-xs md:w-3/4 lg:w-1/2 dark:border-gray-700"
+					class="dark:border-comet-700 m-4 flex w-full flex-col justify-center gap-4 rounded-xl border p-6 text-center shadow-xs md:w-3/4 lg:w-1/2"
 				>
 					<h2 class="mb-2 flex items-center justify-center gap-2 text-lg font-semibold">
 						<Icon name="mdi:dns" class="text-blue-500" /> Create DNS Record
@@ -194,7 +194,7 @@
 									type="text"
 									:model-value="formatSrvDisplayName()"
 									placeholder="Preview"
-									class="grow text-gray-500"
+									class="text-comet-500 grow"
 									disabled
 								/>
 							</div>
@@ -206,12 +206,12 @@
 									type="text"
 									:model-value="getSrvFullName()"
 									placeholder="Technical format"
-									class="grow text-gray-500"
+									class="text-comet-500 grow"
 									disabled
 								/>
 							</div>
 
-							<div class="mt-2 rounded-lg bg-gray-50 p-4 text-sm dark:bg-gray-900/20">
+							<div class="bg-comet-50 dark:bg-comet-900/20 mt-2 rounded-lg p-4 text-sm">
 								<p class="flex items-center">
 									<UIcon name="i-heroicons-information-circle" class="mr-2" />
 									Priority: {{ data.priority || 1 }} | Weight: {{ data.weight || 10 }}
@@ -303,7 +303,7 @@
 									type="text"
 									:model-value="formatSrvDisplayName()"
 									placeholder="Preview"
-									class="grow text-gray-500"
+									class="text-comet-500 grow"
 									disabled
 								/>
 							</div>
@@ -314,7 +314,7 @@
 									type="text"
 									:model-value="getSrvFullName()"
 									placeholder="Technical format"
-									class="grow text-gray-500"
+									class="text-comet-500 grow"
 									disabled
 								/>
 							</div>
@@ -410,6 +410,17 @@ const saving = ref('')
 const toggleEndpoint = ref(false)
 const zone = ref({})
 const presets = ref([])
+const zoneRequestBody = computed(() => ({ apiKey: apiKey.value, currZone: zoneId.value }))
+const {
+	data: zoneData,
+	error: zoneError,
+	refresh: refreshZone
+} = useFetch('/api/zone', {
+	method: 'POST',
+	body: zoneRequestBody,
+	server: false,
+	immediate: false
+})
 
 const seoZoneLabel = computed(() => zone.value?.name || zoneId.value || 'Zone')
 useDynamicSeo({
@@ -537,32 +548,27 @@ const createDns = async () => {
 }
 
 const getZone = async () => {
-	const response = await fetch('/api/zone', {
-		method: 'POST',
-		body: JSON.stringify({
-			apiKey: apiKey.value,
-			currZone: zoneId.value
-		})
-	})
-	if (response.ok) {
-		const data = await response.json()
-		if (data.success) {
+	try {
+		await refreshZone()
+		if (zoneError.value) throw zoneError.value
+		const data = zoneData.value
+		if (data?.success) {
 			zone.value = data.result
 			loading.value = false
-		} else {
-			const toast = useToast()
-			toast.add({
-				id: 'get-zone-error' + Date.now(),
-				title: 'Error',
-				description: 'Failed to fetch zone information',
-				icon: 'i-clarity-warning-solid',
-				duration: 3000,
-				color: 'error'
-			})
-			router.push('/zones')
+			return
 		}
-	} else {
-		console.error('HTTP-Error: ' + response.status)
+		const toast = useToast()
+		toast.add({
+			id: 'get-zone-error' + Date.now(),
+			title: 'Error',
+			description: data?.errors?.[0]?.message || 'Failed to fetch zone information',
+			icon: 'i-clarity-warning-solid',
+			duration: 3000,
+			color: 'error'
+		})
+		router.push('/zones')
+	} catch (error) {
+		console.error('HTTP-Error: ' + (error?.data?.statusCode || error?.statusCode || ''))
 		loading.value = false
 	}
 }

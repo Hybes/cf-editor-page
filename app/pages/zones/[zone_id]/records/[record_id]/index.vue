@@ -34,7 +34,7 @@
 					{{ dns.type === 'SRV' ? formatSrvDisplayName() : dns.name }}
 				</h1>
 				<div
-					class="m-4 flex w-full flex-col justify-center gap-4 rounded-xl border p-6 text-center shadow-xs md:w-3/4 lg:w-1/2 dark:border-gray-700"
+					class="dark:border-comet-700 m-4 flex w-full flex-col justify-center gap-4 rounded-xl border p-6 text-center shadow-xs md:w-3/4 lg:w-1/2"
 				>
 					<h2 class="mb-2 flex items-center justify-center gap-2 text-lg font-semibold">
 						<Icon :name="getRecordTypeIcon()" class="text-blue-500" /> Edit DNS Record
@@ -173,7 +173,7 @@
 									type="text"
 									:model-value="formatSrvDisplayName()"
 									placeholder="Preview"
-									class="grow text-gray-500"
+									class="text-comet-500 grow"
 									disabled
 								/>
 							</div>
@@ -185,12 +185,12 @@
 									type="text"
 									:model-value="getSrvFullName()"
 									placeholder="Technical format"
-									class="grow text-gray-500"
+									class="text-comet-500 grow"
 									disabled
 								/>
 							</div>
 
-							<div class="mt-2 rounded-lg bg-gray-50 p-4 text-sm dark:bg-gray-900/20">
+							<div class="bg-comet-50 dark:bg-comet-900/20 mt-2 rounded-lg p-4 text-sm">
 								<p class="flex items-center">
 									<UIcon name="i-heroicons-information-circle" class="mr-2" />
 									Priority: {{ data.priority || 1 }} | Weight: {{ data.weight || 10 }}
@@ -289,7 +289,7 @@
 									type="text"
 									:model-value="formatSrvDisplayName()"
 									placeholder="Preview"
-									class="grow text-gray-500"
+									class="text-comet-500 grow"
 									disabled
 								/>
 							</div>
@@ -370,7 +370,12 @@
 							@click="saveDns"
 							>Save</UButton
 						>
-						<UButton class="mt-4 px-6" color="error" variant="outline" type="button" @click="openDeleteModal"
+						<UButton
+							class="mt-4 px-6"
+							color="error"
+							variant="outline"
+							type="button"
+							@click="openDeleteModal"
 							>Delete</UButton
 						>
 					</div>
@@ -390,7 +395,8 @@
 								This will permanently delete
 								<span class="font-semibold">{{ deleteLabel }}</span>
 								from
-								<span class="font-semibold">{{ dns.zone_name || zoneId }}</span>.
+								<span class="font-semibold">{{ dns.zone_name || zoneId }}</span
+								>.
 							</p>
 							<p class="text-xs text-stone-500 dark:text-stone-400">This action cannot be undone.</p>
 						</div>
@@ -423,6 +429,21 @@ const toggleEndpoint = ref(false)
 const presets = ref([])
 const deleteModalOpen = ref(false)
 const deleteLoading = ref(false)
+const dnsRequestBody = computed(() => ({
+	apiKey: apiKey.value,
+	currZone: zoneId.value,
+	currDnsRecord: recordId.value
+}))
+const {
+	data: dnsRecordData,
+	error: dnsRecordError,
+	refresh: refreshDnsRecord
+} = useFetch('/api/dns_record', {
+	method: 'POST',
+	body: dnsRequestBody,
+	server: false,
+	immediate: false
+})
 
 const seoZoneLabel = computed(() => dns.value?.zone_name || zoneId.value || 'Zone')
 const seoRecordLabel = computed(() => {
@@ -456,33 +477,27 @@ const commonServices = [
 ]
 
 const getDns = async () => {
-	const response = await fetch('/api/dns_record', {
-		method: 'POST',
-		body: JSON.stringify({
-			apiKey: apiKey.value,
-			currZone: zoneId.value,
-			currDnsRecord: recordId.value
-		})
-	})
-	if (response.ok) {
-		const result = await response.json()
-		dns.value = result.result || {}
-		data.value = result.result.data || {}
+	try {
+		await refreshDnsRecord()
+		if (dnsRecordError.value) throw dnsRecordError.value
+		const result = dnsRecordData.value
+		dns.value = result?.result || {}
+		data.value = result?.result?.data || {}
 
-		// Set up SRV mode and detect service type
 		if (dns.value.type === 'SRV') {
 			detectServiceType()
 		}
 
 		loading.value = false
-	} else {
-		console.error('HTTP-Error: ' + response.status)
+	} catch (error) {
+		console.error('HTTP-Error: ' + (error?.data?.statusCode || error?.statusCode || ''))
 		loading.value = false
 		const toast = useToast()
+		const message = error?.data?.statusMessage || error?.statusMessage || 'Failed to fetch DNS record'
 		toast.add({
 			id: 'get-record-error' + Date.now(),
 			title: 'Error',
-			description: 'Failed to fetch DNS record',
+			description: message,
 			icon: 'i-clarity-warning-solid',
 			duration: 3000,
 			color: 'error'

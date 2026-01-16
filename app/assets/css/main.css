@@ -41,6 +41,7 @@
 	--color-comet-700: #424a59;
 	--color-comet-800: #353b47;
 	--color-comet-900: #2b303a;
+	--color-comet-950: #1f242c;
 
 	--color-main: #2c323c;
 	--color-primary: #f48120;
@@ -59,7 +60,7 @@
 	::before,
 	::backdrop,
 	::file-selector-button {
-		border-color: var(--color-gray-200, currentcolor);
+		border-color: var(--color-comet-200, currentcolor);
 	}
 }
 

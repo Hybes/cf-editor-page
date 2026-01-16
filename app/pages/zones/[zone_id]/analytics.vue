@@ -73,6 +73,22 @@ const dateLeq = ref('2025-01-02')
 const loading = ref(false)
 const error = ref('')
 const result = ref('')
+const analyticsRequestBody = computed(() => ({
+	apiKey: apiKey.value,
+	currZone: zoneId.value,
+	kind: 'dnsQueryCount',
+	range: { date_geq: dateGeq.value, date_leq: dateLeq.value }
+}))
+const {
+	data: analyticsData,
+	error: analyticsError,
+	refresh: refreshAnalytics
+} = useFetch('/api/account_analytics', {
+	method: 'POST',
+	body: analyticsRequestBody,
+	server: false,
+	immediate: false
+})
 
 const loadCaps = async () => {
 	try {
@@ -91,23 +107,16 @@ const runQuery = async () => {
 	result.value = ''
 	loading.value = true
 	try {
-		const res = await fetch('/api/account_analytics', {
-			method: 'POST',
-			body: JSON.stringify({
-				apiKey: apiKey.value,
-				currZone: zoneId.value,
-				kind: 'dnsQueryCount',
-				range: { date_geq: dateGeq.value, date_leq: dateLeq.value }
-			})
-		})
-		const data = await res.json()
-		if (!res.ok || data?.success === false) {
-			error.value = data?.errors?.[0]?.message || `HTTP ${res.status}`
+		await refreshAnalytics()
+		if (analyticsError.value) throw analyticsError.value
+		const data = analyticsData.value
+		if (!data || data?.success === false) {
+			error.value = data?.errors?.[0]?.message || 'Failed to load analytics'
 			return
 		}
 		result.value = JSON.stringify(data, null, 2)
 	} catch (e) {
-		error.value = e.message || 'Unknown error'
+		error.value = e?.data?.statusMessage || e?.statusMessage || e?.message || 'Unknown error'
 	} finally {
 		loading.value = false
 	}

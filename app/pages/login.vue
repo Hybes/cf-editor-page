@@ -9,16 +9,16 @@
 				Your token is only used to call the Cloudflare API.
 			</p>
 			<div class="flex flex-col items-center gap-3">
-			<NuxtLink
-				to="https://dash.cloudflare.com/profile/api-tokens"
-				external
-				target="_blank"
-				rel="noopener noreferrer"
-			>
-				<UButton variant="outline" color="primary" icon="i-heroicons-key">
-					Create an API token in Cloudflare
-				</UButton>
-			</NuxtLink>
+				<NuxtLink
+					to="https://dash.cloudflare.com/profile/api-tokens"
+					external
+					target="_blank"
+					rel="noopener noreferrer"
+				>
+					<UButton variant="outline" color="primary" icon="i-heroicons-key">
+						Create an API token in Cloudflare
+					</UButton>
+				</NuxtLink>
 				<p class="text-xs text-stone-600 dark:text-stone-400">You will paste it here afterwards.</p>
 			</div>
 			<UInput

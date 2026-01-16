@@ -121,8 +121,8 @@
 							class="absolute right-0 z-10 mt-2 w-48 rounded-sm border border-stone-600 bg-stone-300 shadow-lg dark:border-stone-400 dark:bg-stone-700"
 						>
 							<div
-								class="flex cursor-pointer items-center gap-2 px-4 py-2 hover:bg-gray-100 dark:hover:bg-stone-800"
-								:class="{ 'bg-gray-200 dark:bg-gray-800': zone.ssl?.value === 'strict' }"
+								class="hover:bg-comet-100 flex cursor-pointer items-center gap-2 px-4 py-2 dark:hover:bg-stone-800"
+								:class="{ 'bg-comet-200 dark:bg-comet-800': zone.ssl?.value === 'strict' }"
 								@click="updateSslSetting('strict')"
 							>
 								<UIcon name="i-clarity-lock-solid" class="h-4 w-4" />
@@ -130,8 +130,8 @@
 							</div>
 							<div class="border-t border-stone-400 dark:border-stone-600"></div>
 							<div
-								class="flex cursor-pointer items-center gap-2 px-4 py-2 hover:bg-gray-100 dark:hover:bg-stone-800"
-								:class="{ 'bg-gray-200 dark:bg-gray-800': zone.ssl?.value === 'full' }"
+								class="hover:bg-comet-100 flex cursor-pointer items-center gap-2 px-4 py-2 dark:hover:bg-stone-800"
+								:class="{ 'bg-comet-200 dark:bg-comet-800': zone.ssl?.value === 'full' }"
 								@click="updateSslSetting('full')"
 							>
 								<UIcon name="i-clarity-lock-line" class="h-4 w-4" />
@@ -139,8 +139,8 @@
 							</div>
 							<div class="border-t border-stone-400 dark:border-stone-600"></div>
 							<div
-								class="flex cursor-pointer items-center gap-2 px-4 py-2 hover:bg-gray-100 dark:hover:bg-stone-800"
-								:class="{ 'bg-gray-200 dark:bg-gray-800': zone.ssl?.value === 'flexible' }"
+								class="hover:bg-comet-100 flex cursor-pointer items-center gap-2 px-4 py-2 dark:hover:bg-stone-800"
+								:class="{ 'bg-comet-200 dark:bg-comet-800': zone.ssl?.value === 'flexible' }"
 								@click="updateSslSetting('flexible')"
 							>
 								<UIcon name="i-clarity-curve-chart-solid" class="h-4 w-4" />
@@ -148,8 +148,8 @@
 							</div>
 							<div class="border-t border-stone-400 dark:border-stone-600"></div>
 							<div
-								class="flex cursor-pointer items-center gap-2 px-4 py-2 hover:bg-gray-100 dark:hover:bg-stone-800"
-								:class="{ 'bg-gray-200 dark:bg-gray-800': zone.ssl?.value === 'off' }"
+								class="hover:bg-comet-100 flex cursor-pointer items-center gap-2 px-4 py-2 dark:hover:bg-stone-800"
+								:class="{ 'bg-comet-200 dark:bg-comet-800': zone.ssl?.value === 'off' }"
 								@click="updateSslSetting('off')"
 							>
 								<UIcon name="i-clarity-no-access-solid" class="h-4 w-4" />
@@ -235,7 +235,7 @@
 							</UTooltip>
 							<span
 								v-if="searchQuery"
-								class="absolute top-2 right-2 cursor-pointer text-gray-500 hover:text-gray-700"
+								class="text-comet-500 hover:text-comet-700 absolute top-2 right-2 cursor-pointer"
 								@click="searchQuery = ''"
 							>
 								<UIcon name="i-heroicons-x-mark-20-solid" class="h-5 w-5" />
@@ -243,12 +243,7 @@
 						</div>
 					</div>
 					<div class="flex w-full items-center gap-4 md:w-[calc(50%-0.5rem)] md:justify-end">
-						<USelect
-							v-model="pageSize"
-							:items="pageSizeOptions"
-							size="md"
-							class="w-28"
-						/>
+						<USelect v-model="pageSize" :items="pageSizeOptions" size="md" class="w-28" />
 						<UButton
 							v-if="selectedRecordIds.length"
 							color="error"
@@ -329,13 +324,13 @@
 								v-if="row.original.type === 'SRV'"
 								text="Service Record - Maps services to hostnames and ports"
 							>
-								<UIcon name="i-heroicons-question-mark-circle" class="h-4 w-4 text-gray-500" />
+								<UIcon name="i-heroicons-question-mark-circle" class="text-comet-500 h-4 w-4" />
 							</UTooltip>
 						</div>
 					</template>
 					<template #name-cell="{ row }">
 						<div class="group flex max-w-[120px] items-center gap-2 overflow-hidden sm:max-w-[200px]">
-							<UIcon :name="getRecordTypeIcon(row.original.type)" class="h-4 w-4 text-gray-500" />
+							<UIcon :name="getRecordTypeIcon(row.original.type)" class="text-comet-500 h-4 w-4" />
 							<p
 								class="truncate text-xs font-medium group-hover:underline md:text-sm"
 								@click="navigateToRecord(row.original.id)"
@@ -416,13 +411,20 @@
 									This will permanently delete
 									<span class="font-semibold">{{ deleteTargets.length }}</span>
 									record{{ deleteTargets.length === 1 ? '' : 's' }} from
-									<span class="font-semibold">{{ zoneName || 'this zone' }}</span>.
+									<span class="font-semibold">{{ zoneName || 'this zone' }}</span
+									>.
 								</p>
 								<div
 									class="rounded-md border border-stone-200 bg-stone-50 p-3 text-xs dark:border-stone-700 dark:bg-stone-900"
 								>
-									<div v-for="record in deletePreview" :key="record.id" class="flex items-center gap-2">
-										<UBadge :color="getRecordTypeColor(record.type)" class="uppercase">{{ record.type }}</UBadge>
+									<div
+										v-for="record in deletePreview"
+										:key="record.id"
+										class="flex items-center gap-2"
+									>
+										<UBadge :color="getRecordTypeColor(record.type)" class="uppercase">{{
+											record.type
+										}}</UBadge>
 										<span class="truncate">{{ record._displayName }}</span>
 										<span class="text-stone-400">→</span>
 										<span class="truncate">{{ record._displayContent }}</span>
@@ -436,7 +438,9 @@
 							<template #footer>
 								<div class="flex justify-end gap-3">
 									<UButton color="neutral" variant="ghost" @click="closeDeleteModal">Cancel</UButton>
-									<UButton color="error" :loading="deleteLoading" @click="confirmDelete">Delete</UButton>
+									<UButton color="error" :loading="deleteLoading" @click="confirmDelete"
+										>Delete</UButton
+									>
 								</div>
 							</template>
 						</UCard>
@@ -478,6 +482,38 @@ const botUnavailableReason = ref('')
 const dnsLoadError = ref('')
 const capabilities = ref(null)
 const capabilityMissing = ref([])
+const dnsRequestBody = computed(() => ({ apiKey: apiKey.value, currZone: zoneId.value }))
+const zoneRequestBody = computed(() => ({ apiKey: apiKey.value, currZone: zoneId.value }))
+const {
+	data: dnsData,
+	error: dnsError,
+	refresh: refreshDns
+} = useFetch('/api/records', {
+	method: 'POST',
+	body: dnsRequestBody,
+	server: false,
+	immediate: false
+})
+const {
+	data: zoneData,
+	error: zoneError,
+	refresh: refreshZone
+} = useFetch('/api/zone', {
+	method: 'POST',
+	body: zoneRequestBody,
+	server: false,
+	immediate: false
+})
+const {
+	data: botData,
+	error: botError,
+	refresh: refreshBot
+} = useFetch('/api/bot_management', {
+	method: 'POST',
+	body: zoneRequestBody,
+	server: false,
+	immediate: false
+})
 const canSsl = computed(() => Boolean(capabilities.value && capabilities.value.ssl && capabilities.value.ssl.available))
 const canBotFight = computed(() =>
 	Boolean(capabilities.value && capabilities.value.botFightMode && capabilities.value.botFightMode.available)
@@ -587,18 +623,12 @@ const getBotManagement = async () => {
 	botUnavailable.value = false
 	botUnavailableReason.value = ''
 	try {
-		const response = await fetch('/api/bot_management', {
-			method: 'POST',
-			body: JSON.stringify({
-				apiKey: apiKey.value,
-				currZone: zoneId.value
-			})
-		})
-
-		const data = await response.json()
-		if (!response.ok || !data.success) {
+		await refreshBot()
+		if (botError.value) throw botError.value
+		const data = botData.value
+		if (!data || !data.success) {
 			botUnavailable.value = true
-			botUnavailableReason.value = data?.errors?.[0]?.message || `HTTP ${response.status}`
+			botUnavailableReason.value = data?.errors?.[0]?.message || 'Failed to load Bot Fight Mode'
 			return
 		}
 
@@ -621,6 +651,10 @@ const getBotManagement = async () => {
 
 		botUnavailable.value = true
 		botUnavailableReason.value = 'fight_mode not present in response'
+	} catch (error) {
+		botUnavailable.value = true
+		botUnavailableReason.value =
+			error?.data?.statusMessage || error?.statusMessage || 'Failed to load Bot Fight Mode'
 	} finally {
 		botLoading.value = false
 	}
@@ -961,16 +995,11 @@ const handleKeyDown = (e) => {
 const getDns = async () => {
 	const toast = useToast()
 	dnsLoadError.value = ''
-	const response = await fetch('/api/records', {
-		method: 'POST',
-		body: JSON.stringify({
-			apiKey: apiKey.value,
-			currZone: zoneId.value
-		})
-	})
-	if (response.ok) {
-		const data = await response.json()
-		if (data.success === false) {
+	try {
+		await refreshDns()
+		if (dnsError.value) throw dnsError.value
+		const data = dnsData.value
+		if (data?.success === false) {
 			dnsLoadError.value = data.errors?.[0]?.message || 'Failed to get records'
 			toast.add({
 				id: 'get-records-failed' + Date.now(),
@@ -984,10 +1013,9 @@ const getDns = async () => {
 			return
 		}
 
-		// Update the records array
-		dnsRecords.value = data.result || []
-	} else {
-		dnsLoadError.value = `HTTP ${response.status}`
+		dnsRecords.value = data?.result || []
+	} catch (error) {
+		dnsLoadError.value = error?.data?.statusMessage || error?.statusMessage || 'Failed to get records'
 		toast.add({
 			id: 'get-records-http-failed' + Date.now(),
 			title: 'Failed to get records',
@@ -1000,25 +1028,22 @@ const getDns = async () => {
 }
 
 const getZone = async () => {
-	const response = await fetch('/api/zone', {
-		method: 'POST',
-		body: JSON.stringify({
-			apiKey: apiKey.value,
-			currZone: zoneId.value
-		})
-	})
-	if (response.ok) {
-		const data = await response.json()
-		if (data.success && data.result) {
+	try {
+		await refreshZone()
+		if (zoneError.value) throw zoneError.value
+		const data = zoneData.value
+		if (data?.success && data.result) {
 			zone.value = data.result
 			zoneName.value = data.result.name
 			if (data.result.account && data.result.account.id) {
 				localStorage.setItem('cf-account-id', data.result.account.id)
 				if (data.result.account.name) localStorage.setItem('cf-account-name', data.result.account.name)
 			}
+			return
 		}
-	} else {
-		console.error('HTTP-Error: ' + response.status)
+		console.error('Failed to load zone')
+	} catch (error) {
+		console.error('Failed to load zone', error)
 	}
 }
 
