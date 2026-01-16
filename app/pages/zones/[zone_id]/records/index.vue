@@ -106,56 +106,22 @@
 						</div>
 					</UTooltip>
 					<div v-if="canSsl" class="relative">
-						<div class="cursor-pointer" @click="showDropdown = !showDropdown">
-							<UIcon v-if="zone.ssl?.value === 'strict'" name="i-clarity-lock-solid" class="h-6 w-6" />
-							<UIcon v-if="zone.ssl?.value === 'full'" name="i-clarity-lock-line" class="h-6 w-6" />
-							<UIcon
-								v-if="zone.ssl?.value === 'flexible'"
-								name="i-clarity-curve-chart-solid"
-								class="h-6 w-6"
-							/>
-							<UIcon v-if="zone.ssl?.value === 'off'" name="i-clarity-no-access-solid" class="h-6 w-6" />
-						</div>
-						<div
-							v-if="showDropdown"
-							class="absolute right-0 z-10 mt-2 w-48 rounded-sm border border-comet-600 bg-comet-300 shadow-lg dark:border-comet-400 dark:bg-comet-700"
-						>
-							<div
-								class="hover:bg-comet-100 flex cursor-pointer items-center gap-2 px-4 py-2 dark:hover:bg-comet-800"
-								:class="{ 'bg-comet-200 dark:bg-comet-800': zone.ssl?.value === 'strict' }"
-								@click="updateSslSetting('strict')"
-							>
-								<UIcon name="i-clarity-lock-solid" class="h-4 w-4" />
-								Strict
-							</div>
-							<div class="border-t border-comet-400 dark:border-comet-600"></div>
-							<div
-								class="hover:bg-comet-100 flex cursor-pointer items-center gap-2 px-4 py-2 dark:hover:bg-comet-800"
-								:class="{ 'bg-comet-200 dark:bg-comet-800': zone.ssl?.value === 'full' }"
-								@click="updateSslSetting('full')"
-							>
-								<UIcon name="i-clarity-lock-line" class="h-4 w-4" />
-								Full
-							</div>
-							<div class="border-t border-comet-400 dark:border-comet-600"></div>
-							<div
-								class="hover:bg-comet-100 flex cursor-pointer items-center gap-2 px-4 py-2 dark:hover:bg-comet-800"
-								:class="{ 'bg-comet-200 dark:bg-comet-800': zone.ssl?.value === 'flexible' }"
-								@click="updateSslSetting('flexible')"
-							>
-								<UIcon name="i-clarity-curve-chart-solid" class="h-4 w-4" />
-								Flexible
-							</div>
-							<div class="border-t border-comet-400 dark:border-comet-600"></div>
-							<div
-								class="hover:bg-comet-100 flex cursor-pointer items-center gap-2 px-4 py-2 dark:hover:bg-comet-800"
-								:class="{ 'bg-comet-200 dark:bg-comet-800': zone.ssl?.value === 'off' }"
-								@click="updateSslSetting('off')"
-							>
-								<UIcon name="i-clarity-no-access-solid" class="h-4 w-4" />
-								Off
-							</div>
-						</div>
+						<UDropdownMenu :items="sslMenuItems" :content="{ align: 'end' }">
+							<UButton variant="ghost" color="neutral" size="sm" class="p-1">
+								<UIcon v-if="zone.ssl?.value === 'strict'" name="i-clarity-lock-solid" class="h-6 w-6" />
+								<UIcon v-if="zone.ssl?.value === 'full'" name="i-clarity-lock-line" class="h-6 w-6" />
+								<UIcon
+									v-if="zone.ssl?.value === 'flexible'"
+									name="i-clarity-curve-chart-solid"
+									class="h-6 w-6"
+								/>
+								<UIcon
+									v-if="zone.ssl?.value === 'off'"
+									name="i-clarity-no-access-solid"
+									class="h-6 w-6"
+								/>
+							</UButton>
+						</UDropdownMenu>
 					</div>
 				</div>
 				<div class="grid w-full grid-cols-2 gap-3 md:grid-cols-4">
@@ -329,10 +295,13 @@
 						</div>
 					</template>
 					<template #name-cell="{ row }">
-						<div class="group flex max-w-[120px] items-center gap-2 overflow-hidden sm:max-w-[200px]">
-							<UIcon :name="getRecordTypeIcon(row.original.type)" class="text-comet-500 h-4 w-4" />
+						<div class="group flex max-w-[120px] min-w-0 items-center gap-2 overflow-hidden sm:max-w-[200px]">
+							<UIcon
+								:name="getRecordTypeIcon(row.original.type)"
+								class="text-comet-500 h-4 w-4 shrink-0"
+							/>
 							<p
-								class="truncate text-xs font-medium group-hover:underline md:text-sm"
+								class="truncate text-xs font-medium group-hover:underline md:text-sm min-w-0"
 								@click="navigateToRecord(row.original.id)"
 							>
 								{{ row.original._displayName }}
@@ -398,25 +367,27 @@
 					<UPagination v-model:page="page" :items-per-page="pageSize" :total="filteredRecords.length" />
 				</div>
 				<UModal v-model:open="deleteModalOpen">
-					<template #content>
-						<UCard>
-							<template #header>
-								<div class="flex items-center gap-2">
-									<UIcon name="i-heroicons-exclamation-triangle" class="h-5 w-5 text-red-500" />
-									<span class="text-lg font-semibold">Delete records</span>
-								</div>
-							</template>
-							<div class="space-y-4">
-								<p class="text-sm text-comet-600 dark:text-comet-300">
-									This will permanently delete
-									<span class="font-semibold">{{ deleteTargets.length }}</span>
-									record{{ deleteTargets.length === 1 ? '' : 's' }} from
-									<span class="font-semibold">{{ zoneName || 'this zone' }}</span
-									>.
-								</p>
-								<div
-									class="rounded-md border border-comet-200 bg-comet-50 p-3 text-xs dark:border-comet-700 dark:bg-comet-900"
-								>
+					<template #title>
+						<div class="flex items-center gap-2">
+							<UIcon name="i-heroicons-exclamation-triangle" class="h-5 w-5 text-red-500" />
+							<span>Delete records</span>
+						</div>
+					</template>
+					<template #description>
+						<p class="text-sm text-comet-600 dark:text-comet-300">
+							This will permanently delete
+							<span class="font-semibold">{{ deleteTargets.length }}</span>
+							record{{ deleteTargets.length === 1 ? '' : 's' }} from
+							<span class="font-semibold">{{ zoneName || 'this zone' }}</span
+							>.
+						</p>
+					</template>
+					<template #body>
+						<div class="space-y-4">
+							<div
+								class="rounded-md border border-comet-200 bg-comet-50 p-3 text-xs dark:border-comet-700 dark:bg-comet-900"
+							>
+								<div class="space-y-2">
 									<div
 										v-for="record in deletePreview"
 										:key="record.id"
@@ -429,21 +400,19 @@
 										<span class="text-comet-400">→</span>
 										<span class="truncate">{{ record._displayContent }}</span>
 									</div>
-									<div v-if="deleteTargets.length > deletePreview.length" class="mt-2 text-comet-500">
-										+{{ deleteTargets.length - deletePreview.length }} more
-									</div>
 								</div>
-								<p class="text-xs text-comet-500 dark:text-comet-400">This action cannot be undone.</p>
+								<div v-if="deleteTargets.length > deletePreview.length" class="mt-2 text-comet-500">
+									+{{ deleteTargets.length - deletePreview.length }} more
+								</div>
 							</div>
-							<template #footer>
-								<div class="flex justify-end gap-3">
-									<UButton color="neutral" variant="ghost" @click="closeDeleteModal">Cancel</UButton>
-									<UButton color="error" :loading="deleteLoading" @click="confirmDelete"
-										>Delete</UButton
-									>
-								</div>
-							</template>
-						</UCard>
+							<p class="text-xs text-comet-500 dark:text-comet-400">This action cannot be undone.</p>
+						</div>
+					</template>
+					<template #footer>
+						<div class="flex justify-end gap-3">
+							<UButton color="neutral" variant="ghost" @click="closeDeleteModal">Cancel</UButton>
+							<UButton color="error" :loading="deleteLoading" @click="confirmDelete">Delete</UButton>
+						</div>
 					</template>
 				</UModal>
 			</div>
@@ -457,6 +426,7 @@ import { useDebounceFn } from '@vueuse/core'
 
 const route = useRoute()
 const router = useRouter()
+const toast = useToast()
 const zoneId = computed(() => route.params.zone_id)
 const apiKey = ref('')
 const zoneName = ref('')
@@ -472,7 +442,6 @@ const deleteModalOpen = ref(false)
 const deleteTargets = ref([])
 const deleteLoading = ref(false)
 const selectedStatus = ref([])
-const showDropdown = ref(false)
 const windowSize = useWindowSize()
 const isLargeScreen = computed(() => windowSize.width.value >= 768)
 const botFightMode = ref(false)
@@ -541,7 +510,6 @@ useDynamicSeo({
 })
 
 const updateProxyStatus = async (record) => {
-	const toast = useToast()
 	const response = await fetch('/api/update_record', {
 		method: 'POST',
 		body: JSON.stringify({
@@ -580,7 +548,6 @@ const updateProxyStatus = async (record) => {
 }
 
 const updateSslSetting = async (sslMode) => {
-	const toast = useToast()
 	const response = await fetch('/api/update_ssl', {
 		method: 'POST',
 		body: JSON.stringify({
@@ -600,7 +567,6 @@ const updateSslSetting = async (sslMode) => {
 				duration: 3000,
 				color: 'success'
 			})
-			showDropdown.value = false
 			await getAll()
 		} else {
 			console.error(data.errors[0].message)
@@ -617,6 +583,29 @@ const updateSslSetting = async (sslMode) => {
 		console.error('HTTP-Error: ' + response.status)
 	}
 }
+
+const sslMenuItems = computed(() => [
+	{
+		label: 'Strict',
+		icon: 'i-clarity-lock-solid',
+		onSelect: () => updateSslSetting('strict')
+	},
+	{
+		label: 'Full',
+		icon: 'i-clarity-lock-line',
+		onSelect: () => updateSslSetting('full')
+	},
+	{
+		label: 'Flexible',
+		icon: 'i-clarity-curve-chart-solid',
+		onSelect: () => updateSslSetting('flexible')
+	},
+	{
+		label: 'Off',
+		icon: 'i-clarity-no-access-solid',
+		onSelect: () => updateSslSetting('off')
+	}
+])
 
 const getBotManagement = async () => {
 	botLoading.value = true
@@ -661,7 +650,6 @@ const getBotManagement = async () => {
 }
 
 const updateBotFightMode = async (value) => {
-	const toast = useToast()
 	const previous = botFightMode.value
 	botFightMode.value = value
 	botLoading.value = true
@@ -993,7 +981,6 @@ const handleKeyDown = (e) => {
 }
 
 const getDns = async () => {
-	const toast = useToast()
 	dnsLoadError.value = ''
 	try {
 		await refreshDns()
@@ -1095,7 +1082,6 @@ const closeDeleteModal = () => {
 const confirmDelete = async () => {
 	if (!deleteTargets.value.length) return
 	deleteLoading.value = true
-	const toast = useToast()
 	const results = await Promise.all(deleteTargets.value.map((record) => delDns(record)))
 	const successCount = results.filter(Boolean).length
 	const failedCount = results.length - successCount
@@ -1181,7 +1167,6 @@ const openRecordUrl = (record) => {
 
 const copyToClipboard = (text) => {
 	navigator.clipboard.writeText(text)
-	const toast = useToast()
 	toast.add({
 		id: 'copy-ns' + Date.now(),
 		title: 'Copied to clipboard',

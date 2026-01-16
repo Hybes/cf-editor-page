@@ -382,31 +382,29 @@
 				</div>
 			</div>
 			<UModal v-model:open="deleteModalOpen">
-				<template #content>
-					<UCard>
-						<template #header>
-							<div class="flex items-center gap-2">
-								<UIcon name="i-heroicons-exclamation-triangle" class="h-5 w-5 text-red-500" />
-								<span class="text-lg font-semibold">Delete record</span>
-							</div>
-						</template>
-						<div class="space-y-4">
-							<p class="text-sm text-stone-600 dark:text-stone-300">
-								This will permanently delete
-								<span class="font-semibold">{{ deleteLabel }}</span>
-								from
-								<span class="font-semibold">{{ dns.zone_name || zoneId }}</span
-								>.
-							</p>
-							<p class="text-xs text-stone-500 dark:text-stone-400">This action cannot be undone.</p>
-						</div>
-						<template #footer>
-							<div class="flex justify-end gap-3">
-								<UButton color="neutral" variant="ghost" @click="closeDeleteModal">Cancel</UButton>
-								<UButton color="error" :loading="deleteLoading" @click="confirmDelete">Delete</UButton>
-							</div>
-						</template>
-					</UCard>
+				<template #title>
+					<div class="flex items-center gap-2">
+						<UIcon name="i-heroicons-exclamation-triangle" class="h-5 w-5 text-red-500" />
+						<span>Delete record</span>
+					</div>
+				</template>
+				<template #description>
+					<p class="text-sm text-stone-600 dark:text-stone-300">
+						This will permanently delete
+						<span class="font-semibold">{{ deleteLabel }}</span>
+						from
+						<span class="font-semibold">{{ dns.zone_name || zoneId }}</span
+						>.
+					</p>
+				</template>
+				<template #body>
+					<p class="text-xs text-stone-500 dark:text-stone-400">This action cannot be undone.</p>
+				</template>
+				<template #footer>
+					<div class="flex justify-end gap-3">
+						<UButton color="neutral" variant="ghost" @click="closeDeleteModal">Cancel</UButton>
+						<UButton color="error" :loading="deleteLoading" @click="confirmDelete">Delete</UButton>
+					</div>
 				</template>
 			</UModal>
 		</div>
@@ -417,6 +415,7 @@
 const appBootLoading = useState('appBootLoading')
 const route = useRoute()
 const router = useRouter()
+const toast = useToast()
 const zoneId = computed(() => route.params.zone_id)
 const recordId = computed(() => route.params.record_id)
 
@@ -492,7 +491,6 @@ const getDns = async () => {
 	} catch (error) {
 		console.error('HTTP-Error: ' + (error?.data?.statusCode || error?.statusCode || ''))
 		loading.value = false
-		const toast = useToast()
 		const message = error?.data?.statusMessage || error?.statusMessage || 'Failed to fetch DNS record'
 		toast.add({
 			id: 'get-record-error' + Date.now(),
@@ -512,7 +510,6 @@ const saveDns = async () => {
 	// Basic validation
 	if (dns.value.type === 'SRV') {
 		if (!data.value.service || !data.value.proto || !data.value.name || !data.value.target) {
-			const toast = useToast()
 			toast.add({
 				id: 'validation-error' + Date.now(),
 				title: 'Validation Error',
@@ -529,7 +526,6 @@ const saveDns = async () => {
 		data.value.weight = Number(data.value.weight)
 		data.value.priority = Number(data.value.priority)
 	} else if (!dns.value.name || !dns.value.content) {
-		const toast = useToast()
 		toast.add({
 			id: 'validation-error' + Date.now(),
 			title: 'Validation Error',
@@ -575,7 +571,6 @@ const saveDns = async () => {
 
 	if (response.ok) {
 		const data = await response.json()
-		const toast = useToast()
 		if (data.success === true) {
 			saving.value = 'success'
 			toast.add({
@@ -614,7 +609,6 @@ const saveDns = async () => {
 }
 
 const delDns = async (record) => {
-	const toast = useToast()
 	const response = await fetch('/api/delete_record', {
 		method: 'POST',
 		body: JSON.stringify({

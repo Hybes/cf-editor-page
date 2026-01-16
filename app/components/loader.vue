@@ -7,7 +7,7 @@
 		"
 	>
 		<div
-			class="border-default bg-elevated/70 flex w-full max-w-xl flex-col items-center gap-4 rounded-xl border p-6 shadow-sm"
+			class="border-default bg-elevated/70 flex w-full max-w-xl flex-col items-center gap-4 rounded-xl border p-6 text-center shadow-sm"
 		>
 			<svg
 				class="text-primary h-12 w-12 animate-spin"
@@ -25,11 +25,11 @@
 					d="M12 3a9 9 0 1 0 9 9"
 				/>
 			</svg>
-			<div class="flex w-full flex-col gap-1 text-center">
+			<div class="flex w-full flex-col gap-1">
 				<div class="text-highlighted text-lg font-semibold">{{ title }}</div>
 				<div v-if="subtitle" class="text-muted text-sm">{{ subtitle }}</div>
 			</div>
-			<ul v-if="hints?.length" class="text-muted w-full list-outside list-disc space-y-1 pl-5 text-sm">
+			<ul v-if="hints?.length" class="text-muted w-full list-inside list-disc space-y-1 text-sm">
 				<li v-for="(hint, i) in hints" :key="i">{{ hint }}</li>
 			</ul>
 		</div>

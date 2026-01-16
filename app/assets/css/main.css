@@ -63,7 +63,7 @@
 	--breakpoint-full: 2160px;
 	--breakpoint-8xl: 90rem;
 
-	--font-sans: 'Figtree', sans-serif;
+	--font-sans: 'Satoshi', sans-serif;
 }
 @layer base {
 	*,
