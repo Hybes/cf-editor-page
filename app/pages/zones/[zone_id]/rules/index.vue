@@ -32,8 +32,8 @@
 						<USelectMenu
 							v-model="selectedRulesetId"
 							:items="rulesetOptions"
-							value-attribute="value"
-							option-attribute="label"
+							value-key="value"
+							label-key="label"
 							placeholder="Select a ruleset"
 							class="w-full"
 						/>

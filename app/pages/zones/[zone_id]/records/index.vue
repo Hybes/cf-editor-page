@@ -243,6 +243,22 @@
 						</div>
 					</div>
 					<div class="flex w-full items-center gap-4 md:w-[calc(50%-0.5rem)] md:justify-end">
+						<USelect
+							v-model="pageSize"
+							:items="pageSizeOptions"
+							size="md"
+							class="w-28"
+						/>
+						<UButton
+							v-if="selectedRecordIds.length"
+							color="error"
+							variant="outline"
+							icon="i-heroicons-trash-20-solid"
+							class="grow md:grow-0"
+							@click="openDeleteModal(selectedRecords)"
+						>
+							Delete ({{ selectedRecordIds.length }})
+						</UButton>
 						<UDropdownMenu
 							:items="
 								columns.map((c) => ({
@@ -269,7 +285,7 @@
 						</UDropdownMenu>
 						<UPagination
 							v-model:page="page"
-							:page-count="pageCount"
+							:items-per-page="pageSize"
 							:total="filteredRecords.length"
 							class="shrink-0 md:ml-2"
 						/>
@@ -283,14 +299,27 @@
 					class="w-full rounded-lg border border-stone-300 dark:border-stone-700"
 					:ui="{
 						tr: {
-							base: 'cursor-pointer even:bg-stone-100 dark:even:bg-stone-950/50 hover:bg-stone-200 dark:hover:bg-stone-800'
+							base: 'even:bg-stone-100 dark:even:bg-stone-950/50 hover:bg-stone-200 dark:hover:bg-stone-800'
 						},
 						td: {
 							color: 'text-stone-700 dark:text-stone-200'
 						}
 					}"
-					@select="onSelectRecord"
 				>
+					<template #select-header>
+						<UCheckbox
+							:model-value="selectAllState"
+							@click.stop
+							@update:model-value="(value) => toggleSelectAllVisible(value === true)"
+						/>
+					</template>
+					<template #select-cell="{ row }">
+						<UCheckbox
+							:model-value="selectedRecordIds.includes(row.original.id)"
+							@click.stop
+							@update:model-value="(value) => toggleRecordSelection(row.original, value === true)"
+						/>
+					</template>
 					<template #type-cell="{ row }">
 						<div class="flex items-center gap-2">
 							<UBadge :color="getRecordTypeColor(row.original.type)" class="uppercase">
@@ -305,14 +334,23 @@
 						</div>
 					</template>
 					<template #name-cell="{ row }">
-						<div
-							class="group flex max-w-[120px] cursor-pointer items-center gap-2 overflow-hidden sm:max-w-[200px]"
-							@click="navigateToRecord(row.original.id)"
-						>
+						<div class="group flex max-w-[120px] items-center gap-2 overflow-hidden sm:max-w-[200px]">
 							<UIcon :name="getRecordTypeIcon(row.original.type)" class="h-4 w-4 text-gray-500" />
-							<p class="truncate text-xs font-medium group-hover:underline md:text-sm">
+							<p
+								class="truncate text-xs font-medium group-hover:underline md:text-sm"
+								@click="navigateToRecord(row.original.id)"
+							>
 								{{ row.original._displayName }}
 							</p>
+							<UTooltip text="Open in new tab">
+								<UButton
+									icon="i-heroicons-arrow-top-right-on-square"
+									variant="ghost"
+									color="neutral"
+									size="xs"
+									@click.stop="openRecordUrl(row.original)"
+								/>
+							</UTooltip>
 						</div>
 					</template>
 					<template #content-cell="{ row }">
@@ -362,8 +400,48 @@
 					</template>
 				</UTable>
 				<div class="flex w-full justify-end">
-					<UPagination v-model:page="page" :page-count="pageCount" :total="filteredRecords.length" />
+					<UPagination v-model:page="page" :items-per-page="pageSize" :total="filteredRecords.length" />
 				</div>
+				<UModal v-model:open="deleteModalOpen">
+					<template #content>
+						<UCard>
+							<template #header>
+								<div class="flex items-center gap-2">
+									<UIcon name="i-heroicons-exclamation-triangle" class="h-5 w-5 text-red-500" />
+									<span class="text-lg font-semibold">Delete records</span>
+								</div>
+							</template>
+							<div class="space-y-4">
+								<p class="text-sm text-stone-600 dark:text-stone-300">
+									This will permanently delete
+									<span class="font-semibold">{{ deleteTargets.length }}</span>
+									record{{ deleteTargets.length === 1 ? '' : 's' }} from
+									<span class="font-semibold">{{ zoneName || 'this zone' }}</span>.
+								</p>
+								<div
+									class="rounded-md border border-stone-200 bg-stone-50 p-3 text-xs dark:border-stone-700 dark:bg-stone-900"
+								>
+									<div v-for="record in deletePreview" :key="record.id" class="flex items-center gap-2">
+										<UBadge :color="getRecordTypeColor(record.type)" class="uppercase">{{ record.type }}</UBadge>
+										<span class="truncate">{{ record._displayName }}</span>
+										<span class="text-stone-400">→</span>
+										<span class="truncate">{{ record._displayContent }}</span>
+									</div>
+									<div v-if="deleteTargets.length > deletePreview.length" class="mt-2 text-stone-500">
+										+{{ deleteTargets.length - deletePreview.length }} more
+									</div>
+								</div>
+								<p class="text-xs text-stone-500 dark:text-stone-400">This action cannot be undone.</p>
+							</div>
+							<template #footer>
+								<div class="flex justify-end gap-3">
+									<UButton color="neutral" variant="ghost" @click="closeDeleteModal">Cancel</UButton>
+									<UButton color="error" :loading="deleteLoading" @click="confirmDelete">Delete</UButton>
+								</div>
+							</template>
+						</UCard>
+					</template>
+				</UModal>
 			</div>
 		</div>
 	</PageContainer>
@@ -383,7 +461,12 @@ const zone = ref({})
 const loading = ref(true)
 const searchQuery = ref('')
 const page = ref(1)
-const pageCount = 25
+const pageSize = ref(25)
+const pageSizeOptions = [10, 25, 50, 100]
+const selectedRecordIds = ref([])
+const deleteModalOpen = ref(false)
+const deleteTargets = ref([])
+const deleteLoading = ref(false)
 const selectedStatus = ref([])
 const showDropdown = ref(false)
 const windowSize = useWindowSize()
@@ -605,6 +688,11 @@ const dnsTypes = computed(() => {
 
 const columns = [
 	{
+		id: 'select',
+		header: '',
+		enableSorting: false
+	},
+	{
 		id: 'type',
 		accessorKey: 'type',
 		header: 'Type'
@@ -647,6 +735,11 @@ const items = (row) => {
 				onClick: () => navigateToRecord(row.id)
 			},
 			{
+				label: 'Open',
+				icon: 'i-heroicons-arrow-top-right-on-square',
+				onClick: () => openRecordUrl(row)
+			},
+			{
 				label: row.proxiable ? 'Proxiable' : 'Not Proxiable',
 				disabled: true,
 				icon: row.proxiable ? 'i-heroicons-check-circle-20-solid' : 'i-heroicons-x-circle-20-solid'
@@ -657,7 +750,7 @@ const items = (row) => {
 				label: 'Delete',
 				icon: 'i-heroicons-trash-20-solid',
 				color: 'error',
-				onClick: () => preDel(row)
+				onClick: () => openDeleteModal(row)
 			}
 		]
 	]
@@ -717,10 +810,35 @@ const totalRecords = computed(() => (dnsRecords.value || []).length)
 const filteredCount = computed(() => (filteredRecords.value || []).length)
 const proxiedCount = computed(() => (dnsRecords.value || []).filter((r) => r && r.proxied === true).length)
 const typesCount = computed(() => (dnsTypes.value || []).length)
+const pageCount = computed(() => Math.max(1, Math.ceil(filteredRecords.value.length / pageSize.value)))
+
+const selectedRecords = computed(() => {
+	const ids = selectedRecordIds.value
+	if (!ids.length) return []
+	return processedRecords.value.filter((record) => ids.includes(record.id))
+})
+
+const allVisibleSelected = computed(() => {
+	if (!rows.value.length) return false
+	return rows.value.every((row) => selectedRecordIds.value.includes(row.id))
+})
+
+const someVisibleSelected = computed(() => {
+	if (!rows.value.length) return false
+	return rows.value.some((row) => selectedRecordIds.value.includes(row.id)) && !allVisibleSelected.value
+})
+
+const selectAllState = computed(() => {
+	if (allVisibleSelected.value) return true
+	if (someVisibleSelected.value) return 'indeterminate'
+	return false
+})
+
+const deletePreview = computed(() => deleteTargets.value.slice(0, 6))
 
 const rows = computed(() => {
-	const startIndex = (page.value - 1) * pageCount
-	const endIndex = startIndex + pageCount
+	const startIndex = (page.value - 1) * pageSize.value
+	const endIndex = startIndex + pageSize.value
 	return filteredRecords.value.slice(startIndex, endIndex)
 })
 
@@ -728,6 +846,7 @@ const rows = computed(() => {
 watch(
 	selectedStatus,
 	(newValue) => {
+		page.value = 1
 		if (newValue.length) {
 			router.push({
 				query: {
@@ -762,7 +881,12 @@ const debouncedUpdateSearchQuery = useDebounceFn((newValue) => {
 
 // Watch search query changes
 watch(searchQuery, (newValue) => {
+	page.value = 1
 	debouncedUpdateSearchQuery(newValue)
+})
+
+watch(pageSize, () => {
+	page.value = 1
 })
 
 // Add watch to update URL when page changes
@@ -778,6 +902,12 @@ watch(page, (newValue) => {
 		// Remove the page param if on page 1
 		const { page: _page, ...restQuery } = route.query
 		router.push({ query: restQuery })
+	}
+})
+
+watch(filteredRecords, () => {
+	if (page.value > pageCount.value) {
+		page.value = pageCount.value
 	}
 })
 
@@ -912,7 +1042,6 @@ const loadCapabilities = async () => {
 }
 
 const delDns = async (record) => {
-	const toast = useToast()
 	const response = await fetch('/api/delete_record', {
 		method: 'POST',
 		body: JSON.stringify({
@@ -922,48 +1051,55 @@ const delDns = async (record) => {
 		})
 	})
 	if (response.ok) {
-		const _data = await response.json()
+		const data = await response.json()
+		return data.success !== false
+	}
+	return false
+}
+
+const openDeleteModal = (records) => {
+	deleteTargets.value = Array.isArray(records) ? records : [records]
+	deleteModalOpen.value = true
+}
+
+const closeDeleteModal = () => {
+	deleteModalOpen.value = false
+	deleteTargets.value = []
+}
+
+const confirmDelete = async () => {
+	if (!deleteTargets.value.length) return
+	deleteLoading.value = true
+	const toast = useToast()
+	const results = await Promise.all(deleteTargets.value.map((record) => delDns(record)))
+	const successCount = results.filter(Boolean).length
+	const failedCount = results.length - successCount
+	if (successCount > 0) {
 		toast.add({
 			id: 'delete-record-success' + Date.now(),
 			title: 'Delete success',
-			description: 'Record deleted successfully',
+			description: `${successCount} record${successCount === 1 ? '' : 's'} deleted`,
 			icon: 'i-clarity-check-circle-solid',
 			duration: 3000,
 			color: 'success'
 		})
 		await getDns()
-	} else {
-		console.error('HTTP-Error: ' + response.status)
+		selectedRecordIds.value = selectedRecordIds.value.filter((id) =>
+			dnsRecords.value.some((record) => record.id === id)
+		)
 	}
-}
-
-const preDel = (record) => {
-	const toast = useToast()
-	toast.add({
-		id: 'delete-record' + Date.now(),
-		title: 'Delete record',
-		description: 'Are you sure you want to delete this record?',
-		icon: 'i-clarity-warning-solid',
-		duration: 3000,
-		color: 'error',
-		actions: [
-			{
-				label: 'Delete',
-				color: 'error',
-				onClick: () => {
-					delDns(record)
-					toast.remove('delete-record' + Date.now())
-				}
-			},
-			{
-				label: 'Cancel',
-				color: 'neutral',
-				onClick: () => {
-					toast.remove('delete-record' + Date.now())
-				}
-			}
-		]
-	})
+	if (failedCount > 0) {
+		toast.add({
+			id: 'delete-record-failed' + Date.now(),
+			title: 'Delete failed',
+			description: `${failedCount} record${failedCount === 1 ? '' : 's'} failed to delete`,
+			icon: 'i-clarity-warning-solid',
+			duration: 4000,
+			color: 'error'
+		})
+	}
+	deleteLoading.value = false
+	closeDeleteModal()
 }
 
 const navigateToRecord = (recordId) => {
@@ -991,8 +1127,31 @@ const navigateToRecord = (recordId) => {
 	}
 }
 
-const onSelectRecord = (_e, row) => {
-	navigateToRecord(row.original.id)
+const toggleRecordSelection = (record, value) => {
+	if (value) {
+		if (!selectedRecordIds.value.includes(record.id)) {
+			selectedRecordIds.value.push(record.id)
+		}
+		return
+	}
+	selectedRecordIds.value = selectedRecordIds.value.filter((id) => id !== record.id)
+}
+
+const toggleSelectAllVisible = (value) => {
+	const visibleIds = rows.value.map((row) => row.id)
+	if (value) {
+		const merged = new Set([...selectedRecordIds.value, ...visibleIds])
+		selectedRecordIds.value = Array.from(merged)
+		return
+	}
+	selectedRecordIds.value = selectedRecordIds.value.filter((id) => !visibleIds.includes(id))
+}
+
+const openRecordUrl = (record) => {
+	const base = record?.name || zoneName.value
+	if (!base) return
+	const url = base.startsWith('http://') || base.startsWith('https://') ? base : `https://${base}`
+	window.open(url, '_blank', 'noopener,noreferrer')
 }
 
 const copyToClipboard = (text) => {

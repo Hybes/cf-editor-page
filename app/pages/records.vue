@@ -147,7 +147,7 @@
 								class="grow md:grow-0"
 							/>
 						</UDropdownMenu>
-						<UPagination v-model:page="page" :page-count="pageCount" :total="filteredRecords.length" />
+						<UPagination v-model:page="page" :items-per-page="pageCount" :total="filteredRecords.length" />
 					</div>
 				</div>
 				<UTable
@@ -241,7 +241,7 @@
 					</template>
 				</UTable>
 				<div class="flex w-full justify-end">
-					<UPagination v-model:page="page" :page-count="pageCount" :total="filteredRecords.length" />
+					<UPagination v-model:page="page" :items-per-page="pageCount" :total="filteredRecords.length" />
 				</div>
 			</div>
 		</div>

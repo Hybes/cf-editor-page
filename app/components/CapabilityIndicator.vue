@@ -4,7 +4,7 @@
 			<UButton size="xs" variant="soft" color="yellow" icon="i-heroicons-exclamation-triangle">
 				Limited access
 			</UButton>
-			<template #panel>
+			<template #content>
 				<div class="max-w-sm p-3">
 					<div class="text-sm font-medium text-stone-900 dark:text-stone-100">Unavailable features</div>
 					<div class="mt-2 space-y-2">

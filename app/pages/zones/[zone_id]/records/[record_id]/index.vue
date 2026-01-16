@@ -370,12 +370,39 @@
 							@click="saveDns"
 							>Save</UButton
 						>
-						<UButton class="mt-4 px-6" color="error" variant="outline" type="button" @click="preDel(dns)"
+						<UButton class="mt-4 px-6" color="error" variant="outline" type="button" @click="openDeleteModal"
 							>Delete</UButton
 						>
 					</div>
 				</div>
 			</div>
+			<UModal v-model:open="deleteModalOpen">
+				<template #content>
+					<UCard>
+						<template #header>
+							<div class="flex items-center gap-2">
+								<UIcon name="i-heroicons-exclamation-triangle" class="h-5 w-5 text-red-500" />
+								<span class="text-lg font-semibold">Delete record</span>
+							</div>
+						</template>
+						<div class="space-y-4">
+							<p class="text-sm text-stone-600 dark:text-stone-300">
+								This will permanently delete
+								<span class="font-semibold">{{ deleteLabel }}</span>
+								from
+								<span class="font-semibold">{{ dns.zone_name || zoneId }}</span>.
+							</p>
+							<p class="text-xs text-stone-500 dark:text-stone-400">This action cannot be undone.</p>
+						</div>
+						<template #footer>
+							<div class="flex justify-end gap-3">
+								<UButton color="neutral" variant="ghost" @click="closeDeleteModal">Cancel</UButton>
+								<UButton color="error" :loading="deleteLoading" @click="confirmDelete">Delete</UButton>
+							</div>
+						</template>
+					</UCard>
+				</template>
+			</UModal>
 		</div>
 	</div>
 </template>
@@ -394,6 +421,8 @@ const loading = ref(true)
 const saving = ref('')
 const toggleEndpoint = ref(false)
 const presets = ref([])
+const deleteModalOpen = ref(false)
+const deleteLoading = ref(false)
 
 const seoZoneLabel = computed(() => dns.value?.zone_name || zoneId.value || 'Zone')
 const seoRecordLabel = computed(() => {
@@ -630,33 +659,26 @@ const delPreset = (preset) => {
 	getPresets()
 }
 
-const preDel = (record) => {
-	const toast = useToast()
-	toast.add({
-		id: 'delete-record' + Date.now(),
-		title: 'Delete record',
-		description: 'Are you sure you want to delete this record?',
-		icon: 'i-clarity-warning-solid',
-		duration: 3000,
-		color: 'error',
-		actions: [
-			{
-				label: 'Delete',
-				color: 'error',
-				onClick: () => {
-					delDns(record)
-					toast.remove('delete-record' + Date.now())
-				}
-			},
-			{
-				label: 'Cancel',
-				color: 'neutral',
-				onClick: () => {
-					toast.remove('delete-record' + Date.now())
-				}
-			}
-		]
-	})
+const deleteLabel = computed(() => {
+	if (dns.value?.type === 'SRV') {
+		return formatSrvDisplayName() || dns.value.name || recordId.value
+	}
+	return dns.value?.name || recordId.value
+})
+
+const openDeleteModal = () => {
+	deleteModalOpen.value = true
+}
+
+const closeDeleteModal = () => {
+	deleteModalOpen.value = false
+}
+
+const confirmDelete = async () => {
+	deleteLoading.value = true
+	await delDns(dns.value)
+	deleteLoading.value = false
+	closeDeleteModal()
 }
 
 const getPresets = () => {
