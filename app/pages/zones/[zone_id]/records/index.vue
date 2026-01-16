@@ -427,6 +427,8 @@ const loading = ref(true)
 const searchQuery = ref('')
 const page = ref(1)
 const pageSize = ref(50)
+const recordsCacheTtl = 30000
+const recordsCache = useState('records-cache', () => ({}))
 const pageSizeOptions = [
 	{ label: '10 per page', value: 10 },
 	{ label: '25 per page', value: 25 },
@@ -498,6 +500,21 @@ const canDnsFirewall = computed(() =>
 const canAccountAnalytics = computed(() =>
 	Boolean(capabilities.value && capabilities.value.accountAnalytics && capabilities.value.accountAnalytics.available)
 )
+const getRecordsCacheKey = () => `${apiKey.value}:${zoneId.value}`
+const getRecordsUpdatedKey = () => `cf-records-updated-${zoneId.value}`
+const readRecordsCache = () => {
+	const key = getRecordsCacheKey()
+	return recordsCache.value[key]
+}
+const writeRecordsCache = (records) => {
+	const key = getRecordsCacheKey()
+	if (!key || !zoneId.value) return
+	recordsCache.value[key] = { records, fetchedAt: Date.now() }
+}
+const markRecordsUpdated = () => {
+	if (!zoneId.value) return
+	localStorage.setItem(getRecordsUpdatedKey(), String(Date.now()))
+}
 
 const seoZoneLabel = computed(() => zoneName.value || zone.value?.name || zoneId.value || 'Zone')
 useDynamicSeo({
@@ -526,7 +543,8 @@ const updateProxyStatus = async (record) => {
 				duration: 3000,
 				color: 'success'
 			})
-			await getDns() // Refresh the DNS records
+			markRecordsUpdated()
+			await getDns({ force: true })
 		} else {
 			console.error(data.errors[0].message)
 			toast.add({
@@ -991,9 +1009,19 @@ const handleKeyDown = (e) => {
 	}
 }
 
-const getDns = async () => {
+const getDns = async ({ preferCache = true, force = false } = {}) => {
 	dnsLoadError.value = ''
 	try {
+		if (!force && preferCache) {
+			const cacheEntry = readRecordsCache()
+			const lastMutation = Number(localStorage.getItem(getRecordsUpdatedKey()) || 0)
+			const isValidCache = cacheEntry && cacheEntry.fetchedAt >= lastMutation
+			const isFreshCache = isValidCache && Date.now() - cacheEntry.fetchedAt < recordsCacheTtl
+			if (cacheEntry && isValidCache) {
+				dnsRecords.value = cacheEntry.records || []
+				if (isFreshCache) return
+			}
+		}
 		await refreshDns()
 		if (dnsError.value) throw dnsError.value
 		const data = dnsData.value
@@ -1012,6 +1040,7 @@ const getDns = async () => {
 		}
 
 		dnsRecords.value = data?.result || []
+		writeRecordsCache(dnsRecords.value)
 	} catch (error) {
 		dnsLoadError.value = error?.data?.statusMessage || error?.statusMessage || 'Failed to get records'
 		toast.add({
@@ -1047,7 +1076,7 @@ const getZone = async () => {
 
 const getAll = async () => {
 	loading.value = true
-	await Promise.all([getZone(), getDns(), loadCapabilities()])
+	await Promise.all([getZone(), getDns({ preferCache: true }), loadCapabilities()])
 	if (canBotFight.value) await getBotManagement()
 	loading.value = false
 }
@@ -1105,7 +1134,8 @@ const confirmDelete = async () => {
 			duration: 3000,
 			color: 'success'
 		})
-		await getDns()
+		markRecordsUpdated()
+		await getDns({ force: true })
 		selectedRecordIds.value = selectedRecordIds.value.filter((id) =>
 			dnsRecords.value.some((record) => record.id === id)
 		)

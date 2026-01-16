@@ -411,6 +411,10 @@ const toggleEndpoint = ref(false)
 const zone = ref({})
 const presets = ref([])
 const zoneRequestBody = computed(() => ({ apiKey: apiKey.value, currZone: zoneId.value }))
+const markRecordsUpdated = () => {
+	if (!zoneId.value) return
+	localStorage.setItem(`cf-records-updated-${zoneId.value}`, String(Date.now()))
+}
 const {
 	data: zoneData,
 	error: zoneError,
@@ -522,6 +526,7 @@ const createDns = async () => {
 				duration: 3000,
 				color: 'success'
 			})
+			markRecordsUpdated()
 			router.push(`/zones/${zoneId.value}/records`)
 		} else {
 			saving.value = 'error'

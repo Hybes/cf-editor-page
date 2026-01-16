@@ -433,6 +433,10 @@ const dnsRequestBody = computed(() => ({
 	currZone: zoneId.value,
 	currDnsRecord: recordId.value
 }))
+const markRecordsUpdated = () => {
+	if (!zoneId.value) return
+	localStorage.setItem(`cf-records-updated-${zoneId.value}`, String(Date.now()))
+}
 const {
 	data: dnsRecordData,
 	error: dnsRecordError,
@@ -581,6 +585,7 @@ const saveDns = async () => {
 				duration: 3000,
 				color: 'success'
 			})
+			markRecordsUpdated()
 			setTimeout(() => {
 				saving.value = ''
 			}, 3000)
@@ -620,6 +625,7 @@ const delDns = async (record) => {
 	if (response.ok) {
 		const data = await response.json()
 		if (data.success) {
+			markRecordsUpdated()
 			router.push(`/zones/${zoneId.value}/records`)
 			toast.add({
 				id: 'delete-record-success' + Date.now(),
